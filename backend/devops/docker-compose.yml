@@ -1,0 +1,26 @@
+
+services:
+  frontend:
+    container_name: frontend
+    build: ../../frontend/
+    env_file:
+      .env
+    networks:
+      - saas
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:$PORT_FRONT/"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    restart : on-failure
+  # authentication:
+  #     image: Oauth2.0
+  #     build:  ./auth~/
+  # database:
+  #   container_name: prisma
+  #   build: backend-services/prisma/
+  #   env_file:
+  #     - .env
+networks:
+  saas :
+    driver : bridge
