@@ -1,9 +1,8 @@
 
-FROM node/alpine:latest
+FROM node:alpine3.18
 
-RUN apk add -U curl bash ca-certificates openssl ncurses coreutils python3 make gcc g++ libgcc linux-headers grep util-linux binutils findutils
+RUN apk add postgresql
 
-
-COPY --chmod=777 ./tools/prisma.sh ./entrypoint.sh
+COPY --chmod=777 tools/prisma.sh ./entrypoint.sh
 
 ENTRYPOINT ["./entrypoint.sh"]

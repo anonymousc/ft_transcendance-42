@@ -1,5 +1,6 @@
 
-services:
+name: travel_planning # for project name <written by czar>
+services: 
   frontend:
     container_name: frontend
     build: ../../frontend/
@@ -21,6 +22,28 @@ services:
   #   build: backend-services/prisma/
   #   env_file:
   #     - .env
+  #security services:
+  vault:
+    container_name: vault-hashicorp
+    build: backend-services/security/hashicorp-vault/
+    ports:
+      - "6666:8200"
+    secrets:
+      - source : secret
+        target: config.hcl
+    volumes:
+        - data:/tmp
+  webserver:
+    container_name: webserver
+    build: backend-services/security/modsecurity/
+    ports:
+     - "8080:80" #shoud be changed to 443
+    # retries: on-failure
 networks:
   saas :
     driver : bridge
+secrets:
+    secret:
+      file: secrets~/vault.hcl
+volumes:
+  data: {}
