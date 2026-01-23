@@ -1,9 +1,8 @@
 #!/bin/sh
 
-# set -eu
+set -eu
 
-# curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+npm install -g prisma @types/node @types/pg --save-dev 
+npm install @prisma/client @prisma/adapter-pg pg dotenv
 
-# NVM_DIR="$HOME/.nvm" ; source $NVM_DIR/nvm.sh && nvm install $NODE_VERSION_PRISMA
-
-exec sh
+exec 
