@@ -1,0 +1,61 @@
+.Header {
+  background-color: transparent;
+  box-shadow: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+.nav {
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 4rem;
+}
+
+.logo {
+  flex-shrink: 0;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+}
+
+.logo h1 {
+  font-size: 1.5rem;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-weight: bold;
+  color: #ffffff;
+  margin: 0;
+}
+
+.desktop-nav {
+  display: flex;
+  font-weight: bold;
+  font-size: 1.2rem;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  gap: 2rem;
+}
+
+.nav-link {
+  color: #ffffff;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #ffffff;
+}
+
+.cta-container {
+  display: block;
+  font-size: 1.2rem ;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-weight: bold;
+  color: #ffffff;
+  cursor: pointer;
+  margin-right: 1rem;
+}

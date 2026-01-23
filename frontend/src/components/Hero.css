@@ -1,0 +1,80 @@
+.hero-section {
+  height: 100vh;
+  background-image: url('../assets/GRAND-STADE-HASSAN-II_03-scaled 1.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding-top: 4rem;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.155);
+}
+
+.hero-content {
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-weight: bold;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: white;
+  max-width: 1000px;
+  padding: 0 2rem;
+}
+
+.hero-title {
+  font-size: 4.5rem;
+  font-weight: bolder;
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+}
+
+.hero-subtitle {
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+  opacity: 1;
+}
+
+.hero-button {
+  background: rgba(255, 255, 255, 0);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 1rem 2.5rem;
+  border-radius: 1rem;
+  font-size: 1.125rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 32px 0 rgba(255, 255, 255, 0.16);
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    font-weight: bold;
+}
+
+.hero-button:hover {
+  background: rgba(60, 60, 60, 0.2);
+  border: 1px solid rgba(92, 87, 87, 0);
+  transform: translateY(-2px);
+}
+
+.content-section {
+  background-color: white;
+  padding: 4rem 2rem;
+  min-height: 100vh;
+}
+
+.content-container {
+  max-width: 1280px;
+  margin: 0 auto;
+}
