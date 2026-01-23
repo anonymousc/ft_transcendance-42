@@ -13,8 +13,8 @@ COMPOSE=backend/devops/docker-compose.yml
 all : 
 	$(DOCKER) compose -f ${COMPOSE} build --no-cache
 	$(DOCKER) compose -f ${COMPOSE} up -d
-frontend:
-	$(DOCKER) compose -f ${COMPOSE} build frontend
+front:
+	$(DOCKER) compose -f ${COMPOSE} build frontend --no-cache
 	$(DOCKER) compose -f ${COMPOSE} up frontend -d
 # backend:
 # 	$(DOCKER) compose -f ${COMPOSE} build backend --no-cache
