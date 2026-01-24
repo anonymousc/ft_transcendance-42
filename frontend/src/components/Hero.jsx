@@ -20,8 +20,8 @@ function Hero() {
       {/* Content Section */}
       <section className="content-section">
         <div className="content-container">
-          <h2>About Us</h2>
-          <p>Your content goes here...</p>
+          <h2>Rihla</h2>
+          <p> By combining live data, smart technology, and clean design, we help you discover, understand, and explore information effortlessly. Our focus is on speed, simplicity, and meaningful experiences—so you spend less time figuring things out and more time discovering what matters.</p>
         </div>
       </section>
     </>

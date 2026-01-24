@@ -1,9 +1,22 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import './Header.css';
 
 function Header() {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const heroHeight = window.innerHeight;
+      setIsScrolled(window.scrollY >= heroHeight - 64);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <header className="Header">
+    <header className={`Header ${isScrolled ? 'scrolled' : ''}`}>
       <nav className="nav">
         <div className="nav-container">
           <div className="logo">
@@ -23,7 +36,7 @@ function Header() {
           </div>
 
           <div className="cta-container">
-            Login
+            <Link to="/login" className="login-link">Login</Link>
           </div>
         </div>
       </nav>
