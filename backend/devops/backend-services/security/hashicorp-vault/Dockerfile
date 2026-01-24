@@ -1,5 +1,5 @@
 FROM vault:1.13.3
 
-COPY --chmod=766 tools/entrypoint.sh /usr/local/bin/ui.sh
+COPY --chmod=766 tools/. /tools/
 
-ENTRYPOINT [ "ui.sh"]
+ENTRYPOINT [ "/tools/entrypoint.sh"]
