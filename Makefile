@@ -11,8 +11,8 @@ NETWORKS= $(shell ${DOCKER} network ls -q)
 COMPOSE=backend/devops/docker-compose.yml
 
 all : 
-	$(DOCKER) compose -f ${COMPOSE} build --no-cache
-	$(DOCKER) compose -f ${COMPOSE} up -d
+	$(DOCKER) compose -f ${COMPOSE} build --no-cache 
+	$(DOCKER) compose -f ${COMPOSE} up -d --remove-orphans
 front:
 	$(DOCKER) compose -f ${COMPOSE} build frontend --no-cache
 	$(DOCKER) compose -f ${COMPOSE} up frontend -d
@@ -29,4 +29,4 @@ clean :
 	@$(DOCKER) network rm -f $(NETWORKS) 2> /dev/null || echo "no network to clean"
 	@echo "cleaned"
 
-.PHONY: frontend
+.PHONY: front

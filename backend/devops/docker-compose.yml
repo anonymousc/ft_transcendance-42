@@ -20,15 +20,18 @@ services:
   # authentication:
   #     image: Oauth2.0
   #     build:  ./auth~/
-  # database:
-  #   container_name: prisma
-  #   build: backend-services/prisma/
-  #   env_file:
-  #     - .env
-  #security services:
-  test:
+  database:
+    container_name: prisma
+    build: backend-services/prisma/
+    env_file:
+      - .env
+    volumes:
+     - data:/data
+    networks:
+      - saas
+  # security services:
+  test :
     image : alpine:3.18
-    container_name: api_test
     networks:
       - saas
   vault:
@@ -37,9 +40,7 @@ services:
     env_file:
       - .env
     volumes:
-      - data:/tmp
-    secrets:
-      - vault_key
+      - shared_resources:/shared
     networks:
       - saas
     restart : on-failure
@@ -53,10 +54,8 @@ networks:
   saas :
     driver : bridge
 volumes:
+  data : {}
   shared_resources:
     driver_opts:
-      
-
-secrets:
-  vault_key:
-    file: ./secrets~/vault_key
+      type : tmpfs
+      device : tmpfs
