@@ -1,16 +1,16 @@
-import { User, Lock, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import "./LoginPage.css";
 import SigninOuth from "./SigninOuth.jsx";
+import passportOverlay from '../assets/PassportOverlay.png';
 
 function LoginPage() {
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Add your login logic here
         const formData = new FormData(e.target);
-        const username = formData.get('username');
+        const email = formData.get('email');
         const password = formData.get('password');
-        console.log('Login attempt:', { username, password });
+        console.log('Login attempt:', { email, password });
     };
 
     return (
@@ -18,39 +18,53 @@ function LoginPage() {
             <Link to="/" className="back-arrow">
                 <ArrowLeft size={28} />
             </Link>
-            <div className="login-container">
-                <h2>Sign in</h2>
-                <div>
-                    <p>Sign in with open accounts</p>
-                    <SigninOuth />
+            <div className="blob blob-card-left"></div>
+            <div className="blob blob-card-center"></div>
+
+            <div className="blob blob-card-right"></div>
+            
+            <div className="login-card">
+                <div className="passport-side">
+                    <img 
+                        src={passportOverlay} 
+                        alt="Passport overlay" 
+                        className="passport-overlay"
+                    />
                 </div>
-                <form className="login-form" onSubmit={handleSubmit}>
-                    <p>Or use your username and password</p>
-                    
-                    <div className="input-wrapper">
-                        <User className="input-icon" size={20} />
-                        <input 
-                            type="text" 
-                            id="username" 
-                            name="username" 
-                            placeholder="Username"
-                            required 
-                        />
+                <div className="signin-side">
+                    <h2>Sign in</h2>
+                    <div className="oauth-section">
+                        <p>Sign in with open accounts</p>
+                        <SigninOuth />
                     </div>
+                    <form className="login-form" onSubmit={handleSubmit}>
+                        <p>Or with your email and password</p>
+                        
+                        <div className="input-wrapper">
+                            <Mail className="input-icon" size={20} />
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                placeholder="Email"
+                                required 
+                            />
+                        </div>
 
-                    <div className="input-wrapper">
-                        <Lock className="input-icon" size={20} />
-                        <input 
-                            type="password" 
-                            id="password" 
-                            name="password" 
-                            placeholder="Password"
-                            required 
-                        />
-                    </div>
+                        <div className="input-wrapper">
+                            <Lock className="input-icon" size={20} />
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                placeholder="Password"
+                                required 
+                            />
+                        </div>
 
-                    <button type="submit">Login</button>
-                </form>
+                        <button type="submit">Login</button>
+                    </form>
+                </div>
             </div>
         </main>
     );

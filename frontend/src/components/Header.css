@@ -1,5 +1,5 @@
 .Header {
-  background-color: transparent;
+  background-color: #F5F5F7;
   box-shadow: none;
   position: fixed;
   top: 0;
@@ -9,8 +9,9 @@
 }
 
 .nav {
+  max-width: 1800px  ;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 2rem;
 }
 
 .nav-container {
@@ -22,68 +23,52 @@
 
 .logo {
   flex-shrink: 0;
-  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
 }
 
 .logo h1 {
   font-size: 1.5rem;
-  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-  font-weight: bold;
-  color: #ffffff;
+  font-family: 'Arial Black', 'Helvetica Neue', sans-serif;
+  font-weight: 900;
+  color: #FF6600;
   margin: 0;
-  transition: color 0.3s ease;
-}
-
-.Header.scrolled .logo h1 {
-  color: #000000;
+  letter-spacing: 1px;
 }
 
 .desktop-nav {
   display: flex;
-  font-weight: bold;
-  font-size: 1.2rem;
+  font-weight: 900;
+  font-size: 1.3rem;
   font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-  gap: 2rem;
+  gap: 2.5rem;
 }
 
 .nav-link {
-  color: #ffffff;
+  color: #000000;
   text-decoration: none;
   transition: color 0.3s ease;
 }
 
-.Header.scrolled .nav-link {
-  color: #000000;
-}
-
 .nav-link:hover {
-  color: #ffffff;
-}
-
-.Header.scrolled .nav-link:hover {
-  color: #333333;
+  color: #FF6600;
 }
 
 .cta-container {
   display: block;
-  font-size: 1.2rem ;
-  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-  font-weight: bold;
+}
+
+.login-button {
+  display: inline-block;
+  background-color: #000000;
   color: #ffffff;
-  cursor: pointer;
-  margin-right: 1rem;
-  transition: color 0.3s ease;
-}
-
-.Header.scrolled .cta-container {
-  color: #000000;
-}
-
-.login-link {
-  color: inherit;
+  padding: 0.6rem 1.5rem;
+  border-radius: 2rem;
+  font-size: 1rem;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-weight: 700;
   text-decoration: none;
+  transition: background-color 0.3s ease;
 }
 
-.login-link:hover {
-  color: inherit;
+.login-button:hover {
+  background-color: #333333;
 }

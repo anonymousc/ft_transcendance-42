@@ -1,75 +1,97 @@
-.hero-section {
-  height: 100vh;
-  background-image: url('../assets/GRAND-STADE-HASSAN-II_03-scaled 1.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  padding-top: 4rem;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.hero-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.155);
+.hero-section {
+  min-height: 100vh;
+  background-color: #F5F5F7;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  padding-top: 6rem;
+  overflow: hidden;
 }
 
 .hero-content {
-  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-  font-weight: bold;
   position: relative;
   z-index: 1;
   text-align: center;
-  color: white;
-  max-width: 1000px;
-  padding: 0 2rem;
+  color: #000000;
+  max-width: 900px;
+  padding: 3rem 2rem 0;
+  width: 100%;
 }
 
 .hero-title {
-  font-size: 4.5rem;
-  font-weight: bolder;
-  margin-bottom: 1.5rem;
-  line-height: 1.2;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-size: 4rem;
+  font-weight: 900;
+  margin-bottom: 1rem;
+  line-height: 0.9;
+  color: #000000;
 }
 
 .hero-subtitle {
-  font-size: 1.5rem;
-  margin-bottom: 2rem;
-  opacity: 1;
+  font-family: 'Arial', sans-serif;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-weight: 600;
+  margin-bottom: 3rem;
+  color: #000000;
+  line-height: 1.5;
 }
 
 .hero-button {
-  background: rgba(255, 255, 255, 0);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  padding: 1rem 2.5rem;
-  border-radius: 1rem;
-  font-size: 1.125rem;
+  background: #000000;
+  border: none;
+  color: #ffffff;
+  padding: 1.1rem 2rem;
+  border-radius: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 8px 32px 0 rgba(255, 255, 255, 0.16);
-  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-    font-weight: bold;
+  font-family: 'Arial', sans-serif;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-decoration: none;
 }
 
 .hero-button:hover {
-  background: rgba(60, 60, 60, 0.2);
-  border: 1px solid rgba(92, 87, 87, 0);
+  background: #333333;
   transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.hero-button:focus {
+  outline: 2px solid #000000;
+  outline-offset: 4px;
+}
+
+.hero-button:active {
+  transform: translateY(0);
+}
+
+.hero-image {
+  width: 100%;
+  max-width: 1200px;
+  margin-top: -4rem;
+  display: flex;
+  justify-content: center;
+  padding: 0 2rem;
+}
+
+.hero-image img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
 }
 
 .content-section {
-  background-color: white;
+  background-color: #ffffff;
   padding: 10rem 2rem;
   min-height: 100vh;
 }
@@ -79,16 +101,19 @@
   margin: 0 auto;
 }
 
-
-.content-container h2 {
-  font-size: 5rem;
-  margin-bottom: 0.5 rem;
+.section-title {
   font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  margin-bottom: 1.33rem;
+  color: #000000;
+  line-height: 1.1;
 }
 
-.content-container p {
-  font-weight: bold;
-  font-size: 1.25rem;
-  color: #333333;
-  font-family: Arial, sans-serif;
+.section-text {
+  font-family: 'Arial', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: #000000;
+  line-height: 1.6;
+  max-width: 800px;
 }

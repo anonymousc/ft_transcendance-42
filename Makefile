@@ -14,7 +14,7 @@ all :
 	$(DOCKER) compose -f ${COMPOSE} build --no-cache 
 	$(DOCKER) compose -f ${COMPOSE} up -d --remove-orphans
 front:
-	$(DOCKER) compose -f ${COMPOSE} build frontend --no-cache
+	$(DOCKER) compose -f ${COMPOSE} build frontend
 	$(DOCKER) compose -f ${COMPOSE} up frontend -d
 # backend:
 # 	$(DOCKER) compose -f ${COMPOSE} build backend --no-cache
