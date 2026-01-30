@@ -1,13 +1,9 @@
 FROM node:alpine3.23
 
-RUN npm install -g vite
-
 WORKDIR /app
 
 COPY . .
 
-ADD --chmod=776 http://gist.githubusercontent.com/anonymousc/68b56e985cbc14b1750bf227f32def83/raw/34b722effebc3c3d0fdb0c70cbd8ce35925dc341/Front-EntryPoint.sh /EntryPoint.sh
-
-EXPOSE 5438
+ADD --chmod=776 https://gist.githubusercontent.com/anonymousc/68b56e985cbc14b1750bf227f32def83/raw/efa8821a0fabe5d8551e0a26098c8d5699cc56a4/Front-EntryPoint.sh /EntryPoint.sh
 
 ENTRYPOINT [ "/EntryPoint.sh" ]

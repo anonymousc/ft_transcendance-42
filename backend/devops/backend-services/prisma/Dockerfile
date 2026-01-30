@@ -1,9 +1,21 @@
+FROM postgres:alpine3.21
 
-FROM node/alpine:latest
+RUN apk add --no-cache nodejs npm curl jq socat openssl
 
-RUN apk add -U curl bash ca-certificates openssl ncurses coreutils python3 make gcc g++ libgcc linux-headers grep util-linux binutils findutils
+COPY --chmod=700 --chown=postgres:postgres tools/prisma.sh /tools/prisma.sh
 
+WORKDIR  /app
 
-COPY --chmod=777 ./tools/prisma.sh ./entrypoint.sh
+COPY --chown=postgres:postgres tools/prisma.config.mjs  .
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENV HOME=/app
+
+COPY --chown=postgres:postgres prisma-tables/. ./prisma/
+
+RUN npm install prisma@5.2 @prisma/client@5.2 typescript tsx dotenv && \
+    chown -R 70:70 "/app/.npm" && \
+    chown -R 70:70 /app
+
+USER postgres
+
+ENTRYPOINT ["/tools/prisma.sh"]
