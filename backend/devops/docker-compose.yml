@@ -1,5 +1,6 @@
 
 name: travel_planning # for project name <written by czar>
+
 services: 
   frontend:
     container_name: frontend
@@ -46,9 +47,10 @@ services:
   swagger:
     image: swaggerapi/swagger-ui:v5.31.0
     container_name: swagger
+    environment:
+      - SWAGGER_JSON=/app/swagger.json
     ports:
-     - 8080:5050
-    entrypoint: swagger-ui
+     - 8080:8080
   vault:
     container_name: vault-hashicorp
     build: backend-services/security/hashicorp-vault/
