@@ -7,7 +7,7 @@ services:
     env_file:
       - .env
     ports:
-      - "5173:5173"
+      - "${PORT_FRONT}:${PORT_FRONT}"
     networks:
       - saas
     healthcheck:
@@ -19,33 +19,65 @@ services:
   # authentication:
   #     image: Oauth2.0
   #     build:  ./auth~/
-  # database:
-  #   container_name: prisma
-  #   build: backend-services/prisma/
-  #   env_file:
-  #     - .env
-  #security services:
+  database:
+    container_name: prisma
+    build: backend-services/prisma/
+    ports:
+      - 5555:5555
+    env_file:
+      - .env
+    volumes:
+     - data:/data
+     - shared_resources:/token
+    depends_on:
+      vault:
+        condition: service_healthy
+    networks:
+      - saas
+  # security services:
+  # test :
+  #   image : alpine:3.18
+  #   networks:
+  #     - saas
+  #   volumes:
+  #     - shared_resources:/token
+  #   entrypoint: [""]
+  #   command: tail -f
+  swagger:
+    image: swaggerapi/swagger-ui:v5.31.0
+    container_name: swagger
+    ports:
+     - 8080:5050
+    entrypoint: swagger-ui
   vault:
     container_name: vault-hashicorp
     build: backend-services/security/hashicorp-vault/
-    ports:
-      - "6666:8200"
-    secrets:
-      - source : secret
-        target: config.hcl
+    env_file:
+      - .env
     volumes:
-        - data:/tmp
-  webserver:
-    container_name: webserver
-    build: backend-services/security/modsecurity/
-    ports:
-     - "8080:80" #shoud be changed to 443
-    # retries: on-failure
+      - shared_resources:/shared
+      - ./backend-services/security/hashicorp-vault/tools:/tools:rx
+    networks:
+      - saas
+    healthcheck:
+      test: ["CMD","curl", "http://0.0.0.0:$PORT_VAULT/", "--silent", "--output", "/dev/null"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+    restart : unless-stopped
+  # webserver:
+  #   container_name: webserver
+  #   build: backend-services/security/modsecurity/
+  #   ports:
+  #    - "8080:80" #shoud be changed to 443
+  #   retries: on-failure
 networks:
   saas :
     driver : bridge
-secrets:
-    secret:
-      file: secrets~/vault.hcl
 volumes:
-  data: {}
+  data : {}
+  shared_resources:
+    driver_opts:
+      type : tmpfs
+      device : tmpfs
