@@ -1,9 +1,31 @@
 import Header from './components/Header.jsx';
+import Hero from './components/Hero.jsx';
+import LoginPage from './components/LoginPage.jsx';
+import RegisterPage from './components/RegisterPage.jsx';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+
+function AppContent() {
+  const location = useLocation();
+  const showHeader = location.pathname !== '/login' && location.pathname !== '/register';
+
+  return (
+    <>
+      {showHeader && <Header />}
+      <Routes>
+        <Route path="/" element={<Hero />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+      </Routes>
+    </>
+  );
+}
 
 function App() {
 
   return (
-    <Header />
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   )
 }
 
