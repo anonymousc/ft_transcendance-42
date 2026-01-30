@@ -1,4 +1,3 @@
-
 FROM postgres:alpine3.21
 
 RUN apk add --no-cache nodejs npm curl jq socat openssl
