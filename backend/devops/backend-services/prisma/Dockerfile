@@ -1,11 +1,21 @@
 
-FROM postgres:alpine3.18
+FROM postgres:alpine3.21
 
-RUN apk add --no-cache nodejs npm
+RUN apk add --no-cache nodejs npm curl jq socat openssl
 
-COPY --chmod=766 --chown=postgres:postgres tools/prisma.sh /tools/prisma.sh
+COPY --chmod=700 --chown=postgres:postgres tools/prisma.sh /tools/prisma.sh
 
-COPY --chmod=644 --chown=postgres:postgres tools/postgres.conf /var/lib/postgresql/data/postgresql.conf
+WORKDIR  /app
+
+COPY --chown=postgres:postgres tools/prisma.config.mjs  .
+
+ENV HOME=/app
+
+COPY --chown=postgres:postgres prisma-tables/. ./prisma/
+
+RUN npm install prisma@5.2 @prisma/client@5.2 typescript tsx dotenv && \
+    chown -R 70:70 "/app/.npm" && \
+    chown -R 70:70 /app
 
 USER postgres
 

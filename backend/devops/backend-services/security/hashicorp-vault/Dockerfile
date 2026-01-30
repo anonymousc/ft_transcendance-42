@@ -1,7 +1,5 @@
 FROM vault:1.13.3
 
-RUN apk add --no-cache openssl
+RUN apk add --no-cache openssl curl
 
-COPY --chmod=766 tools/. /tools/
-
-ENTRYPOINT [ "/tools/entrypoint.sh"]
+ENTRYPOINT [ "sh", "/tools/entrypoint.sh"]
