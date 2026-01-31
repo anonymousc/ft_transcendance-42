@@ -11,6 +11,8 @@ services:
       - "${PORT_FRONT}:${PORT_FRONT}"
     networks:
       - saas
+    volumes:
+      - ../../frontend/:/app
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:$PORT_FRONT/"]
       interval: 30s
@@ -51,6 +53,8 @@ services:
       - SWAGGER_JSON=/app/swagger.json
     ports:
      - 8080:8080
+    volumes:
+        - ./data/:/app/
   vault:
     container_name: vault-hashicorp
     build: backend-services/security/hashicorp-vault/
