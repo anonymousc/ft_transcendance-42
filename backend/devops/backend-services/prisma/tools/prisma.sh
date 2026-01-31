@@ -11,6 +11,9 @@ export PGPORT=$PORT_POSTGRES
 initdb -U $(jq -r .data.data.username < /token/data) --pwfile=/token/passfile -A scram-sha-256 
 
 sed -i -e "s/#port = 5432/port = $PORT_POSTGRES/g" $PGDATA/postgresql.conf
+# sed -i "s/#log_directory = 'log'/log_directory = '\/var\/log\/'/g" $PGDATA/postgresql.conf
+# sed -i "s/#logging_collector = off/logging_collector = on/g" $PGDATA/postgresql.conf
+
 
 rm -rf /token/passfile
 

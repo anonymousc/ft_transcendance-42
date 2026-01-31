@@ -1,16 +1,24 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@import "tailwindcss";
 
-html, body {
-  width: 100%;
-  min-height: 100%;
-  overflow-x: hidden;
-}
+:root {
+  /* Colors */
+  --color-primary: #00c6ff;
+  --color-text: ;
+  --color-text-secondary: ;
+  --color-text-muted: ;
+  --color-background: ;
+  --color-foreground: ;
+  --color-surface: ;
+  --color-border: ;
+  --color-border-muted: ;
+  --color-error: ;
+  --color-success: ;
+  --color-info: ;
+  --color-warning: ;
 
-#root {
-  width: 100%;
-  min-height: 100%;
+  /* Fonts */
+  --body-font: ;
+  --heading-font: ;
+  --accent-font: ;
+  
 }

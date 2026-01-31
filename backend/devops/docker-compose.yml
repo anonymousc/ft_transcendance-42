@@ -30,8 +30,9 @@ services:
     env_file:
       - .env
     volumes:
-     - data:/data
+    #  - ./data/postgres:/var/lib/postgresql
      - shared_resources:/token
+     - ./data/logs/:/var/log
     depends_on:
       vault:
         condition: service_healthy
@@ -46,6 +47,15 @@ services:
   #     - shared_resources:/token
   #   entrypoint: [""]
   #   command: tail -f
+  elk_elastic:
+    image: elasticsearch:9.2.4
+    container_name: elk_elastic
+    expose: 
+      - 9200
+    networks: 
+     - saas
+    # volumes:
+
   swagger:
     image: swaggerapi/swagger-ui:v5.31.0
     container_name: swagger
@@ -54,7 +64,7 @@ services:
     ports:
      - 8080:8080
     volumes:
-        - ./data/:/app/
+      - ./data/:/app/
   vault:
     container_name: vault-hashicorp
     build: backend-services/security/hashicorp-vault/
