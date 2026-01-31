@@ -1,0 +1,118 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Travel Planner",
+    "description": "Travel Planner documentation api",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://frontend:5173",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": ["login endpoint"],
+        "parameters" : [{"in" :"query", "name"  : "username", "schema" : {"type" : "string"}, "required": true, "description": "username parameter"}, {"in" : "login", "name": "password", "schema":{"type" : "string"}, "description":"password parameter", "required": true }],
+        "summary": "return the token for the user",
+        "responses": {
+          "200": {
+            "description": "login endpoint",
+                "schema": {
+                  "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/auth/register":{
+      "post":{
+        "tags":["register endpoint"],
+        "parameters":[
+          {
+            "in": "query",
+            "name":"firstname",
+            "schema" :{
+              "type" : "string"
+              },
+            "required" : true,
+            "description":"firstname registration parameter"
+          },
+          {
+            "in": "query",
+            "name":"lastname",
+            "schema":{
+              "type":"string"
+            },
+            "required":true,
+            "description": "lastname registration parameter"
+          },
+          {
+            "in": "query",
+            "name":"email",
+            "schema":{
+              "type":"string"
+            },
+            "required":true,
+            "description": "email registration parameter"
+          },
+          {
+            "in": "query",
+            "name":"phone number",
+            "schema":{
+              "type":"string"
+            },
+            "required":true,
+            "description": "phone number registration parameter"
+          },
+          {
+            "in": "query",
+            "name":"password",
+            "schema":{
+              "type":"string"
+            },
+            "required":true,
+            "description": "password registeration parameter"
+          }
+        ],
+        "summary":"register requirement parameters",
+        "responses":{
+          "200":{
+            "description":"registration is valid",
+            "schema":{
+              "type":"string"}
+          }
+        }  
+      },
+      "summary":"return boolean registeration"
+    },
+    "/auth/oauth/google":{
+      "post":{
+        "tags":["register endpoint"]
+      }
+    },
+    "/auth/verify-email":{
+      "post":{
+        "tags":["register endpoint"]
+      }
+    },
+    "/profiles/{userId}":{
+      "get":{
+        "tags":["profile and preference services"],
+        "operationId": "getUserById",
+        "parameters":[
+          {
+            "in": "query",
+            "name" : "ProfileUserId",
+            "schema":{
+              "type":"integer"
+            },
+            "require":true
+          }
+        ]
+      }
+    }
+  }
+}
