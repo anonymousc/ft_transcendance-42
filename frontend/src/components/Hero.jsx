@@ -1,6 +1,8 @@
 import './Hero.css';
 import { Link } from 'react-router-dom';
-import { useEffect, useRef, useCallback } from 'react';
+import { useLayoutEffect, useRef } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import friendsImage from '../assets/Groupfriend.png';
 import cloudLeft from '../assets/CLOUD1.png';
 import cloudRight from '../assets/CLOUD2.png';
@@ -18,64 +20,157 @@ import ratingIcon from '../assets/RatingIcon.png';
 import OrangeLine from '../assets/OrangeLine.png';
 import Rihlaimg from '../assets/Frame 1.png';
 
+// Register GSAP plugins
+gsap.registerPlugin(ScrollTrigger);
+
 function Hero() {
-  const sectionsRef = useRef([]);
-  const observerRef = useRef(null);
+  const mainRef = useRef(null);
+  const aboutRef = useRef(null);
+  const howItWorksRef = useRef(null);
+  const featuresRef = useRef(null);
+  const rihlaRef = useRef(null);
+  const footerRef = useRef(null);
 
-  useEffect(() => {
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px'
-    };
-
-    const observerCallback = (entries) => {
-      entries.forEach((entry) => {
-        const children = entry.target.querySelectorAll('.animate-child');
-
-        if (entry.isIntersecting) {
-          entry.target.classList.add('animate-in');
-          // Add staggered animation to children
-          children.forEach((child, index) => {
-            child.style.transitionDelay = `${index * 0.1}s`;
-            child.classList.add('animate-in');
-          });
-        } else {
-          // Remove animation classes when leaving viewport for replay
-          entry.target.classList.remove('animate-in');
-          children.forEach((child) => {
-            child.style.transitionDelay = '0s';
-            child.classList.remove('animate-in');
-          });
-        }
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.from('.hero-content', {
+        y: 60,
+        opacity: 0,
+        duration: 1,
+        ease: 'power3.out',
       });
-    };
 
-    observerRef.current = new IntersectionObserver(observerCallback, observerOptions);
+      gsap.from('.hero-image', {
+        y: 80,
+        opacity: 0,
+        duration: 1.2,
+        delay: 0.3,
+        ease: 'power3.out',
+      });
 
-    // Observe all sections that have been added to the refs array
-    sectionsRef.current.forEach((section) => {
-      if (section) observerRef.current.observe(section);
-    });
+      // gsap.from('')
 
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, []);
+      gsap.from('.about-content', {
+        scrollTrigger: {
+          trigger: aboutRef.current,
+          start: 'top 80%',
+          end: 'top 20%',
+          toggleActions: 'play none none reverse',
+        },
+        y: 50,
+        opacity: 0,
+        duration: 0.8,
+        ease: 'power2.out',
+      });
 
-  const addToRefs = useCallback((el) => {
-    if (el && !sectionsRef.current.includes(el)) {
-      sectionsRef.current.push(el);
-      // If observer already exists, observe the new element immediately
-      if (observerRef.current) {
-        observerRef.current.observe(el);
-      }
-    }
+      gsap.from('.how-it-works-item', {
+        scrollTrigger: {
+          trigger: howItWorksRef.current,
+          start: 'top 75%',
+          end: 'top 20%',
+          toggleActions: 'play none none reverse',
+        },
+        y: 60,
+        opacity: 0,
+        duration: 0.7,
+        stagger: 0.15,
+        ease: 'power2.out',
+      });
+
+      gsap.from('.feature-right', {
+        scrollTrigger: {
+          trigger: featuresRef.current,
+          start: 'top 75%',
+          toggleActions: 'play none none reverse',
+        },
+        x: 60,
+        opacity: 0,
+        duration: 0.7,
+        stagger: 0.12,
+        ease: 'power2.out',
+      });
+
+      gsap.from('.feature-left', {
+        scrollTrigger: {
+          trigger: featuresRef.current,
+          start: 'top 75%',
+          toggleActions: 'play none none reverse',
+        },
+        x: 60,
+        opacity: 0,
+        duration: 0.7,
+        stagger: 0.12,
+        ease: 'power2.out',
+      });
+
+      gsap.from('.rihla-image', {
+        scrollTrigger: {
+          trigger: rihlaRef.current,
+          start: 'top 75%',
+          toggleActions: 'play none none reverse',
+        },
+        scale: 0.8,
+        opacity: 0,
+        duration: 0.8,
+        ease: 'back.out(1.7)',
+      });
+
+      gsap.from('.Rihla-section .hero-button', {
+        scrollTrigger: {
+          trigger: rihlaRef.current,
+          start: 'top 70%',
+          toggleActions: 'play none none reverse',
+        },
+        y: 30,
+        opacity: 0,
+        duration: 0.6,
+        delay: 0.3,
+        ease: 'power2.out',
+      });
+
+      gsap.from('.footer-brand', {
+        scrollTrigger: {
+          trigger: footerRef.current,
+          start: 'top 85%',
+          toggleActions: 'play none none reverse',
+        },
+        y: 40,
+        opacity: 0,
+        duration: 0.6,
+        ease: 'power2.out',
+      });
+
+      gsap.from('.footer-column', {
+        scrollTrigger: {
+          trigger: footerRef.current,
+          start: 'top 80%',
+          toggleActions: 'play none none reverse',
+        },
+        y: 40,
+        opacity: 0,
+        duration: 0.6,
+        stagger: 0.1,
+        ease: 'power2.out',
+      });
+
+      gsap.from('.footer-bottom', {
+        scrollTrigger: {
+          trigger: footerRef.current,
+          start: 'top 60%',
+          toggleActions: 'play none none reverse',
+        },
+        y: 20,
+        opacity: 0,
+        duration: 0.5,
+        ease: 'power2.out',
+      });
+    }, mainRef);
+
+    return () => ctx.revert();
   }, []);
 
   return (
-    <>
+    <div ref={mainRef}>
       <section className="hero-section">
         <div className="hero-content">
           <h1 className="hero-title">
@@ -93,14 +188,14 @@ function Hero() {
           <img src={friendsImage} alt="Friends exploring together" />
         </div>
       </section>
-      <section className="about-section animate-section" id="about" ref={addToRefs}>
+      <section className="about-section" id="about" ref={aboutRef}>
         {/* <div className="hermes-note">
           Did you know Hermes wasn't just the messenger of the gods? He was also the god of travel and journeys.
         </div> */}
         {/* <img src={cloudLeft} alt="Cloud" className="cloud-left" />
         <img src={cloudRight} alt="Cloud" className="cloud-right-top" />
         <img src={cloudRight} alt="Cloud" className="cloud-right-bottom" /> */}
-        <div className="about-content animate-child">
+        <div className="about-content">
           <h1 className="about-title">Rihla</h1>
           <p className="about-text">
             By combining live data, smart technology, and clean design, we help you discover, understand, and explore information effortlessly. Our focus is on speed, simplicity, and meaningful experiences—so you spend less time figuring things out and more time discovering what matters.
@@ -109,9 +204,9 @@ function Hero() {
         {/* <img src={sunImage} alt="Sun" className="sun-image" />
         <img src={hermesImage} alt="Hermes" className="hermes-image" /> */}
       </section>
-      <section className="how-it-works-section animate-section" id="how-it-works" ref={addToRefs}>
+      <section className="how-it-works-section" id="how-it-works" ref={howItWorksRef}>
         <div className="how-it-works-container">
-          <div className="how-it-works-item animate-child">
+          <div className="how-it-works-item">
             <div className="how-it-works-icon">
               <img src={userIcon} alt="Sign Up" />
             </div>
@@ -124,7 +219,7 @@ function Hero() {
             </div>
           </div>
 
-          <div className="how-it-works-item animate-child">
+          <div className="how-it-works-item">
             <div className="how-it-works-icon">
               <img src={compassIcon} alt="Explore Live Data" />
             </div>
@@ -137,7 +232,7 @@ function Hero() {
             </div>
           </div>
 
-          <div className="how-it-works-item animate-child">
+          <div className="how-it-works-item">
             <div className="how-it-works-icon">
               <img src={mapIcon} alt="Discover Insights" />
             </div>
@@ -151,11 +246,11 @@ function Hero() {
           </div>
         </div>
       </section>
-      <section className="features-section animate-section" id="features" ref={addToRefs}>
+      <section className="features-section" id="features" ref={featuresRef}>
         <div className="features-container">
           <img src={OrangeLine} alt="Feature" />
 
-          <div className="feature-item feature-right animate-child">
+          <div className="feature-item feature-right">
             <div className="feature-icon">
               <img src={passengerIcon} alt="Discover Morocco" />
             </div>
@@ -167,7 +262,7 @@ function Hero() {
             </div>
           </div>
 
-          <div className="feature-item feature-right animate-child">
+          <div className="feature-item feature-right">
             <div className="feature-icon">
               <img src={excursionIcon} alt="Travel Together" />
             </div>
@@ -179,7 +274,7 @@ function Hero() {
             </div>
           </div>
 
-          <div className="feature-item feature-right animate-child">
+          <div className="feature-item feature-right">
             <div className="feature-icon">
               <img src={conversationIcon} alt="Messaging" />
             </div>
@@ -191,7 +286,7 @@ function Hero() {
             </div>
           </div>
 
-          <div className="feature-item feature-left animate-child">
+          <div className="feature-item feature-left">
             <div className="feature-icon">
               <img src={routIcon} alt="Places & Activities" />
             </div>
@@ -203,7 +298,7 @@ function Hero() {
             </div>
           </div>
 
-          <div className="feature-item feature-left animate-child">
+          <div className="feature-item feature-left">
             <div className="feature-icon">
               <img src={aiIcon} alt="Smart Assistance" />
             </div>
@@ -215,7 +310,7 @@ function Hero() {
             </div>
           </div>
 
-          <div className="feature-item feature-left animate-child">
+          <div className="feature-item feature-left">
             <div className="feature-icon">
               <img src={ratingIcon} alt="Ratings & Feedback" />
             </div>
@@ -228,34 +323,20 @@ function Hero() {
           </div>
         </div>
       </section>
-      <section className="team-section animate-section" id="team" ref={addToRefs}>
-        <h2 className="team-title animate-child">The Team behind all this</h2>
-        <div className="team-container">
-          <div className="team-row">
-            <div className="team-card animate-child"></div>
-            <div className="team-card animate-child"></div>
-            <div className="team-card animate-child"></div>
-          </div>
-          <div className="team-row">
-            <div className="team-card animate-child"></div>
-            <div className="team-card animate-child"></div>
-          </div>
-        </div>
-      </section>
-      <section className="Rihla-section animate-section" ref={addToRefs}>
-        <img src={Rihlaimg} alt="Rihla" className="rihla-image animate-child" />
-        <Link to="/register" className="hero-button animate-child">
+      <section className="Rihla-section" ref={rihlaRef}>
+        <img src={Rihlaimg} alt="Rihla" className="rihla-image" />
+        <Link to="/register" className="hero-button">
           Discover Now
         </Link>
       </section>
-      <footer className="footer-section animate-section" ref={addToRefs}>
+      <footer className="footer-section" ref={footerRef}>
         <div className="footer-content">
-          <div className="footer-brand animate-child">
+          <div className="footer-brand">
             <h2 className="footer-logo">RIHLA</h2>
             <p className="footer-tagline">Discover and experience</p>
           </div>
           <div className="footer-links">
-            <div className="footer-column animate-child">
+            <div className="footer-column">
               <h3 className="footer-column-title">Navigate</h3>
               <ul className="footer-list">
                 <li><Link to="/">Home</Link></li>
@@ -264,7 +345,7 @@ function Hero() {
                 <li><a href="#features">Features</a></li>
               </ul>
             </div>
-            <div className="footer-column animate-child">
+            <div className="footer-column">
               <h3 className="footer-column-title">Socials</h3>
               <ul className="footer-list">
                 <li><a href="#">Twitter [X]</a></li>
@@ -273,7 +354,7 @@ function Hero() {
                 <li><a href="#">Linkdin</a></li>
               </ul>
             </div>
-            <div className="footer-column animate-child">
+            <div className="footer-column">
               <h3 className="footer-column-title">Contacts</h3>
               <ul className="footer-list">
                 <li><a href="mailto:rihla@gmail.ma">rihla@gmail.ma</a></li>
@@ -282,12 +363,12 @@ function Hero() {
             </div>
           </div>
         </div>
-        <div className="footer-bottom animate-child">
+        <div className="footer-bottom">
           <p>COPYRIGHT © 2026 RIHLA</p>
           <Link to="/privacy">Privacy Policy</Link>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
 
