@@ -11,8 +11,11 @@ export PGPORT=$PORT_POSTGRES
 initdb -U $(jq -r .data.data.username < /token/data) --pwfile=/token/passfile -A scram-sha-256 
 
 sed -i -e "s/#port = 5432/port = $PORT_POSTGRES/g" $PGDATA/postgresql.conf
-# sed -i "s/#log_directory = 'log'/log_directory = '\/var\/log\/'/g" $PGDATA/postgresql.conf
-# sed -i "s/#logging_collector = off/logging_collector = on/g" $PGDATA/postgresql.conf
+sed -i -e "s|#log_directory = 'log'|log_directory = '/var/logs/'|g" $PGDATA/postgresql.conf
+sed -i -e "s/#logging_collector = off/logging_collector = on/g" $PGDATA/postgresql.conf
+sed -i -e "s/#log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'/log_filename = 'postgresql.log'/g" $PGDATA/postgresql.conf
+sed -i -e "s/#log_line_prefix = '%m \[%p\] '/log_line_prefix = '%m [%p] %q%u@%d '/g" $PGDATA/postgresql.conf
+
 
 
 rm -rf /token/passfile
