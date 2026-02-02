@@ -22,13 +22,6 @@ services:
   # authentication:
   #     image: Oauth2.0
   #     build:  ./auth~/
-  amq:
-    image : rabbitmq:3.8-management
-    mem_limit: 300m
-    hostname: rabbitmq
-    container_name: rabbitmq
-    ports:
-      - 8080:15672
   database:
     container_name: prisma
     build: backend-services/prisma/
