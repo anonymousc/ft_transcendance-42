@@ -19,8 +19,8 @@ import aiIcon from '../assets/aiOrangeIcone.png';
 import ratingIcon from '../assets/RatingIcon.png';
 import OrangeLine from '../assets/OrangeLine.png';
 import Rihlaimg from '../assets/Frame 1.png';
+import BigAtlass from '../assets/BigAtlass.png';
 
-// Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger);
 
 function Hero() {
@@ -329,6 +329,7 @@ function Hero() {
           Discover Now
         </Link>
       </section>
+      <img src={BigAtlass} alt="Big Atllas" className="big-atlass-image" />
       <footer className="footer-section" ref={footerRef}>
         <div className="footer-content">
           <div className="footer-brand">

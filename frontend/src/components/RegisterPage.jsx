@@ -94,8 +94,6 @@ function RegisterPage() {
                         </div>
                     </form>
                 </div>
-                
-                {/* Passport Side (Right) */}
                 <div className="passport-side">
                     <img 
                         src={passportOverlay} 

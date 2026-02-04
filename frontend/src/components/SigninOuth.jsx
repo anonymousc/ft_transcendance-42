@@ -3,7 +3,6 @@ import "./SigninOuth.css";
 function SigninOuth() {
     return (
         <div className="oauth-buttons">
-            {/* Google Sign In Button */}
             <button className="oauth-button google-button">
                 <div className="oauth-button-content">
                     <div className="oauth-button-icon">
