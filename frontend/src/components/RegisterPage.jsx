@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import "./RegisterPage.css";
 import SigninOuth from "./SigninOuth.jsx";
 import passportOverlay from '../assets/PassportOverlay.png';
+import RegisterForm from './RegisterForm.jsx';
+import GlassCard from './glassCard.jsx';
+import BackArrow from './BackArrow.jsx';
 
 function RegisterPage() {
     const handleSubmit = (e) => {
@@ -18,89 +21,16 @@ function RegisterPage() {
 
     return (
         <main className="register-page">
-            <Link to="/" className="back-arrow">
-                <ArrowLeft size={28} />
-            </Link>
-            
+            <BackArrow />
             <div className="blob blob-card-left"></div>
             <div className="blob blob-card-center"></div>
             <div className="blob blob-card-right"></div>
-            
             <div className="register-card">
                 <div className="register-side">
                     <h2>Register</h2>
-                    
-                    <form className="register-form" onSubmit={handleSubmit}>
-                        <div className="name-row">
-                            <div className="input-wrapper">
-                                <input 
-                                    type="text" 
-                                    id="firstName" 
-                                    name="firstName" 
-                                    placeholder="First Name"
-                                    required 
-                                />
-                            </div>
-                            <div className="input-wrapper">
-                                <input 
-                                    type="text" 
-                                    id="lastName" 
-                                    name="lastName" 
-                                    placeholder="Last Name"
-                                    required 
-                                />
-                            </div>
-                        </div>
-
-                        <div className="input-wrapper">
-                            <Mail className="input-icon" size={20} />
-                            <input 
-                                type="email" 
-                                id="email" 
-                                name="email" 
-                                placeholder="Email"
-                                required 
-                            />
-                        </div>
-
-                        <div className="input-wrapper">
-                            <input 
-                                type="tel" 
-                                id="phone" 
-                                name="phone" 
-                                placeholder="Phone Number"
-                            />
-                        </div>
-
-                        <div className="input-wrapper">
-                            <Lock className="input-icon" size={20} />
-                            <input 
-                                type="password" 
-                                id="password" 
-                                name="password" 
-                                placeholder="Password"
-                                required 
-                            />
-                        </div>
-
-                        <div className="register-actions">
-                            <span className="oauth-label">Or Register with :</span>
-                            <button type="submit">Register</button>
-                        </div>
-                        
-                        <div className="oauth-section">
-                            <SigninOuth />
-                            <span className="oauth-or">or</span>
-                        </div>
-                    </form>
+                    <RegisterForm handleSubmit={handleSubmit} />
                 </div>
-                <div className="passport-side">
-                    <img 
-                        src={passportOverlay} 
-                        alt="Passport overlay" 
-                        className="passport-overlay"
-                    />
-                </div>
+                <GlassCard imageOverlay={passportOverlay} />
             </div>
         </main>
     );
