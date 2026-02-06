@@ -20,6 +20,7 @@ import ratingIcon from '../assets/RatingIcon.png';
 import OrangeLine from '../assets/OrangeLine.png';
 import Rihlaimg from '../assets/Frame 1.png';
 import BigAtlass from '../assets/BigAtlass.png';
+import HeroSection from './HeroSection.jsx';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -171,23 +172,7 @@ function Hero() {
 
   return (
     <div ref={mainRef}>
-      <section className="hero-section">
-        <div className="hero-content">
-          <h1 className="hero-title">
-            Discover more than places,<br />
-            Discover experiences.
-          </h1>
-          <p className="hero-subtitle">
-            Explore cities, activities, and communities tailored to you.
-          </p>
-          <Link to="/register" className="hero-button">
-            Discover Now
-          </Link>
-        </div>
-        <div className="hero-image">
-          <img src={friendsImage} alt="Friends exploring together" />
-        </div>
-      </section>
+      <HeroSection friendsImage={friendsImage} />
       <section className="about-section" id="about" ref={aboutRef}>
         {/* <div className="hermes-note">
           Did you know Hermes wasn't just the messenger of the gods? He was also the god of travel and journeys.

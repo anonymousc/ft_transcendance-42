@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Header.css';
+import LoginBtn from './LoginBtn.jsx';
+import DesktopNav from './DesktopNav.jsx';
+import LogoRihla from './LogoRihla.jsx';
 
 function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -21,7 +24,7 @@ function Header() {
     
     const observerOptions = {
       root: null,
-      rootMargin: '-20% 0px -60% 0px',
+      rootMargin: '-20% 0px -60% 0px', 
       threshold: 0
     };
 
@@ -49,25 +52,9 @@ function Header() {
     <header className={`Header ${isScrolled ? 'scrolled' : ''}`}>
       <nav className="nav">
         <div className="nav-container">
-          <div className="logo">
-            <h1>RIHLA</h1>
-          </div>
-          
-          <div className="desktop-nav">
-            <a href="#about" className={`nav-link ${activeSection === 'about' ? 'active' : ''}`}>
-              About US
-            </a>
-            <a href="#how-it-works" className={`nav-link ${activeSection === 'how-it-works' ? 'active' : ''}`}>
-              How it's Work
-            </a>
-            <a href="#features" className={`nav-link ${activeSection === 'features' ? 'active' : ''}`}>
-              Features
-            </a>
-          </div>
-
-          <div className="cta-container">
-            <Link to="/login" className="login-button">Login</Link>
-          </div>
+          <LogoRihla />
+        <DesktopNav activeSection={activeSection} />
+        <LoginBtn />
         </div>
       </nav>
     </header>

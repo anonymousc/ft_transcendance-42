@@ -1,0 +1,12 @@
+.logo {
+  flex-shrink: 0;
+}
+
+.logo h1 {
+  font-size: 1.5rem;
+  font-family: 'Arial Black', 'Helvetica Neue', sans-serif;
+  font-weight: 900;
+  color: #FF6600;
+  margin: 0;
+  letter-spacing: 1px;
+}
