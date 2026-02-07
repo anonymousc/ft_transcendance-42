@@ -1,8 +1,8 @@
-import { Link } from "react-router-dom";
+import friendsImage from '../assets/Groupfriend.png';
 import "./HeroSection.css";
 import DiscoverBtn from "./DiscoverBtn";
 
-function HeroSection({ friendsImage }: { friendsImage: string }) {
+function HeroSection() {
   return (
     <section className="hero-section">
       <div className="hero-content">

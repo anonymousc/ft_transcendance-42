@@ -1,20 +1,12 @@
 import './Hero.css';
-import { Link } from 'react-router-dom';
 import { useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import friendsImage from '../assets/Groupfriend.png';
-import cloudLeft from '../assets/CLOUD1.png';
-import cloudRight from '../assets/CLOUD2.png';
-import sunImage from '../assets/sun.png';
-import hermesImage from '../assets/hermes_god.png';
-
 import BigAtlass from '../assets/BigAtlass.png';
 import HeroSection from './HeroSection';
 import AboutUsSection from './AboutUsSection';
 import HowitsWorks from './HowItsWorks';
 import FeatureSection from './FeatureSection';
-import DiscoverBtn from './DiscoverBtn';
 import RIhlaBanner from './RihlaBanner';
 import Footer from './Footer';
 
@@ -168,7 +160,7 @@ function Hero() {
 
   return (
     <div ref={mainRef}>
-      <HeroSection friendsImage={friendsImage} />
+      <HeroSection />
       <AboutUsSection aboutRef={aboutRef} />
       <HowitsWorks howItWorksRef={howItWorksRef} />
       <FeatureSection featuresRef={featuresRef} />
