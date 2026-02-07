@@ -1,13 +1,13 @@
 import "./DesktopNav.css";
 
-function DesktopNav({ activeSection }) {
+function DesktopNav({ activeSection } : { activeSection: string }) {
   return (
     <div className="desktop-nav">
       <a
         href="#about"
         className={`nav-link ${activeSection === "about" ? "active" : ""}`}
       >
-        About US
+        About Us
       </a>
       <a
         href="#how-it-works"

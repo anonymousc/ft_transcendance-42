@@ -1,0 +1,29 @@
+.hero-button {
+  background: #000000;
+  border: none;
+  color: #ffffff;
+  padding: 1.1rem 2rem;
+  border-radius: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Arial', sans-serif;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-decoration: none;
+}
+
+.hero-button:hover {
+  background: #333333;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.hero-button:focus {
+  outline: 2px solid #000000;
+  outline-offset: 4px;
+}
+
+.hero-button:active {
+  transform: translateY(0);
+}

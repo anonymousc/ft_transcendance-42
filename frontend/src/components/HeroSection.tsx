@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import "./HeroSection.css";
+import DiscoverBtn from "./DiscoverBtn";
 
 function HeroSection({ friendsImage }: { friendsImage: string }) {
   return (
@@ -13,9 +14,7 @@ function HeroSection({ friendsImage }: { friendsImage: string }) {
         <p className="hero-subtitle">
           Explore cities, activities, and communities tailored to you.
         </p>
-        <Link to="/register" className="hero-button">
-          Discover Now
-        </Link>
+        <DiscoverBtn />
       </div>
       <div className="hero-image">
         <img src={friendsImage} alt="Friends exploring together" />

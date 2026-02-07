@@ -1,4 +1,6 @@
-function AboutUsSection({aboutRef}) {
+import "./AboutUsSection.css";
+
+function AboutUsSection({aboutRef}: {aboutRef: React.RefObject<HTMLElement | null>}) {
   return (
     <section className="about-section" id="about" ref={aboutRef}>
       <div className="about-content">
