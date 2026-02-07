@@ -1,6 +1,6 @@
 import friendsImage from '../assets/Groupfriend.png';
 import "./HeroSection.css";
-import DiscoverBtn from "./DiscoverBtn";
+import DiscoverBtn from "./shared/DiscoverBtn";
 
 function HeroSection() {
   return (

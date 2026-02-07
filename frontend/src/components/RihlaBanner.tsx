@@ -1,5 +1,5 @@
 import Rihlaimg from '../assets/Frame 1.png';
-import DiscoverBtn from "./DiscoverBtn";
+import DiscoverBtn from "./shared/DiscoverBtn";
 
 function RIhlaBanner( {rihlaRef} : {rihlaRef: React.RefObject<HTMLElement | null>}) {
   return (

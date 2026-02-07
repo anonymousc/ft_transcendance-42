@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Header.css';
-import LoginBtn from './LoginBtn.jsx';
+import LoginBtn from './shared/LoginBtn.js';
 import DesktopNav from './DesktopNav.jsx';
 import LogoRihla from './LogoRihla.jsx';
 

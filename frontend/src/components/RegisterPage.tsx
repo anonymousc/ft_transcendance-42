@@ -4,7 +4,7 @@ import SigninOuth from "./SigninOuth";
 import passportOverlay from '../assets/PassportOverlay.png';
 import RegisterForm from './RegisterForm';
 import GlassCard from './glassCard';
-import BackArrow from './BackArrow';
+import BackArrow from './shared/BackArrow';
 
 function RegisterPage() {
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
