@@ -29,9 +29,11 @@ function LoginForm({ handleSubmit }: LoginFormProps) {
           required
         />
       </div>
-      <button type="submit">Login</button>
+    <button type="submit">Login</button>
     </form>
   );
 }
 
 export default LoginForm;
+
+
