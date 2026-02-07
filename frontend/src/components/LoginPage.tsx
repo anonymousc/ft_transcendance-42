@@ -1,15 +1,15 @@
-import { Mail, Lock, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import "./LoginPage.css";
-import SigninOuth from "./SigninOuth.jsx";
-import LoginForm from "./LoginForm.jsx";
+import SigninOuth from "./SigninOuth";
+import LoginForm from "./LoginForm";
 import passportOverlay from "../assets/PassportOverlay.png";
-import GlassCard from "./glassCard.jsx";
+import GlassCard from "./glassCard";
 
 function LoginPage() {
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
+    const formData = new FormData(e.currentTarget);
     const email = formData.get("email");
     const password = formData.get("password");
     console.log("Login attempt:", { email, password });

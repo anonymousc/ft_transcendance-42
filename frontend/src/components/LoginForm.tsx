@@ -1,7 +1,11 @@
 import "./LoginForm.css";
 import { Mail, Lock } from "lucide-react";
 
-function LoginForm({handleSubmit}) {
+interface LoginFormProps {
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+}
+
+function LoginForm({ handleSubmit }: LoginFormProps) {
   return (
     <form className="login-form" onSubmit={handleSubmit}>
       <p>Or with your email and password</p>

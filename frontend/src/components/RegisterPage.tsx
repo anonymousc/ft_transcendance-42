@@ -1,16 +1,15 @@
-import { Mail, Lock, ArrowLeft, User, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import "./RegisterPage.css";
-import SigninOuth from "./SigninOuth.jsx";
+import SigninOuth from "./SigninOuth";
 import passportOverlay from '../assets/PassportOverlay.png';
-import RegisterForm from './RegisterForm.jsx';
-import GlassCard from './glassCard.jsx';
-import BackArrow from './BackArrow.jsx';
+import RegisterForm from './RegisterForm';
+import GlassCard from './glassCard';
+import BackArrow from './BackArrow';
 
 function RegisterPage() {
-    const handleSubmit = (e) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const formData = new FormData(e.target);
+        const formData = new FormData(e.currentTarget);
         const firstName = formData.get('firstName');
         const lastName = formData.get('lastName');
         const email = formData.get('email');

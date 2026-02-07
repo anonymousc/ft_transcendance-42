@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import "./HeroSection.css";
 
-function HeroSection({ friendsImage }) {
+function HeroSection({ friendsImage }: { friendsImage: string }) {
   return (
     <section className="hero-section">
       <div className="hero-content">

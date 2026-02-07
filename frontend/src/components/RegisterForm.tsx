@@ -1,9 +1,13 @@
 import { Link } from "react-router-dom";
 import { Mail, Lock } from "lucide-react";
 import "./RegisterForm.css";
-import SigninOuth from "./SigninOuth.jsx";
+import SigninOuth from "./SigninOuth";
 
-function RegisterForm({handleSubmit}) {
+interface RegisterFormProps {
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+}
+
+function RegisterForm({ handleSubmit }: RegisterFormProps) {
   return (
     <form className="register-form" onSubmit={handleSubmit}>
       <div className="name-row">

@@ -20,7 +20,7 @@ import ratingIcon from '../assets/RatingIcon.png';
 import OrangeLine from '../assets/OrangeLine.png';
 import Rihlaimg from '../assets/Frame 1.png';
 import BigAtlass from '../assets/BigAtlass.png';
-import HeroSection from './HeroSection.jsx';
+import HeroSection from './HeroSection';
 
 gsap.registerPlugin(ScrollTrigger);
 

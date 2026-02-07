@@ -1,6 +1,10 @@
 import "./glassCard.css";
 
-function GlassCard({ imageOverlay }) {
+interface GlassCardProps {
+  imageOverlay: string;
+}
+
+function GlassCard({ imageOverlay }: GlassCardProps) {
   return (
     <div className="passport-side">
       <img
