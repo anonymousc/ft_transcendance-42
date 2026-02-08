@@ -1,10 +1,17 @@
+import { Link } from 'react-router-dom';
 import friendsImage from '../assets/Groupfriend.png';
 import "./HeroSection.css";
 import DiscoverBtn from "./shared/DiscoverBtn";
+import { useNavigate } from 'react-router-dom';
+import { Button } from './ui/button';
 
 function HeroSection() {
+  const navigate = useNavigate();
   return (
     <section className="hero-section">
+      <Button variant="outline" size="lg" onClick={() => navigate('/home')}>
+        Go to Home
+      </Button>
       <div className="hero-content">
         <h1 className="hero-title">
           Discover more than places,

@@ -12,6 +12,11 @@
     "moduleResolution": "bundler",
     "target": "esnext",
     "types": [],
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
