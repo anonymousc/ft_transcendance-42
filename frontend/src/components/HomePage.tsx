@@ -24,14 +24,11 @@ function HomePage() {
       </video>
       <VerticalNav onNavigate={handleNavigation} />
       <main className="home-content">
-        <h1 className="header-home">Where do you want to go next ?</h1>
+        {/* <h1 className="header-home">Where do you want to go next ?</h1> */}
         <div className="search-container">
           <GlassSearchBar onSearch={handleSearch} />
         </div>
       </main>
-      <div className="scroll-indicator">
-        <ChevronDown size={32}/>
-      </div>
     </div>
   );
 }

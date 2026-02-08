@@ -3,46 +3,95 @@
     left: 0;
     top: 0;
     height: 100vh;
-    width: 64px;
+    width: 72px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 1.5rem 0;
+    padding: 1.5rem 1rem;
     z-index: 100;
-    background: black;
+    background: rgb(0, 0, 0);
+    transition: width 0.3s ease;
+    overflow: hidden;
 }
 
-.nav-logo {
+.vertical-nav.expanded {
+    width: 240px;
+}
+
+.nav-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
     margin-bottom: 2rem;
+    min-height: 32px;
+}
+
+.vertical-nav.expanded .nav-header {
+    justify-content: space-between;
+}
+
+.nav-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #FF8C00;
+    white-space: nowrap;
+}
+
+.nav-toggle {
+    background: transparent;
+    border: none;
     color: #ffffff;
     cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.nav-toggle:hover {
+    transform: scale(1.1);
 }
 
 .nav-items {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.8rem;
+    gap: 0.75rem;
     flex: 1;
+    width: 100%;
 }
 
 .nav-item {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
+    width: 100%;
+    height: 48px;
     border-radius: 12px;
     color: #ffffff;
     cursor: pointer;
     transition: all 0.3s ease;
     background: transparent;
     border: none;
+    gap: 1rem;
+    padding: 0;  /* Changed from 0 0.75rem */
+}
+
+.vertical-nav.expanded .nav-item {
+    justify-content: flex-start;
+    padding: 0 0.75rem;  /* Add this line */
+}
+
+.nav-label {
+    font-size: 1rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 1;
+    transition: opacity 0.2s ease;
 }
 
 .nav-item:hover {
-    background: transparent;
-    transform: scale(1.2);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .nav-item.active {
@@ -50,12 +99,24 @@
     background: transparent;
 }
 
+.nav-item.active:hover {
+    background: rgba(255, 140, 0, 0.1);
+}
+
 .nav-bottom {
     margin-top: auto;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.8rem;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.nav-item.profile {
+    color: #B388FF;
+}
+
+.nav-item.profile.active {
+    color: #B388FF;
 }
 
 .nav-item.logout {
@@ -64,5 +125,5 @@
 
 .nav-item.logout:hover {
     color: #FF8C00;
-    background: rgba(231, 76, 60, 0.1);
+    background: rgba(255, 140, 0, 0.1);
 }

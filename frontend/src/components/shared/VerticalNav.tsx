@@ -15,14 +15,14 @@ interface VerticalNavProps {
 
 function VerticalNav({ onNavigate, activeItem: controlledActive }: VerticalNavProps) {
     const [internalActive, setInternalActive] = useState("home");
+    const [isExpanded, setIsExpanded] = useState(false);
     const activeItem = controlledActive ?? internalActive;
 
     const navItems: NavItem[] = [
-        { id: "home", icon: <Home size={24} />, label: "Home" },
-        { id: "messages", icon: <MessageSquare size={24} />, label: "Messages" },
-        { id: "friends", icon: <Users size={24} />, label: "Friends" },
-        { id: "notifications", icon: <Bell size={24} />, label: "Notifications" },
-        { id: "profile", icon: <User size={24} />, label: "Profile" },
+        { id: "home", icon: <Home size={28} />, label: "Home" },
+        { id: "messages", icon: <MessageSquare size={28} />, label: "Messages" },
+        { id: "friends", icon: <Users size={28} />, label: "Friends" },
+        { id: "notifications", icon: <Bell size={28} />, label: "Notification" },
     ];
 
     const handleClick = (id: string) => {
@@ -30,11 +30,18 @@ function VerticalNav({ onNavigate, activeItem: controlledActive }: VerticalNavPr
         onNavigate?.(id);
     };
 
+    const toggleExpand = () => {
+        setIsExpanded(!isExpanded);
+    };
+
     return (
-        <nav className="vertical-nav">
-            <button className="nav-logo" aria-label="Menu">
-                <Menu size={28} />
-            </button>
+        <nav className={`vertical-nav ${isExpanded ? "expanded" : ""}`}>
+            <div className="nav-header">
+                {isExpanded && <span className="nav-brand">RIHLA</span>}
+                <button className="nav-toggle" onClick={toggleExpand} aria-label="Menu">
+                    <Menu size={28} />
+                </button>
+            </div>
 
             <div className="nav-items">
                 {navItems.map((item) => (
@@ -45,17 +52,27 @@ function VerticalNav({ onNavigate, activeItem: controlledActive }: VerticalNavPr
                         aria-label={item.label}
                     >
                         {item.icon}
+                        {isExpanded && <span className="nav-label">{item.label}</span>}
                     </button>
                 ))}
             </div>
 
             <div className="nav-bottom">
                 <button
+                    className={`nav-item profile ${activeItem === "profile" ? "active" : ""}`}
+                    onClick={() => handleClick("profile")}
+                    aria-label="My Profile"
+                >
+                    <User size={28} />
+                    {isExpanded && <span className="nav-label">My Profile</span>}
+                </button>
+                <button
                     className="nav-item logout"
                     onClick={() => handleClick("logout")}
                     aria-label="Logout"
                 >
-                    <LogOut size={24} />
+                    <LogOut size={28} />
+                    {isExpanded && <span className="nav-label">Logout</span>}
                 </button>
             </div>
         </nav>
