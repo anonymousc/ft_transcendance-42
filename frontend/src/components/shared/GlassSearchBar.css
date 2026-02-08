@@ -4,18 +4,18 @@
     width: 100%;
     max-width: 900px;
     padding: 1rem 1.5rem;
-    background: rgba(255, 255, 255, 0.176);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-radius: 50px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.243);
     transition: all 0.3s ease;
 }
 
 .glass-search-bar:focus-within {
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-    border-color: rgba(255, 140, 66, 0.3);
+    border-color: rgba(255, 138, 66, 0);
 }
 
 .glass-search-input {
@@ -24,12 +24,12 @@
     border: none;
     outline: none;
     font-size: 1rem;
-    color: #333333;
+    color: #ffffff;
     padding-right: 1rem;
 }
 
 .glass-search-input::placeholder {
-    color: #999999;
+    color: #ffffff9b;
     font-weight: 400;
 }
 
@@ -41,7 +41,7 @@
     border: none;
     cursor: pointer;
     padding: 0;
-    color: #FF8C42;
+    color: #ff8c42;
     transition: all 0.3s ease;
 }
 
