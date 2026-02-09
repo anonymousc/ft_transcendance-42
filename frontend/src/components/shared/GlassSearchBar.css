@@ -12,11 +12,11 @@
     border: 1px solid rgba(255, 255, 255, 0.287);
     transition: all 0.3s ease;
 }
-
+/* 
 .glass-search-bar:focus-within {
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
     border-color: rgba(255, 138, 66, 0);
-}
+} */
 
 .glass-search-input {
     flex: 1;
@@ -26,6 +26,7 @@
     font-size: 1rem;
     color: #ffffff;
     padding-right: 1rem;
+    caret-color: cyan;
 }
 
 .glass-search-input::placeholder {

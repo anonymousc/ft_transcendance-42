@@ -4,19 +4,19 @@ import LoginPage from './components/LoginPage.jsx';
 import RegisterPage from './components/RegisterPage.jsx';
 import HomePage from './components/HomePage';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import NotFoundPage from './pages/NotFound.js';
 
 function AppContent() {
   const location = useLocation();
-  const showHeader = location.pathname !== '/login' && location.pathname !== '/register' && location.pathname !== '/home';
 
   return (
     <>
-      {showHeader && <Header />}
       <Routes>
         <Route path="/" element={<Hero />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/home" element={<HomePage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>
   );

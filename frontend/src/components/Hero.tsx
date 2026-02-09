@@ -9,6 +9,7 @@ import HowitsWorks from './HowItsWorks';
 import FeatureSection from './FeatureSection';
 import RIhlaBanner from './RihlaBanner';
 import Footer from './Footer';
+import Header from './Header';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -160,6 +161,7 @@ function Hero() {
 
   return (
     <div ref={mainRef}>
+      <Header />
       <HeroSection />
       <AboutUsSection aboutRef={aboutRef} />
       <HowitsWorks howItWorksRef={howItWorksRef} />
