@@ -3,13 +3,13 @@ import { useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import BigAtlass from '../assets/BigAtlass.png';
-import HeroSection from './HeroSection';
-import AboutUsSection from './AboutUsSection';
-import HowitsWorks from './HowItsWorks';
-import FeatureSection from './FeatureSection';
-import RIhlaBanner from './RihlaBanner';
-import Footer from './Footer';
-import Header from './Header';
+import HeroSection from '../components/HeroSection';
+import AboutUsSection from '../components/AboutUsSection';
+import HowitsWorks from '../components/HowItsWorks';
+import FeatureSection from '../components/FeatureSection';
+import RIhlaBanner from '../components/shared/RihlaBanner';
+import Footer from '../components/Footer';
+import Header from '../components/Header';
 
 gsap.registerPlugin(ScrollTrigger);
 

@@ -52,7 +52,7 @@ function Header() {
     <header className={`Header ${isScrolled ? 'scrolled' : ''}`}>
       <nav className="nav">
         <div className="nav-container">
-          <LogoRihla />
+          <LogoRihla/>
         <DesktopNav activeSection={activeSection} />
         <LoginBtn />
         </div>

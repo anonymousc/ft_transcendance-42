@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Home, MessageSquare, Users, Bell } from "lucide-react";
+import { Home, MessageSquare, Users, Bell, MessageCircle } from "lucide-react";
 import gsap from "gsap";
 import "./GlassNavBar.css";
 
@@ -14,7 +14,7 @@ function GlassNavBar({ handleNavigation }: { handleNavigation?: (id: string) => 
 
     const navItems: NavItem[] = [
         { id: "home", icon: <Home size={28} />, label: "Home" },
-        { id: "messages", icon: <MessageSquare size={28} />, label: "Messages" },
+        { id: "messages", icon: <MessageCircle size={28} />, label: "Messages" },
         { id: "friends", icon: <Users size={28} />, label: "Friends" },
         { id: "notifications", icon: <Bell size={28} />, label: "Notification" },
     ];

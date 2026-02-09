@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Mail, Lock } from "lucide-react";
 import "./RegisterForm.css";
-import SigninOuth from "./SigninOuth";
+import SigninOuth from "./shared/SigninOuth";
 
 interface RegisterFormProps {
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;

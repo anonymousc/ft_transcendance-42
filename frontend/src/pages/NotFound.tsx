@@ -1,7 +1,7 @@
 
 const NotFoundPage = () => {
   return (
-    <div>NotFound</div>
+    <div className="font-[10rem]">NotFound</div>
   )
 }
 

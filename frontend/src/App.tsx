@@ -1,7 +1,7 @@
 import Header from './components/Header.jsx';
-import Hero from './components/Hero.jsx';
-import LoginPage from './components/LoginPage.jsx';
-import RegisterPage from './components/RegisterPage.jsx';
+import Hero from './pages/Hero.js';
+import LoginPage from './pages/LoginPage.js';
+import RegisterPage from './pages/RegisterPage.js';
 import HomePage from './components/HomePage';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import NotFoundPage from './pages/NotFound.js';
