@@ -1,0 +1,21 @@
+.cta-container {
+  display: block;
+}
+
+.LoginBtn {
+      display: inline-block;
+  background-color: #000000;
+  color: #ffffff;
+  padding: 0.4rem 1.5rem;
+  border-radius: 1rem;
+  font-size: 1rem;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.LoginBtn:hover {
+  background-color: #333333;
+}
+

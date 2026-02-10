@@ -1,0 +1,52 @@
+.glass-search-bar {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 900px;
+    padding: 1.4rem 1.7rem;
+    background: rgba(255, 255, 255, 0);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 50px;
+    box-shadow: 0 8px 32px rgba(255, 255, 255, 0.169);
+    border: 1px solid rgba(255, 255, 255, 0.287);
+    transition: all 0.3s ease;
+}
+/* 
+.glass-search-bar:focus-within {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    border-color: rgba(255, 138, 66, 0);
+} */
+
+.glass-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    color: #ffffff;
+    padding-right: 1rem;
+    caret-color: cyan;
+}
+
+.glass-search-input::placeholder {
+    color: #ffffff9b;
+    font-weight: 400;
+}
+
+.glass-search-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    color: #ff8c42;
+    transition: all 0.3s ease;
+}
+
+.glass-search-button:hover {
+    color: #FF6600;
+    transform: scale(1.1);
+}
