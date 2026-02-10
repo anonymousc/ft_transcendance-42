@@ -5,24 +5,7 @@ function FooterLinks() {
 
     return (
         <div className="flex gap-16 flex-wrap">
-            <div className="min-w-[120px]">
-                <h3 className="font-mono text-[0.9rem] font-normal text-[#888888] mb-4 capitalize">Navigate</h3>
-                <ul className="list-none p-0 m-0">
-                    <li className="mb-3">
-                        <Link to="/" className={linkClasses}>Home</Link>
-                    </li>
-                    <li className="mb-3">
-                        <Link to="/about-section" className={linkClasses}>About Us</Link>
-                    </li>
-                    <li className="mb-3">
-                        <Link to="/how-it-works" className={linkClasses}>How it Works</Link>
-                    </li>
-                    <li className="mb-3">
-                        <Link to="/features" className={linkClasses}>Features</Link>
-                    </li>
-                </ul>
-            </div>
-            <div className="min-w-[120px]">
+            <div className="min-w-30">
                 <h3 className="font-mono text-[0.9rem] font-normal text-[#888888] mb-4 capitalize">Socials</h3>
                 <ul className="list-none p-0 m-0">
                     <li className="mb-3">
@@ -39,11 +22,11 @@ function FooterLinks() {
                     </li>
                 </ul>
             </div>
-            <div className="min-w-[120px]">
+            <div className="min-w-30">
                 <h3 className="font-mono text-[0.9rem] font-normal text-[#888888] mb-4 capitalize">Contacts</h3>
                 <ul className="list-none p-0 m-0">
                     <li className="mb-3">
-                        <a href="mailto:rihla@gmail.ma" className={linkClasses}>rihla@gmail.ma</a>
+                        <a href="mailto:rihlaHELP@gmail.com" className={linkClasses}>rihlaHELP@gmail.com</a>
                     </li>
                     <li className="mb-3">
                         <a href="tel:+212000000000" className={linkClasses}>+212 000 000 000</a>
