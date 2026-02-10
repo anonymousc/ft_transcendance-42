@@ -1,9 +1,14 @@
-import userIcon from '../assets/utilisateur 1.png';
-import compassIcon from '../assets/boussole 1.png';
-import mapIcon from '../assets/espace-reserve 1.png';
+import userIcon from '../assets/icons/utilisateur 1.png';
+import userIconWhite from '../assets/icons/utilisateur-white.png';
+import compassIcon from '../assets/icons/boussole 1.png';
+import compassIconWhite from '../assets/icons/boussole-white.png';
+import mapIcon from '../assets/icons/espace-reserve 1.png';
+import mapIconWhite from '../assets/icons/espace-white.png';
 import "./HowItsWorks.css";
+import { useTheme } from '../context/ThemeContext';
 
 function HowitsWorks({ howItWorksRef }: { howItWorksRef: React.RefObject<HTMLElement | null> }) {
+  const { isDark } = useTheme();
   return (
     <section
       className="how-it-works-section"
@@ -13,7 +18,7 @@ function HowitsWorks({ howItWorksRef }: { howItWorksRef: React.RefObject<HTMLEle
       <div className="how-it-works-container">
         <div className="how-it-works-item">
           <div className="how-it-works-icon">
-            <img src={userIcon} alt="Sign Up" />
+            <img src={isDark ? userIconWhite : userIcon} alt="Sign Up" />
           </div>
           <div className="how-it-works-divider"></div>
           <div className="how-it-works-content">
@@ -26,7 +31,7 @@ function HowitsWorks({ howItWorksRef }: { howItWorksRef: React.RefObject<HTMLEle
 
         <div className="how-it-works-item">
           <div className="how-it-works-icon">
-            <img src={compassIcon} alt="Explore Live Data" />
+            <img src={isDark ? compassIconWhite : compassIcon} alt="Explore Live Data" />
           </div>
           <div className="how-it-works-divider"></div>
           <div className="how-it-works-content">
@@ -40,7 +45,7 @@ function HowitsWorks({ howItWorksRef }: { howItWorksRef: React.RefObject<HTMLEle
 
         <div className="how-it-works-item">
           <div className="how-it-works-icon">
-            <img src={mapIcon} alt="Discover Insights" />
+            <img src={isDark ? mapIconWhite : mapIcon} alt="Discover Insights" />
           </div>
           <div className="how-it-works-divider"></div>
           <div className="how-it-works-content">
