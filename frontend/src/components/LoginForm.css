@@ -27,7 +27,7 @@
     z-index: 1;
 }
 
-.login-form input {
+.login-form input:not([type="checkbox"]) {
     padding: 0.875rem 1rem 0.875rem 3rem;
     width: 100%;
     border: 1px solid #E5E5E5;
@@ -38,11 +38,11 @@
     transition: all 0.3s ease;
 }
 
-.login-form input::placeholder {
+.login-form input:not([type="checkbox"])::placeholder {
     color: #999999;
 }
 
-.login-form input:focus {
+.login-form input:not([type="checkbox"]):focus {
     outline: none;
     border-color: #FF8C42;
     background-color: #ffffff;
@@ -52,7 +52,7 @@
     color: #FF8C42;
 }
 
-.login-form button {
+.login-form button[type="submit"] {
     margin-top: 0.5rem;
     padding: 0.75rem 2rem;
     background-color: #FF8C42;
@@ -67,6 +67,6 @@
     width: fit-content;
 }
 
-.login-form button:hover {
+.login-form button[type="submit"]:hover {
     background-color: #FF7A2E;
 }

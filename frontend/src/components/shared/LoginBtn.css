@@ -3,7 +3,7 @@
 }
 
 .LoginBtn {
-      display: inline-block;
+  display: inline-block;
   background-color: #000000;
   color: #ffffff;
   padding: 0.4rem 1.5rem;
@@ -16,6 +16,5 @@
 }
 
 .LoginBtn:hover {
-  background-color: #333333;
+  background-color: #33333392;
 }
-
