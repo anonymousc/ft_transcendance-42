@@ -93,14 +93,16 @@
 }
     
 .oauth-section {
-    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    margin-bottom: 1.3rem;
 }
 
 .oauth-section p {
-    font-family: 'Arial', sans-serif;
-    font-size: 0.9rem;
-    color: #333333;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0;
     transition: color 0.3s ease;
 }
 
