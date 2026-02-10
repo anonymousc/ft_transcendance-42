@@ -1,8 +1,8 @@
 function RIhlaBanner() {
   return (
     <div className="flex-1 min-w-70">
-      <h2 className="font-[Impact,Haettenschweiler,'Arial_Narrow_Bold',sans-serif] text-[10rem] font-black text-white mb-2 leading-none">RIHLA</h2>
-      <p className="font-[Impact,Haettenschweiler,'Arial_Narrow_Bold',sans-serif] ml-[7px] text-[3rem] font-semibold text-white">Discover and experience</p>
+      <h2 className="font-[Inter,sans-serif] text-[10rem] font-black text-white mb-2 leading-none font-semibold">RIHLA</h2>
+      <p className="font-[Inter,sans-serif] ml-[7px] text-[3rem]  text-white">Discover and experience</p>
     </div>
   );
 }
