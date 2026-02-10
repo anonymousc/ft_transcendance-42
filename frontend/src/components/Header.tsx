@@ -4,6 +4,7 @@ import './Header.css';
 import LoginBtn from './shared/LoginBtn.js';
 import DesktopNav from './DesktopNav.jsx';
 import LogoRihla from './LogoRihla.jsx';
+import ThemeToggle from './shared/ThemeToggle';
 
 function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -53,8 +54,11 @@ function Header() {
       <nav className="nav">
         <div className="nav-container">
           <LogoRihla/>
-        <DesktopNav activeSection={activeSection} />
-        <LoginBtn />
+          <DesktopNav activeSection={activeSection} />
+          <div className="nav-right">
+            <ThemeToggle />
+            <LoginBtn />
+          </div>
         </div>
       </nav>
     </header>

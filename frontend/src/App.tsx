@@ -5,6 +5,7 @@ import RegisterPage from './pages/RegisterPage.js';
 import HomePage from './components/HomePage';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import NotFoundPage from './pages/NotFound.js';
+import { ThemeProvider } from './context/ThemeContext';
 
 function AppContent() {
   const location = useLocation();
@@ -25,9 +26,11 @@ function AppContent() {
 function App() {
 
   return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }
 

@@ -13,11 +13,20 @@
   transform: translate3d(0, 0, 0);
 }
 
+:is(.dark) .Header {
+  background-color: #1C1C1E;
+}
+
 .Header.scrolled {
   background-color: rgba(245, 245, 247, 0.9);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+:is(.dark) .Header.scrolled {
+  background-color: rgba(28, 28, 30, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .nav {
@@ -32,6 +41,13 @@
   align-items: center;
   height: 4rem;
 }
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 
 
 

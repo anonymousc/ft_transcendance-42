@@ -167,7 +167,7 @@ function Hero() {
       <HowitsWorks howItWorksRef={howItWorksRef} />
       <FeatureSection featuresRef={featuresRef} />
       <RIhlaBanner rihlaRef={rihlaRef} />
-      <img src={BigAtlass} alt="Big Atllas" className="big-atlass-image" />
+      {/* <img src={BigAtlass} alt="Big Atllas" className="big-atlass-image" /> */}
       <Footer footerRef={footerRef} />
     </div>
   );

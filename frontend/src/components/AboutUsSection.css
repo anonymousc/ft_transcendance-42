@@ -6,6 +6,11 @@
   align-items: center;
   justify-content: flex-start;
   padding: 4rem;
+  transition: background-color 0.3s ease;
+}
+
+:is(.dark) .about-section {
+  background-color: #1C1C1E;
 }
 
 .about-section .about-content{
@@ -28,6 +33,11 @@
   color: #000000;
   margin-bottom: 1.5rem;
   line-height: 1;
+  transition: color 0.3s ease;
+}
+
+:is(.dark) .about-title {
+  color: #ffffff;
 }
 
 .about-text {
@@ -36,4 +46,9 @@
   font-weight: 700;
   color: #000000;
   line-height: 1.4;
+  transition: color 0.3s ease;
+}
+
+:is(.dark) .about-text {
+  color: #cccccc;
 }

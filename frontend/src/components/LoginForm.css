@@ -10,6 +10,11 @@
     font-weight: 400;
     margin: 0.5rem 0;
     color: #333333;
+    transition: color 0.3s ease;
+}
+
+:is(.dark) .login-form p {
+    color: #cccccc;
 }
 
 .input-wrapper {
@@ -38,14 +43,28 @@
     transition: all 0.3s ease;
 }
 
+:is(.dark) .login-form input:not([type="checkbox"]) {
+    background-color: #2C2C2E;
+    border-color: #3A3A3C;
+    color: #ffffff;
+}
+
 .login-form input:not([type="checkbox"])::placeholder {
     color: #999999;
+}
+
+:is(.dark) .login-form input:not([type="checkbox"])::placeholder {
+    color: #666666;
 }
 
 .login-form input:not([type="checkbox"]):focus {
     outline: none;
     border-color: #FF8C42;
     background-color: #ffffff;
+}
+
+:is(.dark) .login-form input:not([type="checkbox"]):focus {
+    background-color: #1C1C1E;
 }
 
 .input-wrapper:focus-within .input-icon {

@@ -5,6 +5,11 @@
   align-items: center;
   justify-content: center;
   padding: 4rem 2rem;
+  transition: background-color 0.3s ease;
+}
+
+:is(.dark) .how-it-works-section {
+  background-color: #1C1C1E;
 }
 
 .how-it-works-container {
@@ -96,6 +101,11 @@
   font-weight: 900;
   color: #000000;
   margin-bottom: 0.5rem;
+  transition: color 0.3s ease;
+}
+
+:is(.dark) .how-it-works-title {
+  color: #ffffff;
 }
 
 .how-it-works-text {
@@ -104,4 +114,9 @@
   font-weight: 500;
   color: #000000;
   line-height: 1.5;
+  transition: color 0.3s ease;
+}
+
+:is(.dark) .how-it-works-text {
+  color: #cccccc;
 }

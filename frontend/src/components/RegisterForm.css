@@ -39,12 +39,22 @@
     transition: all 0.3s ease;
 }
 
+:is(.dark) .register-form input {
+    background-color: #2C2C2E;
+    border-color: #3A3A3C;
+    color: #ffffff;
+}
+
 .register-form .input-wrapper:has(.input-icon) input {
     padding-left: 3rem;
 }
 
 .register-form input::placeholder {
     color: #999999;
+}
+
+:is(.dark) .register-form input::placeholder {
+    color: #666666;
 }
 
 .register-form input:focus {
@@ -68,6 +78,11 @@
     font-family: 'Arial', sans-serif;
     font-size: 0.9rem;
     color: #333333;
+    transition: color 0.3s ease;
+}
+
+:is(.dark) .oauth-label {
+    color: #cccccc;
 }
 
 .register-form button {
@@ -99,4 +114,9 @@
     font-family: 'Arial', sans-serif;
     font-size: 0.875rem;
     color: #666666;
+    transition: color 0.3s ease;
+}
+
+:is(.dark) .oauth-or {
+    color: #999999;
 }

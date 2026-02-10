@@ -23,14 +23,16 @@ function HomePage() {
         <source src={bgvideo} type="video/mp4" />
       </video>
       <nav className="home-nav">
-        <LogoRihla />
+        <div className="text-white text-2xl font-bold">
+          <h1>RIHLA</h1>
+        </div>
         <GlassNavBar handleNavigation={handleNavigation} />
         <div className="profile-dropdown-wrapper">
           <ProfileDropdown
-            onProfile={() => console.log('View profile')}
-            onSettings={() => console.log('Settings')}
-            onLanguage={() => console.log('Change language')}
-            onLogout={() => console.log('Logout')}
+            onProfile={() => console.log("View profile")}
+            onSettings={() => console.log("Settings")}
+            onLanguage={() => console.log("Change language")}
+            onLogout={() => console.log("Logout")}
           />
         </div>
       </nav>
