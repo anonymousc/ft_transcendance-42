@@ -96,7 +96,7 @@
 }
 
 .how-it-works-title {
-  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 1.75rem;
   font-weight: 900;
   color: #000000;
@@ -109,7 +109,7 @@
 }
 
 .how-it-works-text {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.95rem;
   font-weight: 500;
   color: #000000;

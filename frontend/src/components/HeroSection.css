@@ -44,7 +44,7 @@
 }
 
 .hero-subtitle {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: clamp(1rem, 2vw, 1.25rem);
   font-weight: 600;
   margin-bottom: 3rem;
@@ -67,7 +67,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   text-decoration: none;
 }
