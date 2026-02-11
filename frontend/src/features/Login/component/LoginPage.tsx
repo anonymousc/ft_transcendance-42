@@ -1,10 +1,10 @@
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import "./LoginPage.css";
-import SigninOuth from "../components/shared/SigninOuth";
-import LoginForm from "../components/LoginForm";
+import SigninOuth from "../../../components/shared/SigninOuth";
+import LoginForm from "../../../components/LoginForm";
 import passportOverlay from "../assets/PassportOverlay.png";
-import GlassCard from "../components/glassCard";
+import GlassCard from "../../../components/glassCard";
 
 function LoginPage() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
