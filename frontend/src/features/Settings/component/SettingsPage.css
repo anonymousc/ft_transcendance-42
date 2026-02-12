@@ -41,7 +41,6 @@
     color: #F5F5F7;
 }
 
-/* ── Container ── */
 .settings-container {
     width: 100%;
     max-width: 680px;
@@ -50,9 +49,10 @@
     gap: 1rem;
 }
 
-/* ── Section ── */
 .settings-section {
-    background: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-radius: 16px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
     overflow: hidden;
@@ -60,7 +60,6 @@
 }
 
 :is(.dark) .settings-section {
-    background: #2C2C2E;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
@@ -123,30 +122,15 @@
 }
 
 .settings-row-icon svg {
-    width: 18px;
-    height: 18px;
-    color: #ffffff;
+    width: 24px;
+    height: 24px;
+    color: #000000;
 }
 
-.icon-blue {
-    background-color: #007AFF;
+:is(.dark) .settings-row-icon svg {
+    color: #F5F5F7;
 }
 
-.icon-orange {
-    background-color: #FF8C42;
-}
-
-.icon-purple {
-    background-color: #AF52DE;
-}
-
-.icon-green {
-    background-color: #34C759;
-}
-
-.icon-red {
-    background-color: #FF3B30;
-}
 
 .settings-row-label {
     font-family: 'Inter', sans-serif;

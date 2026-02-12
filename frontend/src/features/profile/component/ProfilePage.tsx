@@ -46,21 +46,6 @@ function ProfilePage() {
                         <span className="profile-info-value">{user.location}</span>
                     </div>
                 </div>
-
-                <div className="profile-actions">
-                    <button
-                        className="profile-btn profile-btn-primary"
-                        onClick={() => console.log("Edit profile")}
-                    >
-                        Edit Profile
-                    </button>
-                    <button
-                        className="profile-btn profile-btn-secondary"
-                        onClick={() => console.log("Change password")}
-                    >
-                        Change Password
-                    </button>
-                </div>
             </div>
         </main>
     );
