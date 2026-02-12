@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import "./LoginPage.css";
 import SigninOuth from "../../../components/shared/SigninOuth";
 import LoginForm from "../../../components/LoginForm";
-import passportOverlay from "../assets/PassportOverlay.png";
+import passportOverlay from "../../../assets/PassportOverlay.png";
 import GlassCard from "../../../components/glassCard";
 
 function LoginPage() {

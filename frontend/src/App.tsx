@@ -1,10 +1,10 @@
-import Header from './components/Header.jsx';
-import Hero from './pages/Hero.js';
-import LoginPage from './pages/LoginPage.js';
-import RegisterPage from './pages/RegisterPage.js';
+import Header from './components/Header';
+import Hero from './pages/Hero';
+import LoginPage from './features/Login/component/LoginPage';
+import RegisterPage from './features/register/component/RegisterPage';
 import HomePage from './components/HomePage';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import NotFoundPage from './pages/NotFound.js';
+import NotFoundPage from './pages/NotFound';
 import { ThemeProvider } from './context/ThemeContext';
 
 function AppContent() {
