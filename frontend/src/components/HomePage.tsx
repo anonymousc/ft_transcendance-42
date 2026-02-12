@@ -32,7 +32,7 @@ function HomePage() {
         <div className="profile-dropdown-wrapper">
           <ProfileDropdown
             onProfile={() => navigate("/profile")}
-            onSettings={() => console.log("Settings")}
+            onSettings={() => navigate("/settings")}  
             onLanguage={() => console.log("Change language")}
             onLogout={() => console.log("Logout")}
           />
