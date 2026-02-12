@@ -50,22 +50,43 @@
 .profile-header {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 3rem 2rem 2rem;
+    align-items: left;
+    padding: 3rem 2rem 1rem;
     border-bottom: 1px solid #E5E5EA;
+    background-image: url('../../../assets/BigAtlass.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
     transition: border-color 0.3s ease;
+}
+
+.profile-header::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 40%, transparent 100%);
+    pointer-events: none;
+}
+
+.profile-header > * {
+    position: relative;
+    z-index: 1;
 }
 
 :is(.dark) .profile-header {
     border-bottom-color: #3A3A3C;
 }
 
+:is(.dark) .profile-header::after {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 40%, transparent 100%);
+}
+
 .profile-avatar {
-    width: 110px;
-    height: 110px;
+    width: 120px;
+    height: 120px;
     border-radius: 50%;
     object-fit: cover;
-    border: 4px solid #FF8C42;
     margin-bottom: 1rem;
 }
 
@@ -73,7 +94,7 @@
     font-family: 'Inter', sans-serif;
     font-size: 1.75rem;
     font-weight: 700;
-    color: #1C1C1E;
+    color: #ffffff;
     margin: 0;
     transition: color 0.3s ease;
 }
@@ -85,7 +106,7 @@
 .profile-email {
     font-family: 'Inter', sans-serif;
     font-size: 0.95rem;
-    color: #8E8E93;
+    color: #ffffff;
     margin: 0.25rem 0 0;
 }
 

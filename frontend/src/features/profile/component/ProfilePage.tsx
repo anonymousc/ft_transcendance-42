@@ -5,10 +5,10 @@ import "./ProfilePage.css";
 
 function ProfilePage() {
     const user = {
-        name: "Ilyass",
+        name: "Ilyass Ouhsseine",
         email: "ilyass@example.com",
         phone: "+212 600 000 000",
-        location: "Casablanca, Morocco",
+        location: "Tadla, Morocco",
     };
 
     return (
