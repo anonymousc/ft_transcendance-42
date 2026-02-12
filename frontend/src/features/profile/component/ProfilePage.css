@@ -13,8 +13,6 @@
 :is(.dark) .profile-page {
     background-color: #1C1C1E;
 }
-
-/* Back arrow override to go to /home */
 .profile-page .back-arrow {
     position: absolute;
     top: 2rem;
@@ -28,7 +26,6 @@
     color: #F5F5F7;
 }
 
-/* ── Card ── */
 .profile-card {
     width: 100%;
     max-width: 720px;
