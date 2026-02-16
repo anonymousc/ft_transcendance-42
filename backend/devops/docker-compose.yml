@@ -45,16 +45,6 @@ services:
     networks:
       - saas
   # security services:
-<<<<<<< Updated upstream
-  # test :
-  #   image : alpine:3.18
-  #   networks:
-  #     - saas
-  #   volumes:
-  #     - shared_resources:/token
-  #   entrypoint: [""]
-  #   command: tail -f
-=======
 
   #elk stack
   elasticsearch:
@@ -103,7 +93,6 @@ services:
     networks:
       - saas
     restart: on-failure
->>>>>>> Stashed changes
   swagger:
     image: swaggerapi/swagger-ui:v5.31.0
     container_name: swagger
