@@ -16,9 +16,13 @@ all :
 front:
 	$(DOCKER) compose -f ${COMPOSE} build frontend
 	$(DOCKER) compose -f ${COMPOSE} up frontend -d
+logs :
+	$(DOCKER) compose -f ${COMPOSE} logs -f
 # backend:
 # 	$(DOCKER) compose -f ${COMPOSE} build backend --no-cache
 # 	$(DOCKER) compose -f ${COMPOSE} up backend -d
+stop :
+	$(DOCKER) compose -f ${COMPOSE} stop
 clean :
 	@echo "start cleaning"
 	@$(DOCKER) compose -f ${COMPOSE} stop

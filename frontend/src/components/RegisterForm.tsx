@@ -1,0 +1,76 @@
+import { Link } from "react-router-dom";
+import { Mail, Lock } from "lucide-react";
+import "./RegisterForm.css";
+import SigninOuth from "./shared/SigninOuth";
+import AcceptTerms from "./shared/AcceptTerms";
+
+interface RegisterFormProps {
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+}
+
+function RegisterForm({ handleSubmit }: RegisterFormProps) {
+  return (
+    <form className="register-form" onSubmit={handleSubmit}>
+      <div className="name-row">
+        <div className="input-wrapper">
+          <input
+            type="text"
+            id="firstName"
+            name="firstName"
+            placeholder="First Name"
+            required
+          />
+        </div>
+        <div className="input-wrapper">
+          <input
+            type="text"
+            id="lastName"
+            name="lastName"
+            placeholder="Last Name"
+            required
+          />
+        </div>
+      </div>
+
+      <div className="input-wrapper">
+        <Mail className="input-icon" size={20} />
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="Email"
+          required
+        />
+      </div>
+      <div className="input-wrapper">
+        <Lock className="input-icon" size={20} />
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Password"
+          required
+        />
+      </div>
+
+
+      <AcceptTerms />
+      <button type="submit">Create Account</button>
+
+      <div className="w-full h-px bg-gray-300 dark:bg-gray-600"></div>
+
+      <div className="oauth-section">
+        <div className="oauth-row">
+          <span className="text-sm text-gray-600 dark:text-gray-400">Or with</span>
+          <SigninOuth />
+        </div>
+        <div className="flex items-center justify-center gap-1">
+          <span className="text-sm text-gray-600 dark:text-gray-400">You already have an account?</span>
+          <Link to="/login" className="text-sm font-semibold text-[#FF8C42] hover:underline">Sign in</Link>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+export default RegisterForm;

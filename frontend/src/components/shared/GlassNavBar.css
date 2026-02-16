@@ -1,0 +1,49 @@
+.glass-nav-bar {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0rem 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(50px);
+    -webkit-backdrop-filter: blur(50px);
+    border-radius: 50px;
+    box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    z-index: 1000;
+}
+
+.glass-nav-item {
+    display: flex;
+    align-items: center;
+    padding: 1.1rem;
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 25px;
+    transition: background 0.3s ease;
+    overflow: hidden;
+}
+
+.glass-nav-item svg {
+    transition: color 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+
+.glass-nav-item:hover {
+    background: rgba(255, 255, 255, 0);
+}
+
+.glass-nav-item .nav-label {
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    white-space: nowrap;
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
+}
