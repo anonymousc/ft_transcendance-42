@@ -1,5 +1,6 @@
 
 name: travel_planning # for project name <written by czar>
+
 services: 
   frontend:
     container_name: frontend
@@ -10,6 +11,8 @@ services:
       - "${PORT_FRONT}:${PORT_FRONT}"
     networks:
       - saas
+    volumes:
+      - ../../frontend/:/app
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:$PORT_FRONT/"]
       interval: 30s
@@ -19,13 +22,13 @@ services:
   # authentication:
   #     image: Oauth2.0
   #     build:  ./auth~/
-  # amq:
-  #   image : rabbitmq:3.8-management
-  #   mem_limit: 300m
-  #   hostname: rabbitmq
-  #   container_name: rabbitmq
-  #   ports:
-  #     - 8081:15672
+  amq:
+    image : rabbitmq:3.8-management
+    mem_limit: 300m
+    hostname: rabbitmq
+    container_name: rabbitmq
+    ports:
+      - 8081:15672
   database:
     container_name: prisma
     build: backend-services/prisma/
@@ -36,6 +39,7 @@ services:
     volumes:
      - data:/data
      - shared_resources:/token
+     - logs:/var/logs
     depends_on:
       vault:
         condition: service_healthy
@@ -82,7 +86,7 @@ services:
     command: logstash -f /usr/share/logstash/pipeline/logstash.conf
     volumes:
       - logs:/var/log/postgresql
-      - ./data/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ./data/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
     environment:
       - "ES_JAVA_OPTS=-Xms500m -Xmx500m"
     depends_on:
@@ -93,9 +97,13 @@ services:
   swagger:
     image: swaggerapi/swagger-ui:v5.31.0
     container_name: swagger
+    environment:
+      - SWAGGER_JSON=/app/swagger.json
     ports:
-     - 8080:5050
-    entrypoint: swagger-ui
+     - 8080:8080
+    volumes:
+      - ./data/:/app/
+  #############################
   vault:
     container_name: vault-hashicorp
     build: backend-services/security/hashicorp-vault/
@@ -124,6 +132,7 @@ networks:
     driver : bridge
 volumes:
   data : {}
+  logs: {}
   shared_resources:
     driver_opts:
       type : tmpfs

@@ -14,8 +14,10 @@ COPY --chown=postgres:postgres prisma-tables/. ./prisma/
 
 RUN npm install prisma@5.2 @prisma/client@5.2 typescript tsx dotenv && \
     chown -R 70:70 "/app/.npm" && \
-    chown -R 70:70 /app
-
+    chown -R 70:70 /app && \
+    mkdir -p /var/logs && \
+    chown -R 70:70 /var/logs && \
+    chmod -R 777 /var/logs
 USER postgres
 
 ENTRYPOINT ["/tools/prisma.sh"]
