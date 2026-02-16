@@ -22,6 +22,13 @@ services:
   # authentication:
   #     image: Oauth2.0
   #     build:  ./auth~/
+  amq:
+    image : rabbitmq:3.8-management
+    mem_limit: 300m
+    hostname: rabbitmq
+    container_name: rabbitmq
+    ports:
+      - 8081:15672
   database:
     container_name: prisma
     build: backend-services/prisma/
@@ -32,20 +39,61 @@ services:
     volumes:
      - data:/data
      - shared_resources:/token
+     - logs:/var/logs
     depends_on:
       vault:
         condition: service_healthy
     networks:
       - saas
   # security services:
-  # test :
-  #   image : alpine:3.18
-  #   networks:
-  #     - saas
-  #   volumes:
-  #     - shared_resources:/token
-  #   entrypoint: [""]
-  #   command: tail -f
+
+  #elk stack
+  elasticsearch:
+    image: elasticsearch:8.12.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.monitoring.collection.enabled=true
+      - "ES_JAVA_OPTS=-Xms500m -Xmx500m" 
+    networks:
+      - saas
+  kibana:
+    image: kibana:8.12.0
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    healthcheck:
+        test: ["CMD-SHELL", "curl -sf http://localhost:5601/api/status || exit 1"]
+        interval: 60s
+        timeout: 1m
+        retries: 3
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - NODE_OPTIONS="--max-old-space-size=4096"
+      - TELEMETRY_ENABLED=false 
+      - XPACK_SECURITY_ENABLED=false
+      - XPACK_SECURITY_AUDIT_ENABLED=false
+    networks:
+      - saas
+    depends_on:
+      - elasticsearch
+    restart: on-failure
+  logstash :
+    image : logstash:8.12.0
+    container_name: logstash
+    user : root
+    command: logstash -f /usr/share/logstash/pipeline/logstash.conf
+    volumes:
+      - logs:/var/log/postgresql
+      - ./data/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+    environment:
+      - "ES_JAVA_OPTS=-Xms500m -Xmx500m"
+    depends_on:
+      - elasticsearch
+    networks:
+      - saas
+    restart: on-failure
   swagger:
     image: swaggerapi/swagger-ui:v5.31.0
     container_name: swagger
@@ -54,7 +102,8 @@ services:
     ports:
      - 8080:8080
     volumes:
-        - ./data/:/app/
+      - ./data/:/app/
+  #############################
   vault:
     container_name: vault-hashicorp
     build: backend-services/security/hashicorp-vault/
@@ -83,6 +132,7 @@ networks:
     driver : bridge
 volumes:
   data : {}
+  logs: {}
   shared_resources:
     driver_opts:
       type : tmpfs
