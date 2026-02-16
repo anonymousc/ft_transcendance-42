@@ -19,8 +19,6 @@ services:
   # authentication:
   #     image: Oauth2.0
   #     build:  ./auth~/
-<<<<<<< Updated upstream
-=======
   # amq:
   #   image : rabbitmq:3.8-management
   #   mem_limit: 300m
@@ -28,7 +26,6 @@ services:
   #   container_name: rabbitmq
   #   ports:
   #     - 8081:15672
->>>>>>> Stashed changes
   database:
     container_name: prisma
     build: backend-services/prisma/
