@@ -18,9 +18,20 @@
     color: #333333;
 }
 
+:is(.dark) .oauth-button {
+    background-color: #2C2C2E;
+    border-color: #3A3A3C;
+    color: #ffffff;
+}
+
 .oauth-button:hover {
     background-color: #F5F5F7;
     border-color: #CCCCCC;
+}
+
+:is(.dark) .oauth-button:hover {
+    background-color: #3A3A3C;
+    border-color: #4A4A4C;
 }
 
 .oauth-button-content {
