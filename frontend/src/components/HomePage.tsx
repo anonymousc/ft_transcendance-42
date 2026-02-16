@@ -7,8 +7,10 @@ import "./HomePage.css";
 import bgvideo from "../assets/home-background.mp4";
 import GlassNavBar from "./shared/GlassNavBar";
 import LogoRihla from "./LogoRihla";
+import { useNavigate } from "react-router-dom";
 
 function HomePage() {
+  const navigate = useNavigate();
   const handleNavigation = (id: string) => {
     console.log("Navigate to:", id);
   };
@@ -23,20 +25,21 @@ function HomePage() {
         <source src={bgvideo} type="video/mp4" />
       </video>
       <nav className="home-nav">
-        <LogoRihla />
+        <div className="text-white text-2xl font-bold">
+          <h1>RIHLA</h1>
+        </div>
         <GlassNavBar handleNavigation={handleNavigation} />
         <div className="profile-dropdown-wrapper">
           <ProfileDropdown
-            onProfile={() => console.log('View profile')}
-            onSettings={() => console.log('Settings')}
-            onLanguage={() => console.log('Change language')}
-            onLogout={() => console.log('Logout')}
+            onProfile={() => navigate("/profile")}
+            onSettings={() => navigate("/settings")}  
+            onLanguage={() => console.log("Change language")}
+            onLogout={() => console.log("Logout")}
           />
         </div>
       </nav>
       <main className="home-content">
         <h1 className="header-home">Welcome Back, {userName} </h1>
-        {/* <ProfilePicture /> */}
         <div className="search-container">
           <GlassSearchBar onSearch={handleSearch} />
         </div>

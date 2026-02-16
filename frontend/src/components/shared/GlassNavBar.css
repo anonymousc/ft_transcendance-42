@@ -40,8 +40,8 @@
 
 .glass-nav-item .nav-label {
     font-size: 0.9rem;
-    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
     white-space: nowrap;
     width: 0;
     opacity: 0;

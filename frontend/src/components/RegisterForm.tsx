@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Mail, Lock } from "lucide-react";
 import "./RegisterForm.css";
 import SigninOuth from "./shared/SigninOuth";
+import AcceptTerms from "./shared/AcceptTerms";
 
 interface RegisterFormProps {
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
@@ -52,14 +53,21 @@ function RegisterForm({ handleSubmit }: RegisterFormProps) {
         />
       </div>
 
-      <div className="register-actions">
-        <span className="oauth-label">Or Register with :</span>
-        <button type="submit">Register</button>
-      </div>
+
+      <AcceptTerms />
+      <button type="submit">Create Account</button>
+
+      <div className="w-full h-px bg-gray-300 dark:bg-gray-600"></div>
 
       <div className="oauth-section">
-        <SigninOuth />
-        <span className="oauth-or">or</span>
+        <div className="oauth-row">
+          <span className="text-sm text-gray-600 dark:text-gray-400">Or with</span>
+          <SigninOuth />
+        </div>
+        <div className="flex items-center justify-center gap-1">
+          <span className="text-sm text-gray-600 dark:text-gray-400">You already have an account?</span>
+          <Link to="/login" className="text-sm font-semibold text-[#FF8C42] hover:underline">Sign in</Link>
+        </div>
       </div>
     </form>
   );

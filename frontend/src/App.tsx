@@ -1,10 +1,13 @@
-import Header from './components/Header.jsx';
-import Hero from './pages/Hero.js';
-import LoginPage from './pages/LoginPage.js';
-import RegisterPage from './pages/RegisterPage.js';
+import Header from './components/Header';
+import Hero from './pages/Hero';
+import LoginPage from './features/Login/component/LoginPage';
+import RegisterPage from './features/register/component/RegisterPage';
+import ProfilePage from './features/profile/component/ProfilePage';
 import HomePage from './components/HomePage';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import NotFoundPage from './pages/NotFound.js';
+import NotFoundPage from './pages/NotFound';
+import { ThemeProvider } from './context/ThemeContext';
+import SettingsPage from './features/Settings/component/SettingsPage';
 
 function AppContent() {
   const location = useLocation();
@@ -16,6 +19,8 @@ function AppContent() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/home" element={<HomePage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>
@@ -25,9 +30,11 @@ function AppContent() {
 function App() {
 
   return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }
 

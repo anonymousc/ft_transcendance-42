@@ -5,6 +5,11 @@
   align-items: center;
   justify-content: center;
   padding: 4rem 2rem;
+  transition: background-color 0.3s ease;
+}
+
+:is(.dark) .how-it-works-section {
+  background-color: #1C1C1E;
 }
 
 .how-it-works-container {
@@ -91,17 +96,27 @@
 }
 
 .how-it-works-title {
-  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 1.75rem;
-  font-weight: 900;
+  font-weight: 700;
   color: #000000;
   margin-bottom: 0.5rem;
+  transition: color 0.3s ease;
+}
+
+:is(.dark) .how-it-works-title {
+  color: #ffffff;
 }
 
 .how-it-works-text {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.95rem;
   font-weight: 500;
   color: #000000;
   line-height: 1.5;
+  transition: color 0.3s ease;
+}
+
+:is(.dark) .how-it-works-text {
+  color: #cccccc;
 }

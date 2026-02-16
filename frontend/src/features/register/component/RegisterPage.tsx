@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 import "./RegisterPage.css";
-import SigninOuth from "../components/shared/SigninOuth";
-import passportOverlay from '../assets/PassportOverlay.png';
-import RegisterForm from '../components/RegisterForm';
-import GlassCard from '../components/glassCard';
-import BackArrow from '../components/shared/BackArrow';
+import SigninOuth from "../../../components/shared/SigninOuth";
+import passportOverlay from '../../../assets/PassportOverlay.png';
+import RegisterForm from '../../../components/RegisterForm';
+import GlassCard from '../../../components/glassCard';
+import BackArrow from '../../../components/shared/BackArrow';
 
 function RegisterPage() {
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {

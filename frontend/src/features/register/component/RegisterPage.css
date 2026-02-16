@@ -7,6 +7,11 @@
     padding: 2rem;
     position: relative;
     overflow: hidden;
+    transition: background-color 0.3s ease;
+}
+
+:is(.dark) .register-page {
+    background-color: #1C1C1E;
 }
 
 .register-page .blob {
@@ -66,14 +71,25 @@
     position: relative;
     z-index: 2;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+:is(.dark) .register-side {
+    background: #000000;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
 .register-side h2 {
-    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    font-family: 'Inter', sans-serif;
     margin: 0 0 1.5rem 0;
     text-align: left;
     font-size: 3rem;
-    font-weight: 900;
+    font-weight: 700;
     color: #000000;
+    transition: color 0.3s ease;
+}
+
+:is(.dark) .register-side h2 {
+    color: #ffffff;
 }
 

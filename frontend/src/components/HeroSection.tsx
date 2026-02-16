@@ -9,9 +9,9 @@ function HeroSection() {
   const navigate = useNavigate();
   return (
     <section className="hero-section">
-      <Button variant="outline" size="lg" onClick={() => navigate('/home')}>
+      {/* <Button variant="outline" size="lg" onClick={() => navigate('/home')}>
         Go to Home
-      </Button>
+      </Button> */}
       <div className="hero-content">
         <h1 className="hero-title">
           Discover more than places,

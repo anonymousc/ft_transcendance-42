@@ -1,12 +1,20 @@
 import passengerIcon from '../assets/passengerIcon.png';
-import excursionIcon from '../assets/excursionIcon.png';
+import passengerIconWhite from '../assets/icons/passenger-white.png';
+import excursionIcon from '../assets/icons/excursionIcon.png';
+import excursionIconWhite from '../assets/icons/excursion-white.png';
 import conversationIcon from '../assets/conversationIcon.png';
-import routIcon from '../assets/routIcon.png';
-import aiIcon from '../assets/aiOrangeIcone.png';
-import ratingIcon from '../assets/RatingIcon.png';
+import conversationIconWhite from '../assets/icons/conversation-white.png';
+import routIcon from '../assets/icons/routIcon.png';
+import routIconWhite from '../assets/icons/route-white.png';
+import aiIcon from '../assets/icons/aiOrangeIcone.png';
+import ratingIcon from '../assets/icons/RatingIcon.png';
+import ratingIconWhite from '../assets/icons/rating-white.png';
 import OrangeLine from '../assets/OrangeLine.png';
 import "./FeatureSection.css";
+import { useTheme } from '../context/ThemeContext';
+
 function FeatureSection({ featuresRef } : { featuresRef: React.RefObject<HTMLElement | null> }) {
+  const { isDark } = useTheme();
   return (
     <section className="features-section" id="features" ref={featuresRef}>
       <div className="features-container">
@@ -14,7 +22,7 @@ function FeatureSection({ featuresRef } : { featuresRef: React.RefObject<HTMLEle
 
         <div className="feature-item feature-right">
           <div className="feature-icon">
-            <img src={passengerIcon} alt="Discover Morocco" />
+            <img src={isDark ? passengerIconWhite : passengerIcon} alt="Discover Morocco" />
           </div>
           <div className="feature-content">
             <h3 className="feature-title">Discover Morocco, Your Way</h3>
@@ -27,7 +35,7 @@ function FeatureSection({ featuresRef } : { featuresRef: React.RefObject<HTMLEle
 
         <div className="feature-item feature-right">
           <div className="feature-icon">
-            <img src={excursionIcon} alt="Travel Together" />
+            <img src={isDark ? excursionIconWhite : excursionIcon} alt="Travel Together" />
           </div>
           <div className="feature-content">
             <h3 className="feature-title">Travel Together</h3>
@@ -40,7 +48,7 @@ function FeatureSection({ featuresRef } : { featuresRef: React.RefObject<HTMLEle
 
         <div className="feature-item feature-right">
           <div className="feature-icon">
-            <img src={conversationIcon} alt="Messaging" />
+            <img src={isDark ? conversationIconWhite : conversationIcon} alt="Messaging" />
           </div>
           <div className="feature-content">
             <h3 className="feature-title">
@@ -55,7 +63,7 @@ function FeatureSection({ featuresRef } : { featuresRef: React.RefObject<HTMLEle
 
         <div className="feature-item feature-left">
           <div className="feature-icon">
-            <img src={routIcon} alt="Places & Activities" />
+            <img src={isDark ? routIconWhite : routIcon} alt="Places & Activities" />
           </div>
           <div className="feature-content">
             <h3 className="feature-title">Places & Activities</h3>
@@ -81,7 +89,7 @@ function FeatureSection({ featuresRef } : { featuresRef: React.RefObject<HTMLEle
 
         <div className="feature-item feature-left">
           <div className="feature-icon">
-            <img src={ratingIcon} alt="Ratings & Feedback" />
+            <img src={isDark ? ratingIconWhite : ratingIcon} alt="Ratings & Feedback" />
           </div>
           <div className="feature-content">
             <h3 className="feature-title">Trusted Ratings & Feedback</h3>

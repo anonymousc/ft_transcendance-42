@@ -6,6 +6,11 @@
   align-items: flex-start;
   justify-content: center;
   padding: 4rem 2rem;
+  transition: background-color 0.3s ease;
+}
+
+:is(.dark) .features-section {
+  background-color: #1C1C1E;
 }
 
 .features-container {
@@ -90,17 +95,27 @@
 }
 
 .feature-title {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 1.1rem;
   font-weight: 700;
   color: #000000;
   margin-bottom: 0.35rem;
+  transition: color 0.3s ease;
+}
+
+:is(.dark) .feature-title {
+  color: #ffffff;
 }
 
 .feature-text {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.9rem;
   font-weight: 400;
   color: #000000;
   line-height: 1.5;
+  transition: color 0.3s ease;
+}
+
+:is(.dark) .feature-text {
+  color: #cccccc;
 }
