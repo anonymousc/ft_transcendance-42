@@ -19,9 +19,19 @@ services:
       timeout: 30s
       retries: 3
     restart : on-failure
-  # authentication:
-  #     image: Oauth2.0
-  #     build:  ./auth~/
+  auth:
+    build: ./backend-services/auth/
+    container_name: auth
+    networks:
+      - saas
+    volumes:
+      - shared_resources:/data
+    depends_on:
+      database:
+        condition: service_started
+      vault:
+        condition: service_healthy
+    restart: on-failure
   amq:
     image : rabbitmq:3.8-management
     mem_limit: 300m
@@ -45,6 +55,7 @@ services:
         condition: service_healthy
     networks:
       - saas
+    restart: on-failure
   # security services:
 
   #elk stack
