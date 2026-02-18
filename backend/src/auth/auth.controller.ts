@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleOAuthGuard } from './guards/google-oauth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 
@@ -21,10 +22,6 @@ export class AuthController {
     return this.authService.signin();
   }
 
-  /**
-   * Initiates the Google OAuth2 flow.
-   * Redirects the user to Google's consent screen.
-   */
   @Get('google')
   @UseGuards(GoogleOAuthGuard)
   async googleAuth() {
@@ -43,5 +40,20 @@ export class AuthController {
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
     return res.redirect(`${frontendUrl}/oauth-success?token=${token}`);
+  }
+
+  /**
+   * Returns the currently authenticated user's data.
+   * Requires a valid JWT in the Authorization header.
+   */
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getMe(@Req() req: Request) {
+    const user = req.user as { id: string };
+    const profile = await this.authService.getMe(user.id);
+    if (!profile) {
+      throw new UnauthorizedException('User not found');
+    }
+    return profile;
   }
 }

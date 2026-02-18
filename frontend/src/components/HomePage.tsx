@@ -1,16 +1,16 @@
 import { ChevronDown } from "lucide-react";
 import VerticalNav from "./shared/VerticalNav";
 import GlassSearchBar from "./shared/GlassSearchBar";
-import ProfilePicture from "./shared/ProfilePicture";
 import ProfileDropdown from "./shared/ProfileDropdown";
 import "./HomePage.css";
 import bgvideo from "../assets/home-background.mp4";
 import GlassNavBar from "./shared/GlassNavBar";
-import LogoRihla from "./LogoRihla";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function HomePage() {
   const navigate = useNavigate();
+  const { user, loading, logout } = useAuth();
   const handleNavigation = (id: string) => {
     console.log("Navigate to:", id);
   };
@@ -18,7 +18,13 @@ function HomePage() {
   const handleSearch = (query: string) => {
     console.log("Search query:", query);
   };
-  let userName = "Ilyass";
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
+
+  const userName = user?.displayName || user?.username || "Traveler";
   return (
     <div className="home-page">
       <video className="videoTag" autoPlay loop muted>
@@ -34,7 +40,7 @@ function HomePage() {
             onProfile={() => navigate("/profile")}
             onSettings={() => navigate("/settings")}  
             onLanguage={() => console.log("Change language")}
-            onLogout={() => console.log("Logout")}
+            onLogout={() => handleLogout()}
           />
         </div>
       </nav>

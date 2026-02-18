@@ -2,14 +2,18 @@ import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import pdp from "../../../assets/pdp1.png";
 import "./ProfilePage.css";
+import { useAuth } from "../../../context/AuthContext";
 
 function ProfilePage() {
-    const user = {
-        name: "Ilyass Ouhsseine",
-        email: "ilyass@example.com",
-        phone: "+212 600 000 000",
-        location: "Tadla, Morocco",
-    };
+    const { user, loading } = useAuth();
+
+    if (loading) {
+        return (
+            <main className="profile-page">
+                <p>Loading...</p>
+            </main>
+        );
+    }
 
     return (
         <main className="profile-page">
@@ -20,30 +24,34 @@ function ProfilePage() {
             <div className="profile-card">
                 <div className="profile-header">
                     <img
-                        src={pdp}
-                        alt={user.name}
+                        src={user?.avatar || pdp}
+                        alt={user?.displayName || "Profile"}
                         className="profile-avatar"
                     />
-                    <h1 className="profile-name">{user.name}</h1>
-                    <p className="profile-email">{user.email}</p>
+                    <h1 className="profile-name">{user?.displayName || user?.username || "Unknown"}</h1>
+                    <p className="profile-email">{user?.email || ""}</p>
                 </div>
 
                 <div className="profile-info">
                     <div className="profile-info-item">
-                        <span className="profile-info-label">Full Name</span>
-                        <span className="profile-info-value">{user.name}</span>
+                        <span className="profile-info-label">Display Name</span>
+                        <span className="profile-info-value">{user?.displayName || "—"}</span>
+                    </div>
+                    <div className="profile-info-item">
+                        <span className="profile-info-label">Username</span>
+                        <span className="profile-info-value">{user?.username || "—"}</span>
                     </div>
                     <div className="profile-info-item">
                         <span className="profile-info-label">Email</span>
-                        <span className="profile-info-value">{user.email}</span>
+                        <span className="profile-info-value">{user?.email || "—"}</span>
                     </div>
                     <div className="profile-info-item">
-                        <span className="profile-info-label">Phone</span>
-                        <span className="profile-info-value">{user.phone}</span>
+                        <span className="profile-info-label">Bio</span>
+                        <span className="profile-info-value">{user?.bio || "—"}</span>
                     </div>
                     <div className="profile-info-item">
-                        <span className="profile-info-label">Location</span>
-                        <span className="profile-info-value">{user.location}</span>
+                        <span className="profile-info-label">Status</span>
+                        <span className="profile-info-value">{user?.status || "offline"}</span>
                     </div>
                 </div>
             </div>
