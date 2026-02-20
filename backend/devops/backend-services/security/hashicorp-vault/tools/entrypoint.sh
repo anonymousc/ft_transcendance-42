@@ -15,9 +15,13 @@ done
 
 vault policy write postgres /tools/policy.hcl > /dev/null 
 
-vault token create -policy=postgres -format=json > /shared/token
+DB_PASS=$(openssl rand -hex 12)
+DB_USER=$(openssl rand -hex 12)
+DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@localhost:${PORT_POSTGRES}/prisma?schema=public"
 
-vault kv put -mount=secret postgres username=$(openssl rand -hex 12) password=$(openssl rand -hex 12) > /dev/null
+vault kv put -mount=secret postgres username="$DB_USER" password="$DB_PASS" database_url="$DATABASE_URL" > /dev/null
+
+vault token create -policy=postgres -format=json > /shared/token
 
 if [ -f /shared/token ];then
     chown 70:70 /shared/ && chown 70:70 /shared/token

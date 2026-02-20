@@ -1,12 +1,12 @@
 import { ChevronDown } from "lucide-react";
-import VerticalNav from "./shared/VerticalNav";
-import GlassSearchBar from "./shared/GlassSearchBar";
-import ProfilePicture from "./shared/ProfilePicture";
-import ProfileDropdown from "./shared/ProfileDropdown";
+import VerticalNav from "../components/shared/VerticalNav";
+import GlassSearchBar from "../components/shared/GlassSearchBar";
+import ProfilePicture from "../components/shared/ProfilePicture";
+import ProfileDropdown from "../components/shared/ProfileDropdown";
 import "./HomePage.css";
 import bgvideo from "../assets/home-background.mp4";
-import GlassNavBar from "./shared/GlassNavBar";
-import LogoRihla from "./LogoRihla";
+import GlassNavBar from "../components/shared/GlassNavBar";
+import LogoRihla from "../components/LogoRihla";
 import { useNavigate } from "react-router-dom";
 
 function HomePage() {
