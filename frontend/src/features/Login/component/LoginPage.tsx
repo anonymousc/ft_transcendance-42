@@ -15,6 +15,10 @@ function LoginPage() {
     console.log("Login attempt:", { email, password });
   };
 
+  const handleGoogleLogin = (): void => {
+    window.location.href = "http://localhost:3000/auth/google";
+  };
+
   return (
     <main className="login-page">
       <Link to="/" className="back-arrow">
@@ -33,7 +37,7 @@ function LoginPage() {
             <p className="text-sm font-normal text-gray-600 dark:text-gray-400">
               Sign in with :
             </p>
-            <SigninOuth />
+            <SigninOuth onGoogleLogin={handleGoogleLogin} />
           </div>
           <div className="flex items-center justify-center gap-1">
             <span className="text-sm text-gray-600 dark:text-gray-400">

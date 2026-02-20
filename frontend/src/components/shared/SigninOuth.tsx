@@ -1,9 +1,13 @@
 import "./SigninOuth.css";
 
-function SigninOuth() {
+interface SigninOuthProps {
+    onGoogleLogin?: () => void;
+}
+
+function SigninOuth({ onGoogleLogin }: SigninOuthProps) {
     return (
         <div className="oauth-buttons">
-            <button className="oauth-button google-button">
+            <button type="button" className="oauth-button google-button" onClick={onGoogleLogin}>
                 <div className="oauth-button-content">
                     <div className="oauth-button-icon">
                         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" style={{ display: "block", width: "20px", height: "20px" }}>
