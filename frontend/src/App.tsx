@@ -3,7 +3,7 @@ import Hero from './pages/Hero';
 import LoginPage from './features/Login/component/LoginPage';
 import RegisterPage from './features/register/component/RegisterPage';
 import ProfilePage from './features/profile/component/ProfilePage';
-import HomePage from './components/HomePage';
+import HomePage from './pages/HomePage';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import NotFoundPage from './pages/NotFound';
 import { ThemeProvider } from './context/ThemeContext';
