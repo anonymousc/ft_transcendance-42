@@ -1,3 +1,4 @@
+/* Apple-style liquid glass nav bar */
 .glass-nav-bar {
     position: fixed;
     top: 20px;
@@ -5,43 +6,76 @@
     transform: translateX(-50%);
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0rem 1.5rem;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(50px);
-    -webkit-backdrop-filter: blur(50px);
-    border-radius: 50px;
-    box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    gap: 0.35rem;
+    padding: 0.4rem;
+    /* Liquid glass: frosted base with saturation for that organic bleed */
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.22) 0%,
+        rgba(255, 255, 255, 0.08) 50%,
+        rgba(255, 255, 255, 0.12) 100%
+    );
+    backdrop-filter: blur(80px) saturate(180%);
+    -webkit-backdrop-filter: blur(80px) saturate(180%);
+    border-radius: 9999px;
+    /* Soft diffused border + inner highlight for curved glass feel */
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+        0 2px 4px rgba(0, 0, 0, 0.06),
+        0 12px 40px rgba(0, 0, 0, 0.12);
     z-index: 1000;
 }
 
 .glass-nav-item {
     display: flex;
     align-items: center;
-    padding: 1.1rem;
+    padding: 0.75rem 1rem;
     background: transparent;
     border: none;
-    color: white;
+    color: rgba(255, 255, 255, 0.9);
     cursor: pointer;
-    border-radius: 25px;
-    transition: background 0.3s ease;
+    border-radius: 9999px;
+    transition: color 0.25s ease, background 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
 }
 
 .glass-nav-item svg {
-    transition: color 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: color 0.3s ease, transform 0.25s ease;
+    flex-shrink: 0;
 }
 
-
 .glass-nav-item:hover {
-    background: rgba(255, 255, 255, 0);
+    color: rgba(255, 255, 255, 1);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.glass-nav-item.active {
+    /* Frosted pill inside the bar – liquid glass “blob” */
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.35) 0%,
+        rgba(255, 255, 255, 0.18) 100%
+    );
+    color: #fff;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+        0 1px 2px rgba(255, 255, 255, 0.15);
+}
+
+.glass-nav-item.active:hover {
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.4) 0%,
+        rgba(255, 255, 255, 0.22) 100%
+    );
 }
 
 .glass-nav-item .nav-label {
     font-size: 0.9rem;
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.01em;
     white-space: nowrap;
     width: 0;
     opacity: 0;

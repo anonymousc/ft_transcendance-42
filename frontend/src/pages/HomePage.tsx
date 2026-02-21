@@ -7,19 +7,31 @@ import "./HomePage.css";
 import bgvideo from "../assets/home-background.mp4";
 import GlassNavBar from "../components/shared/GlassNavBar";
 import LogoRihla from "../components/LogoRihla";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+
+const NAV_ID_TO_PATH: Record<string, string> = {
+  home: "/home",
+  messages: "/webchat",
+  friends: "/friends",
+  notifications: "/notifications",
+};
+
+const PATH_TO_NAV_ID: Record<string, string> = {
+  "/home": "home",
+  "/webchat": "messages",
+  "/friends": "friends",
+  "/notifications": "notifications",
+};
 
 function HomePage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const activeId = PATH_TO_NAV_ID[location.pathname] ?? "home";
+
   const handleNavigation = (id: string) => {
-    if(id === "home") {
-      navigate("/home");
-    } else if (id === "messages") {
-      navigate("/webchat");
-    } else if (id === "friends") {
-      console.log("Navigate to friends");
-    } else if (id === "notifications") {
-      console.log("Navigate to notifications");
+    const path = NAV_ID_TO_PATH[id];
+    if (path) {
+      navigate(path);
     }
   };
 
@@ -36,7 +48,7 @@ function HomePage() {
         <div className="text-white text-2xl font-bold">
           <h1>RIHLA</h1>
         </div>
-        <GlassNavBar handleNavigation={handleNavigation} />
+        <GlassNavBar activeId={activeId} handleNavigation={handleNavigation} />
         <div className="profile-dropdown-wrapper">
           <ProfileDropdown
             onProfile={() => navigate("/profile")}
