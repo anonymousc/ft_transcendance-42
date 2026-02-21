@@ -9,6 +9,7 @@ import NotFoundPage from './pages/NotFound';
 import { ThemeProvider } from './context/ThemeContext';
 import SettingsPage from './features/Settings/component/SettingsPage';
 import OAuthSuccess from './pages/OAuthSuccess';
+import Webchat from './features/chat/component/Webchat';
 
 function AppContent() {
   const location = useLocation();
@@ -23,6 +24,7 @@ function AppContent() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/oauth-success" element={<OAuthSuccess />} />
+        <Route path="/webchat" element={<Webchat />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>

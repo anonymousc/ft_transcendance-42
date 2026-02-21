@@ -12,7 +12,15 @@ import { useNavigate } from "react-router-dom";
 function HomePage() {
   const navigate = useNavigate();
   const handleNavigation = (id: string) => {
-    console.log("Navigate to:", id);
+    if(id === "home") {
+      navigate("/home");
+    } else if (id === "messages") {
+      navigate("/webchat");
+    } else if (id === "friends") {
+      console.log("Navigate to friends");
+    } else if (id === "notifications") {
+      console.log("Navigate to notifications");
+    }
   };
 
   const handleSearch = (query: string) => {
