@@ -201,8 +201,7 @@ function Webchat() {
     <div className="flex flex-col h-screen bg-background">
       <GlassNavBar activeId={activeId} handleNavigation={handleNavigation} />
 
-      <div className="flex flex-1 overflow-hidden pt-24 px-4 md:px-6 pb-4 gap-3">
-        {/* Left Sidebar */}
+      <div className="flex flex-1 overflow-hidden">
         <ChatSidebar
           currentUser={CURRENT_USER}
           conversations={MOCK_CONVERSATIONS}
@@ -213,8 +212,6 @@ function Webchat() {
             showSidebar ? "flex" : "hidden md:flex"
           )}
         />
-
-        {/* Center: Chat or Welcome */}
         <div
           className={cn(
             "flex-1 min-w-0",

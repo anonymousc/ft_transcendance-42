@@ -44,7 +44,8 @@ function ConversationItem({
     <button
       onClick={() => onClick(conversation.id)}
       className={cn(
-        "flex items-center gap-3 w-full px-4 py-3 text-left",
+        "flex items-center gap-3 min-h-17 w-full text-left",
+        "px-5 py-4",
         "rounded-xl border border-transparent",
         "transition-all duration-200 cursor-pointer",
         "hover:bg-gray-100 dark:hover:bg-zinc-800/60 hover:border-border/40",
