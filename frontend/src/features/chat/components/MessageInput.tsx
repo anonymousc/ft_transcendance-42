@@ -35,17 +35,17 @@ function MessageInput({ onSend, disabled, className }: MessageInputProps) {
   return (
     <div
       className={cn(
-        "px-6 md:px-10 pt-4 pb-6 border-t border-border/30",
+        "px-6 py-4 border-t border-border/40 shrink-0",
         className
       )}
     >
       <div
         className={cn(
-          "flex items-center gap-3 rounded-2xl px-5 py-3.5",
+          "flex items-center gap-3 rounded-2xl px-5 py-4",
           "bg-white dark:bg-zinc-800",
-          "border border-border/60 shadow-sm",
+          "border-2 border-border/80 shadow-sm",
           "transition-shadow duration-200",
-          "focus-within:shadow-md focus-within:border-border"
+          "focus-within:shadow-md focus-within:border-primary/50"
         )}
       >
         <input
@@ -54,10 +54,10 @@ function MessageInput({ onSend, disabled, className }: MessageInputProps) {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Message..."
+          placeholder="Type a message..."
           disabled={disabled}
           className={cn(
-            "flex-1 bg-transparent text-sm text-foreground",
+            "flex-1 bg-transparent text-sm text-foreground min-h-[28px]",
             "placeholder:text-muted-foreground outline-none"
           )}
         />

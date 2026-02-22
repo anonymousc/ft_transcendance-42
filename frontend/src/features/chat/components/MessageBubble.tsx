@@ -17,17 +17,33 @@ function MessageBubble({ message, isOwn }: MessageBubbleProps) {
     >
       <div
         className={cn(
-          "max-w-[70%] px-5 py-3 rounded-2xl",
-          "transition-opacity duration-200",
+          "max-w-[70%] min-h-[42px] px-5 py-3 rounded-2xl",
+          "border transition-opacity duration-200",
           isOwn
-            ? "bg-zinc-200 dark:bg-zinc-700 rounded-br-sm"
-            : "bg-white dark:bg-zinc-800 rounded-bl-sm shadow-sm",
+            ? "bg-primary/90 dark:bg-primary/80 border-primary/20 text-white rounded-br-sm"
+            : "bg-white dark:bg-zinc-800 border-border/40 rounded-bl-sm shadow-sm",
           message.status === "sending" && "opacity-60"
         )}
       >
-        <p className="text-sm leading-relaxed break-words whitespace-pre-wrap text-foreground">
+        <p
+          className={cn(
+            "text-sm leading-relaxed break-words whitespace-pre-wrap",
+            isOwn ? "text-white" : "text-foreground"
+          )}
+        >
           {message.content}
         </p>
+        <span
+          className={cn(
+            "block text-[10px] mt-1 text-right",
+            isOwn ? "text-white/60" : "text-muted-foreground"
+          )}
+        >
+          {message.timestamp.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </span>
       </div>
     </div>
   );

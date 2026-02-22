@@ -44,10 +44,13 @@ function ConversationItem({
     <button
       onClick={() => onClick(conversation.id)}
       className={cn(
-        "flex items-center gap-4 w-full px-6 py-4 text-left",
-        "transition-colors duration-200 cursor-pointer",
-        "hover:bg-gray-100 dark:hover:bg-zinc-800/60",
-        isActive && "bg-gray-100 dark:bg-zinc-800/60"
+        "flex items-center gap-3 w-full px-4 py-3 text-left",
+        "rounded-xl border border-transparent",
+        "transition-all duration-200 cursor-pointer",
+        "hover:bg-gray-100 dark:hover:bg-zinc-800/60 hover:border-border/40",
+        isActive
+          ? "bg-gray-100 dark:bg-zinc-800/60 border-border/40 shadow-sm"
+          : "bg-white dark:bg-zinc-900"
       )}
     >
       <ChatAvatar
@@ -62,7 +65,7 @@ function ConversationItem({
           <span className="font-semibold text-sm text-foreground truncate">
             {participant.name}
           </span>
-          <span className="text-[11px] text-muted-foreground shrink-0 ml-2">
+          <span className="text-xs text-muted-foreground shrink-0 ml-2">
             {formatConversationTime(lastMessageTime)}
           </span>
         </div>

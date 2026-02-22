@@ -13,7 +13,7 @@ function ContactPanel({ contact, onRemoveFriend, className }: ContactPanelProps)
   return (
     <aside
       className={cn(
-        "flex flex-col bg-white dark:bg-zinc-900 border-l border-border h-full",
+        "flex flex-col bg-white dark:bg-zinc-900 border-l border-border/40 h-full",
         className
       )}
     >
@@ -32,7 +32,7 @@ function ContactPanel({ contact, onRemoveFriend, className }: ContactPanelProps)
       </div>
 
       {/* Avatar + Name */}
-      <div className="flex flex-col items-center -mt-10 px-6 pb-6 border-b border-border/30">
+      <div className="flex flex-col items-center -mt-10 p-6 border-b border-border/30">
         <ChatAvatar
           src={contact.avatar}
           name={contact.name}
@@ -45,7 +45,7 @@ function ContactPanel({ contact, onRemoveFriend, className }: ContactPanelProps)
       </div>
 
       {/* Last Activities */}
-      <div className="flex-1 px-6 pt-8">
+      <div className="flex-1 p-6 min-h-0">
         <h4 className="text-sm font-semibold text-muted-foreground tracking-wide uppercase">
           Last Activities
         </h4>
@@ -53,17 +53,17 @@ function ContactPanel({ contact, onRemoveFriend, className }: ContactPanelProps)
 
       {/* Remove Friend */}
       {onRemoveFriend && (
-        <div className="p-6">
+        <div className="p-6 flex justify-center">
           <button
             onClick={onRemoveFriend}
             className={cn(
-              "w-full py-3 px-4 rounded-xl",
+              "py-2.5 px-6 rounded-lg",
               "bg-red-500 hover:bg-red-600 active:bg-red-700",
               "text-white text-sm font-semibold",
               "transition-colors duration-200 cursor-pointer"
             )}
           >
-            Remove Friends
+            Remove Friend
           </button>
         </div>
       )}

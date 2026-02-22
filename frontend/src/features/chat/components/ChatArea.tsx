@@ -33,7 +33,7 @@ function ChatArea({
       )}
     >
       {/* Mobile-only header */}
-      <div className="flex items-center gap-4 px-6 py-4 md:hidden border-b border-border/40 bg-white dark:bg-zinc-900">
+      <div className="flex items-center gap-4 px-6 py-4 md:hidden border-b border-border/40 bg-white dark:bg-zinc-900 shrink-0">
         <button
           onClick={onBack}
           className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
@@ -50,15 +50,17 @@ function ChatArea({
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-6 md:px-10 py-6 space-y-4 scrollbar-thin"
+        className="flex-1 overflow-y-auto px-6 py-6 flex flex-col justify-end scrollbar-thin min-h-0"
       >
-        {messages.map((message) => (
-          <MessageBubble
-            key={message.id}
-            message={message}
-            isOwn={message.senderId === currentUserId}
-          />
-        ))}
+        <div className="space-y-3 mt-auto">
+          {messages.map((message) => (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              isOwn={message.senderId === currentUserId}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Input */}

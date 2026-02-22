@@ -201,7 +201,7 @@ function Webchat() {
     <div className="flex flex-col h-screen bg-background">
       <GlassNavBar activeId={activeId} handleNavigation={handleNavigation} />
 
-      <div className="flex flex-1 overflow-hidden pt-24">
+      <div className="flex flex-1 overflow-hidden pt-24 px-4 md:px-6 pb-4 gap-3">
         {/* Left Sidebar */}
         <ChatSidebar
           currentUser={CURRENT_USER}
@@ -209,7 +209,7 @@ function Webchat() {
           activeConversationId={activeConversationId}
           onSelectConversation={handleSelectConversation}
           className={cn(
-            "w-full md:w-80 lg:w-72 xl:w-80 shrink-0",
+            "w-full md:w-80 lg:w-72 xl:w-80 shrink-0 gap-20",
             showSidebar ? "flex" : "hidden md:flex"
           )}
         />
