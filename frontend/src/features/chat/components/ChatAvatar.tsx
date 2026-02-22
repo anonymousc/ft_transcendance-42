@@ -11,31 +11,31 @@ interface ChatAvatarProps {
 }
 
 const sizeClasses = {
-  sm: "h-8 w-8",
-  md: "h-10 w-10",
-  lg: "h-12 w-12",
-  xl: "h-20 w-20",
+  sm: "h-9 w-9",
+  md: "h-11 w-11",
+  lg: "h-14 w-14",
+  xl: "h-24 w-24",
 } as const;
 
 const textSizeClasses = {
-  sm: "text-xs",
-  md: "text-sm",
-  lg: "text-base",
-  xl: "text-xl",
+  sm: "text-sm",
+  md: "text-base",
+  lg: "text-lg",
+  xl: "text-2xl",
 } as const;
 
 const iconSizeClasses = {
-  sm: "h-4 w-4",
-  md: "h-5 w-5",
-  lg: "h-6 w-6",
-  xl: "h-9 w-9",
+  sm: "h-5 w-5",
+  md: "h-6 w-6",
+  lg: "h-7 w-7",
+  xl: "h-10 w-10",
 } as const;
 
 const indicatorClasses = {
-  sm: "h-2 w-2 border",
-  md: "h-2.5 w-2.5 border-[1.5px]",
-  lg: "h-3 w-3 border-2",
-  xl: "h-4 w-4 border-2",
+  sm: "h-2.5 w-2.5 border",
+  md: "h-3 w-3 border-[1.5px]",
+  lg: "h-3.5 w-3.5 border-2",
+  xl: "h-5 w-5 border-2",
 } as const;
 
 function ChatAvatar({
