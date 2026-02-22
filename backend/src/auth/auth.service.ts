@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
+import { SignupDto, SigninDto } from './dto';
+import * as argon2 from 'argon2';
 
 interface GoogleUser {
   provider: string;
@@ -113,11 +115,93 @@ export class AuthService {
     };
   }
 
-  signup() {
-    return { msg: 'signed up' };
+  async signup(dto: SignupDto) {
+    // Check if email is already taken
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+    if (existingUser) {
+      throw new ConflictException('Email is already registered');
+    }
+
+    // Auto-generate a unique username from email
+    const username = dto.email.split('@')[0] + '_' + Date.now().toString(36);
+
+    // Hash password
+    const hashPassword = await argon2.hash(dto.password);
+
+    // Build display name from first + last name
+    const displayName = `${dto.firstName} ${dto.lastName}`;
+
+    // Create user + local account + profile in a transaction
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        hashPassword,
+        isEmailVerified: false,
+        accounts: {
+          create: {
+            provider: 'local',
+            providerAccountId: dto.email,
+          },
+        },
+        profile: {
+          create: {
+            username,
+            displayName,
+          },
+        },
+      },
+      include: { profile: true },
+    });
+
+    const token = this.generateJwt(user);
+
+    return {
+      accessToken: token,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.profile?.username,
+        displayName: user.profile?.displayName,
+      },
+    };
   }
 
-  signin() {
-    return { msg: 'signed in' };
+  async signin(dto: SigninDto) {
+    // Find user by email
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+      include: { profile: true },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Check if user has a password (could be OAuth-only account)
+    if (!user.hashPassword) {
+      throw new BadRequestException(
+        'This account was created via OAuth. Please sign in with Google.',
+      );
+    }
+
+    // Verify password
+    const isPasswordValid = await argon2.verify(user.hashPassword, dto.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    const token = this.generateJwt(user);
+
+    return {
+      accessToken: token,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.profile?.username,
+        displayName: user.profile?.displayName,
+      },
+    };
   }
 }

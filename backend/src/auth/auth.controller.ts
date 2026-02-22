@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Req, Res, UseGuards, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Req, Res, UseGuards, UnauthorizedException, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleOAuthGuard } from './guards/google-oauth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { SignupDto, SigninDto } from './dto';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 
@@ -13,13 +14,14 @@ export class AuthController {
   ) {}
 
   @Post('signup')
-  signup() {
-    return this.authService.signup();
+  async signup(@Body() dto: SignupDto) {
+    return this.authService.signup(dto);
   }
 
+  @HttpCode(HttpStatus.OK)
   @Post('signin')
-  signin() {
-    return this.authService.signin();
+  async signin(@Body() dto: SigninDto) {
+    return this.authService.signin(dto);
   }
 
   @Get('google')
