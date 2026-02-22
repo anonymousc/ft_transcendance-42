@@ -18,7 +18,7 @@ function ContactPanel({ contact, onRemoveFriend, className }: ContactPanelProps)
       )}
     >
       {/* Cover Image */}
-      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-orange-50 dark:from-primary/15 dark:via-zinc-800 dark:to-zinc-900">
+      <div className="flex flex-col items-center -mt-10 p-6 border-b border-border/30">
         {contact.coverImage ? (
           <img
             src={contact.coverImage}
@@ -32,7 +32,7 @@ function ContactPanel({ contact, onRemoveFriend, className }: ContactPanelProps)
       </div>
 
       {/* Avatar + Name */}
-      <div className="flex flex-col items-center -mt-10 p-6 border-b border-border/30">
+      <div className="flex flex-col items-center pt-20 border-b border-border/30">
         <ChatAvatar
           src={contact.avatar}
           name={contact.name}

@@ -17,7 +17,7 @@ function MessageBubble({ message, isOwn }: MessageBubbleProps) {
     >
       <div
         className={cn(
-          "max-w-[70%] min-h-[42px] px-5 py-3 rounded-2xl",
+          "max-w-[70%] min-h-[36px] px-3 py-2 rounded-2xl",
           "border transition-opacity duration-200",
           isOwn
             ? "bg-primary/90 dark:bg-primary/80 border-primary/20 text-white rounded-br-sm"

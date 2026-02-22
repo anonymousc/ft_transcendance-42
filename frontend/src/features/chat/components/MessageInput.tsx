@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, type KeyboardEvent } from "react";
-import { Smile, Send } from "lucide-react";
+// import { Smile, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MessageInputProps {
@@ -35,14 +36,14 @@ function MessageInput({ onSend, disabled, className }: MessageInputProps) {
   return (
     <div
       className={cn(
-        "flex justify-center px-6 py-4 border-t border-border/40 shrink-0",
+        "flex justify-center px-4 py-2 border-t border-border/40 shrink-0",
         className
       )}
     >
       <div
-        style={{ paddingLeft: "1.5rem", paddingRight: "1.5rem" }}
+        style={{ paddingLeft: "1rem", paddingRight: "1rem" }}
         className={cn(
-          "flex items-center gap-3 rounded-2xl py-3 w-full max-w-2xl",
+          "flex items-center gap-3 rounded-2xl py-1.5 w-full max-w-2xl",
           "bg-white dark:bg-zinc-800",
           "border-2 border-border/80 shadow-sm",
           "transition-shadow duration-200",
@@ -58,11 +59,11 @@ function MessageInput({ onSend, disabled, className }: MessageInputProps) {
           placeholder="Type a message..."
           disabled={disabled}
           className={cn(
-            "flex-1 bg-transparent text-base text-foreground min-h-12 py-2",
+            "flex-1 bg-transparent text-sm text-foreground min-h-9 py-1",
             "placeholder:text-muted-foreground outline-none"
           )}
         />
-
+{/* 
         <button
           type="button"
           className={cn(
@@ -74,7 +75,7 @@ function MessageInput({ onSend, disabled, className }: MessageInputProps) {
           aria-label="Emoji"
         >
           <Smile className="h-5 w-5" />
-        </button>
+        </button> */}
 
         <button
           type="button"

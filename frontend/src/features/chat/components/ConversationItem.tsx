@@ -45,8 +45,8 @@ function ConversationItem({
       onClick={() => onClick(conversation.id)}
       style={{ paddingLeft: "0.5rem", paddingRight: "0.5rem" }}
       className={cn(
-        "flex items-center gap-3 min-h-17 w-full text-left",
-        "py-4 rounded-xl border border-transparent",
+        "flex items-center gap-3 min-h-14 w-full text-left",
+        "py-2.5 rounded-xl border border-transparent",
         "transition-all duration-200 cursor-pointer",
         "hover:bg-gray-100 dark:hover:bg-zinc-800/60 hover:border-border/40",
         isActive
