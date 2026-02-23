@@ -1,8 +1,11 @@
 
 const NotFoundPage = () => {
   return (
-    <div className="font-[10rem]">NotFound</div>
+    <div
+      className="h-screen w-screen bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/NotFound.png')" }}
+    />
   )
 }
 
-export default  NotFoundPage
+export default NotFoundPage

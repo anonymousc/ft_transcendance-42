@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { Home, MessageSquare, Users, Bell, MessageCircle } from "lucide-react";
+import { useRef, useState, useEffect, useCallback } from "react";
+import { Home, Users, Bell, MessageCircle } from "lucide-react";
 import gsap from "gsap";
 import "./GlassNavBar.css";
 
@@ -9,8 +9,9 @@ interface NavItem {
     label: string;
 }
 
-function GlassNavBar({ handleNavigation }: { handleNavigation?: (id: string) => void }) {
+function GlassNavBar({ activeId = "home", handleNavigation }: { activeId?: string; handleNavigation?: (id: string) => void }) {
     const labelRefs = useRef<(HTMLSpanElement | null)[]>([]);
+    const [activeIndex, setActiveIndex] = useState<number>(0);
 
     const navItems: NavItem[] = [
         { id: "home", icon: <Home size={28} />, label: "Home" },
@@ -19,9 +20,10 @@ function GlassNavBar({ handleNavigation }: { handleNavigation?: (id: string) => 
         { id: "notifications", icon: <Bell size={28} />, label: "Notification" },
     ];
 
-    const handleMouseEnter = (index: number) => {
+    const expandLabel = useCallback((index: number) => {
         const label = labelRefs.current[index];
         if (label) {
+            gsap.killTweensOf(label);
             gsap.to(label, {
                 width: "auto",
                 opacity: 1,
@@ -30,11 +32,12 @@ function GlassNavBar({ handleNavigation }: { handleNavigation?: (id: string) => 
                 ease: "power3.out",
             });
         }
-    };
+    }, []);
 
-    const handleMouseLeave = (index: number) => {
+    const collapseLabel = useCallback((index: number) => {
         const label = labelRefs.current[index];
         if (label) {
+            gsap.killTweensOf(label);
             gsap.to(label, {
                 width: 0,
                 opacity: 0,
@@ -43,6 +46,33 @@ function GlassNavBar({ handleNavigation }: { handleNavigation?: (id: string) => 
                 ease: "power2.inOut",
             });
         }
+    }, []);
+
+    useEffect(() => {
+        const idx = navItems.findIndex((item) => item.id === activeId);
+        if (idx !== -1) {
+            setActiveIndex(idx);
+        }
+    }, [activeId]);
+
+    useEffect(() => {
+        navItems.forEach((_, i) => {
+            if (i === activeIndex) expandLabel(i);
+            else collapseLabel(i);
+        });
+    }, [activeIndex, expandLabel, collapseLabel]);
+
+    const handleClick = (index: number) => {
+        if (index === activeIndex) return;
+
+        collapseLabel(activeIndex);
+        setActiveIndex(index);
+        expandLabel(index);
+
+        const navItem = navItems[index];
+        if (navItem && handleNavigation) {
+            handleNavigation(navItem.id);
+        }
     };
 
     return (
@@ -50,10 +80,8 @@ function GlassNavBar({ handleNavigation }: { handleNavigation?: (id: string) => 
             {navItems.map((item, index) => (
                 <button
                     key={item.id}
-                    className="glass-nav-item"
-                    onClick={() => handleNavigation?.(item.id)}
-                    onMouseEnter={() => handleMouseEnter(index)}
-                    onMouseLeave={() => handleMouseLeave(index)}
+                    className={`glass-nav-item${index === activeIndex ? " active" : ""}`}
+                    onClick={() => handleClick(index)}
                     aria-label={item.label}
                 >
                     {item.icon}
