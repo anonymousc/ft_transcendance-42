@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -45,12 +45,16 @@ function ChatAvatar({
   isOnline,
   className,
 }: ChatAvatarProps) {
+  const [imgError, setImgError] = useState(false);
+
   const initials = name
     .split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
+
+  const showImage = src && !imgError;
 
   return (
     <div className={cn("relative shrink-0", className)}>
@@ -61,12 +65,13 @@ function ChatAvatar({
           sizeClasses[size]
         )}
       >
-        {src ? (
+        {showImage ? (
           <img
             src={src}
             alt={name}
             className="h-full w-full object-cover"
             loading="lazy"
+            onError={() => setImgError(true)}
           />
         ) : (
           <span
