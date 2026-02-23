@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import pdp from "../../assets/pdp1.png";
 import "./ProfileDropdown.css";
+import { useAuth } from "../../context/AuthContext";
+
 
 interface ProfileDropdownProps {
   profileImage?: string;
@@ -40,6 +42,8 @@ function ProfileDropdown({
     action?.();
   };
 
+  const { user } = useAuth();
+
   return (
     <div className="profile-dropdown" ref={dropdownRef}>
       <button
@@ -48,7 +52,7 @@ function ProfileDropdown({
         aria-label="Profile menu"
         aria-expanded={isOpen}
       >
-        <img src={profileImage} alt="Profile" className="profile-dropdown-img" />
+        <img src={user?.avatar || profileImage} alt="Profile" className="profile-dropdown-img" />
       </button>
 
       {isOpen && (

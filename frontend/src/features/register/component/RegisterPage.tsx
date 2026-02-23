@@ -18,6 +18,10 @@ function RegisterPage() {
         console.log('Register attempt:', { firstName, lastName, email, phone, password });
     };
 
+    const handleGoogleLogin = (): void => {
+        window.location.href = "http://localhost:3000/auth/google";
+    };
+
     return (
         <main className="register-page">
             <BackArrow />
@@ -28,6 +32,12 @@ function RegisterPage() {
                 <div className="register-side">
                     <h2>Register</h2>
                     <RegisterForm handleSubmit={handleSubmit} />
+                    <div className="oauth-section">
+                        <p className="text-sm font-normal text-gray-600 dark:text-gray-400">
+                            Or sign up with :
+                        </p>
+                        <SigninOuth onGoogleLogin={handleGoogleLogin} />
+                    </div>
                 </div>
                 <GlassCard imageOverlay={passportOverlay} />
             </div>

@@ -7,9 +7,10 @@ import HomePage from './pages/HomePage';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import NotFoundPage from './pages/NotFound';
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext';
 import SettingsPage from './features/Settings/component/SettingsPage';
 import OAuthSuccess from './pages/OAuthSuccess';
-import Webchat from './features/chat/components/Webchat';
+import ProtectedRoute from './components/shared/ProtectedRoute';
 
 function AppContent() {
   const location = useLocation();
@@ -20,9 +21,9 @@ function AppContent() {
         <Route path="/" element={<Hero />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/oauth-success" element={<OAuthSuccess />} />
         <Route path="/webchat" element={<Webchat />} />
         <Route path="*" element={<NotFoundPage />} />
@@ -36,7 +37,9 @@ function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
-        <AppContent />
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>
   )
