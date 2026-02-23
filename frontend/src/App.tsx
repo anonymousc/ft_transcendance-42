@@ -9,7 +9,7 @@ import NotFoundPage from './pages/NotFound';
 import { ThemeProvider } from './context/ThemeContext';
 import SettingsPage from './features/Settings/component/SettingsPage';
 import OAuthSuccess from './pages/OAuthSuccess';
-import Webchat from './features/chat/component/Webchat';
+import Webchat from './features/chat/components/Webchat';
 
 function AppContent() {
   const location = useLocation();
