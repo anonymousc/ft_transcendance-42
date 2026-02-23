@@ -56,8 +56,11 @@ function GlassNavBar({ activeId = "home", handleNavigation }: { activeId?: strin
     }, [activeId]);
 
     useEffect(() => {
-        expandLabel(activeIndex);
-    }, [activeIndex, expandLabel]);
+        navItems.forEach((_, i) => {
+            if (i === activeIndex) expandLabel(i);
+            else collapseLabel(i);
+        });
+    }, [activeIndex, expandLabel, collapseLabel]);
 
     const handleClick = (index: number) => {
         if (index === activeIndex) return;
