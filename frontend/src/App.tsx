@@ -11,6 +11,7 @@ import { AuthProvider } from './context/AuthContext';
 import SettingsPage from './features/Settings/component/SettingsPage';
 import OAuthSuccess from './pages/OAuthSuccess';
 import ProtectedRoute from './components/shared/ProtectedRoute';
+import Webchat from './features/chat/components/Webchat.tsx';
 
 function AppContent() {
   const location = useLocation();
