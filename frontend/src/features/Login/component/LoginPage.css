@@ -91,6 +91,20 @@
 :is(.dark) .signin-side h2 {
     color: #ffffff;
 }
+
+.login-error {
+    margin: 0 0 1rem 0;
+    padding: 0.5rem 0.75rem;
+    background: #fef2f2;
+    color: #b91c1c;
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+:is(.dark) .login-error {
+    background: rgba(185, 28, 28, 0.2);
+    color: #fca5a5;
+}
     
 .oauth-section {
     display: flex;
