@@ -5,10 +5,11 @@ import SigninOuth from "./shared/SigninOuth";
 import AcceptTerms from "./shared/AcceptTerms";
 
 interface RegisterFormProps {
-  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
+  submitting?: boolean;
 }
 
-function RegisterForm({ handleSubmit }: RegisterFormProps) {
+function RegisterForm({ handleSubmit, submitting = false }: RegisterFormProps) {
   return (
     <form className="register-form" onSubmit={handleSubmit}>
       <div className="name-row">
@@ -55,7 +56,7 @@ function RegisterForm({ handleSubmit }: RegisterFormProps) {
 
 
       <AcceptTerms />
-      <button type="submit">Create Account</button>
+      <button type="submit" disabled={submitting}>{submitting ? 'Creating…' : 'Create Account'}</button>
 
       <div className="w-full h-px bg-gray-300 dark:bg-gray-600"></div>
 
