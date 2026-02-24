@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import GlassNavBar from "@/components/shared/GlassNavBar";
@@ -7,7 +7,7 @@ import ChatArea from "../components/ChatArea";
 import ChatWelcome from "../components/ChatWelcome";
 import ContactPanel from "../components/ContactPanel";
 import type { ChatUser, Conversation, Message } from "../types";
-import pdp from "@/assets/pdp.jpg";
+import { useAuth } from "@/context/AuthContext";
 import pdp1 from "@/assets/pdp1.jpg";
 import pdp1Png from "@/assets/pdp1.png";
 import pdp2 from "@/assets/pdp2.jpg";
@@ -27,14 +27,9 @@ const PATH_TO_NAV_ID: Record<string, string> = {
   "/notifications": "notifications",
 };
 
-// TODO: Replace with real user data from auth context
-const CURRENT_USER: ChatUser = {
-  id: "me",
-  name: "Ilyass Ouhsseine",
-  avatar: pdp,
-  isOnline: true,
-};
 
+
+// Mock data for conversations and messages (for testing UI)
 const MOCK_CONVERSATIONS: Conversation[] = [
   {
     id: "1",
@@ -338,7 +333,25 @@ const MOCK_MESSAGES: Record<string, Message[]> = {
 function Webchat() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const activeId = PATH_TO_NAV_ID[location.pathname] ?? "home";
+
+  const currentUser: ChatUser = useMemo(() => {
+    if (user) {
+      const u: ChatUser = {
+        id: user.id,
+        name: user.displayName || user.username || user.email,
+        isOnline: user.status === "online",
+      };
+      if (user.avatar) u.avatar = user.avatar;
+      return u;
+    }
+    return {
+      id: "me",
+      name: "Guest",
+      isOnline: false,
+    };
+  }, [user]);
 
   const [activeConversationId, setActiveConversationId] = useState<
     string | undefined
@@ -375,7 +388,7 @@ function Webchat() {
       const optimisticMessage: Message = {
         id: `temp-${Date.now()}`,
         conversationId: activeConversationId,
-        senderId: CURRENT_USER.id,
+        senderId: currentUser.id,
         content,
         timestamp: new Date(),
         status: "sending",
@@ -401,7 +414,7 @@ function Webchat() {
         }));
       }, 500);
     },
-    [activeConversationId]
+    [activeConversationId, currentUser.id]
   );
 
   const handleBack = useCallback(() => {
@@ -415,7 +428,7 @@ function Webchat() {
 
       <div className="flex flex-1 overflow-hidden">
         <ChatSidebar
-          currentUser={CURRENT_USER}
+          currentUser={currentUser}
           conversations={MOCK_CONVERSATIONS}
           activeConversationId={activeConversationId}
           onSelectConversation={handleSelectConversation}
@@ -433,7 +446,7 @@ function Webchat() {
           {activeConversation ? (
             <ChatArea
               messages={currentMessages}
-              currentUserId={CURRENT_USER.id}
+              currentUserId={currentUser.id}
               contactName={activeConversation.participant.name}
               onSendMessage={handleSendMessage}
               onBack={handleBack}
