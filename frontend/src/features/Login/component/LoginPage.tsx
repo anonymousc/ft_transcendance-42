@@ -1,18 +1,40 @@
+import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./LoginPage.css";
 import SigninOuth from "../../../components/shared/SigninOuth";
 import LoginForm from "../../../components/LoginForm";
 import passportOverlay from "../../../assets/PassportOverlay.png";
 import GlassCard from "../../../components/glassCard";
+import { useAuth } from "../../../context/AuthContext";
+import { API_BASE_URL } from "../../../lib/api";
 
 function LoginPage() {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const { signin } = useAuth();
+  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(null);
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email");
-    const password = formData.get("password");
-    console.log("Login attempt:", { email, password });
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    if (!email || !password) return;
+    setSubmitting(true);
+    try {
+      await signin({ email, password });
+      navigate("/home", { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid email or password");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleGoogleLogin = (): void => {
+    window.location.href = `${API_BASE_URL}/auth/google`;
   };
 
   return (
@@ -27,13 +49,14 @@ function LoginPage() {
         <GlassCard imageOverlay={passportOverlay} />
         <div className="signin-side">
           <h2>Sign in</h2>
-          <LoginForm handleSubmit={handleSubmit} />
+          {error && <p className="login-error" role="alert">{error}</p>}
+          <LoginForm handleSubmit={handleSubmit} submitting={submitting} />
           <div className="w-full h-px bg-gray-300 dark:bg-gray-600"></div>
           <div className="oauth-section">
             <p className="text-sm font-normal text-gray-600 dark:text-gray-400">
               Sign in with :
             </p>
-            <SigninOuth />
+            <SigninOuth onGoogleLogin={handleGoogleLogin} />
           </div>
           <div className="flex items-center justify-center gap-1">
             <span className="text-sm text-gray-600 dark:text-gray-400">

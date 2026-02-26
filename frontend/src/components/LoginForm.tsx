@@ -4,10 +4,11 @@ import AcceptTerms from "./shared/AcceptTerms";
 
 
 interface LoginFormProps {
-  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
+  submitting?: boolean;
 }
 
-function LoginForm({ handleSubmit }: LoginFormProps) {
+function LoginForm({ handleSubmit, submitting = false }: LoginFormProps) {
   return (
     <form className="login-form" onSubmit={handleSubmit}>
       <div className="input-wrapper">
@@ -31,7 +32,7 @@ function LoginForm({ handleSubmit }: LoginFormProps) {
         />
       </div>
       <AcceptTerms />
-      <button type="submit">Login</button>
+      <button type="submit" disabled={submitting}>{submitting ? 'Signing in…' : 'Login'}</button>
     </form>
   );
 }

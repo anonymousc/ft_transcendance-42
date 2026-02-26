@@ -30,19 +30,17 @@ createdb -U $(jq -r .data.data.username < /token/data) prisma
 DB_USER=$(jq -r .data.data.username < /token/data)
 RAW_PASS=$(jq -r .data.data.password < /token/data)
 
-export DATABASE_URL="postgresql://${DB_USER}:${RAW_PASS}@localhost:${PORT_POSTGRES}/prisma?schema=public"
+export DATABASE_URL=$(jq -r .data.data.database_url < /token/data)
 
 npx prisma db push
 
 echo "Seeding..."
 node /app/prisma/seed.js
-
 pg_ctl reload
 
 pg_ctl stop
 
-rm -rf /token/data
-
+rm -rf /token/data 
 npx prisma studio --port 5556 --browser none &
 
 socat TCP-LISTEN:5555,fork,bind=0.0.0.0 TCP:127.0.0.1:5556 &
