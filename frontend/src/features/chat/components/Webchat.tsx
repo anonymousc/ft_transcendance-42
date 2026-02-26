@@ -12,6 +12,7 @@ import pdp1 from "@/assets/pdp1.jpg";
 import pdp1Png from "@/assets/pdp1.png";
 import pdp2 from "@/assets/pdp2.jpg";
 import pdp3 from "@/assets/pdp3.jpg";
+import HomeNavBar from "@/components/shared/HomeNavBar";
 
 const NAV_ID_TO_PATH: Record<string, string> = {
   home: "/home",
@@ -424,8 +425,8 @@ function Webchat() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <GlassNavBar activeId={activeId} handleNavigation={handleNavigation} />
-
+      {/* <GlassNavBar activeId={activeId} handleNavigation={handleNavigation} /> */}
+      <HomeNavBar />
       <div className="flex flex-1 overflow-hidden">
         <ChatSidebar
           currentUser={currentUser}
