@@ -14,5 +14,7 @@ import { UploadsModule } from './uploads/uploads.module';
     ProfilesModule,
     UploadsModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
