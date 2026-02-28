@@ -2,8 +2,6 @@
 
 set -eu 
 
-ls -al /data/
-
 curl -s -X GET http://vault:$PORT_VAULT/v1/secret/data/postgres \
   --header "X-Vault-Token: $(jq -r .auth.client_token < /data/token)" \
   --output /tmp/data

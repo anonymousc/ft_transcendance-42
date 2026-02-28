@@ -13,6 +13,9 @@ services:
       - saas
     volumes:
       - ../../frontend/:/app
+    depends_on:
+      backend:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:$PORT_FRONT/"]
       interval: 30s
@@ -22,6 +25,8 @@ services:
   auth:
     build: ./backend-services/auth/
     container_name: auth
+    env_file:
+      - .env
     networks:
       - saas
     volumes:
@@ -40,11 +45,8 @@ services:
     ports:
       - 8081:15672
   database:
-    container_name: prisma
+    container_name: database
     build: backend-services/prisma/
-    ports:
-      - 5555:5555
-    replicates: 2
     env_file:
       - .env
     volumes:
@@ -57,6 +59,11 @@ services:
     networks:
       - saas
     restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 5555 || exit 1"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
   # security services:
 
   #logger
@@ -66,7 +73,12 @@ services:
     container_name: logbull
     volumes:
       - logs:/app/logs
-      - shared_resources:/app/:ro
+      - shared_resources:/tmp/token:ro
+    depends_on:
+      vault:
+        condition: service_healthy
+      database:
+        condition: service_started
     networks:
       - saas
   ######################
@@ -88,6 +100,7 @@ services:
     volumes:
       - shared_resources:/shared
       - ./backend-services/security/hashicorp-vault/tools:/tools:rx
+      - ./secrets~:/secrets:ro
     networks:
       - saas
     healthcheck:
@@ -103,6 +116,29 @@ services:
   #   ports:
   #    - "8080:80" #shoud be changed to 443
   #   retries: on-failure
+  backend:
+    build: ./..
+    container_name: backend
+    ports:
+      - "3000:3000"
+      - "5555:5555"
+    env_file:
+      - .env
+    networks:
+      - saas
+    volumes:
+      - shared_resources:/data
+    depends_on:
+      database:
+        condition: service_started
+      vault:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    restart: on-failure
 networks:
   saas :
     driver : bridge
@@ -113,3 +149,12 @@ volumes:
     driver_opts:
       type : tmpfs
       device : tmpfs
+secrets:
+  google_client_id:
+    file: ./secrets.example/google_client_id
+  google_client_secret:
+    file: ./secrets.example/google_client_secret
+  callback_url:
+    file: ./secrets.example/callback_url
+  frontend_url:
+    file: ./secrets.example/frontend_url
