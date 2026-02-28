@@ -4,4 +4,4 @@ FROM alpine:3.18
 
 COPY --from=builder /app/ /app/
 
-ENTRYPOINT ["tail", "-f"]
+ENTRYPOINT ["/app/main"]
