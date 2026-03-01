@@ -74,8 +74,6 @@ services:
     container_name: auth
     env_file:
       - .env
-    env_file:
-      - .env
     networks:
       - saas
     volumes:
@@ -87,14 +85,31 @@ services:
         condition: service_healthy
     restart: on-failure
   amq:
-    image : rabbitmq:3.8-management
-    mem_limit: 300m
+    build: ./backend-services/rabbitmq/
     hostname: rabbitmq
     container_name: rabbitmq
+    mem_limit: 512m
+    env_file:
+      - .env
     ports:
-      - 8081:15672
+      - "5672:5672"
+      - "15692:15692"
+    networks:
+      - saas
+    volumes:
+      - shared_resources:/vault:ro
+      - rabbitmq_data:/var/lib/rabbitmq
+    depends_on:
+      vault:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: on-failure
   database:
-    container_name: database
     container_name: database
     build: backend-services/prisma/
     env_file:
@@ -118,17 +133,11 @@ services:
 
   #logger
   logger:
-    build : backend-services/logbull
+    build: backend-services/logbull
     restart: on-failure
     container_name: logbull
     volumes:
       - logs:/app/logs
-      - shared_resources:/tmp/token:ro
-    depends_on:
-      vault:
-        condition: service_healthy
-      database:
-        condition: service_started
       - shared_resources:/tmp/token:ro
     depends_on:
       vault:
@@ -144,9 +153,11 @@ services:
     environment:
       - SWAGGER_JSON=/app/swagger.json
     ports:
-     - 8080:8080
+      - 8080:8080
     volumes:
       - ./data/:/app/
+    networks:
+      - saas
   #############################
   vault:
     container_name: vault-hashicorp
@@ -161,7 +172,6 @@ services:
     volumes:
       - shared_resources:/shared
       - ./backend-services/security/hashicorp-vault/tools:/tools:rx
-      - ./secrets~:/secrets:ro
       - ./secrets~:/secrets:ro
     networks:
       - saas
@@ -201,26 +211,61 @@ services:
       timeout: 60s
       retries: 3
     restart: on-failure
+
+  # Monitoring service - Netdata
+  netdata:
+    image: netdata/netdata:stable
+    container_name: netdata
+    hostname: netdata-monitor
+    ports:
+      - "19999:19999"
+    cap_add:
+      - SYS_PTRACE
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+      - netdata_config:/etc/netdata
+      - netdata_lib:/var/lib/netdata
+      - netdata_cache:/var/cache/netdata
+      - ./backend-services/netdata/go.d/prometheus.conf:/etc/netdata/go.d/prometheus.conf:ro
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/group:/host/etc/group:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - NETDATA_CLAIM_TOKEN=${NETDATA_CLAIM_TOKEN:-}
+      - NETDATA_CLAIM_URL=${NETDATA_CLAIM_URL:-https://app.netdata.cloud}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    networks:
+      - saas
+    depends_on:
+      amq:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:19999/api/v1/info"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 networks:
   saas :
     driver : bridge
 volumes:
-  data : {}
+  data: {}
   logs: {}
   redis_data: {}
+  rabbitmq_data: {}
+  netdata_config: {}
+  netdata_lib: {}
+  netdata_cache: {}
   shared_resources:
     driver_opts:
       type : tmpfs
       device : tmpfs
-secrets:
-  google_client_id:
-    file: ./secrets.example/google_client_id
-  google_client_secret:
-    file: ./secrets.example/google_client_secret
-  callback_url:
-    file: ./secrets.example/callback_url
-  frontend_url:
-    file: ./secrets.example/frontend_url
 secrets:
   google_client_id:
     file: ./secrets.example/google_client_id

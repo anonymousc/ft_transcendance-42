@@ -7,6 +7,7 @@ RUN apk add --no-cache \
     npm \
     curl \
     jq \
+    netcat-openbsd \
     && rm -rf /var/cache/apk/*
 
 WORKDIR /app

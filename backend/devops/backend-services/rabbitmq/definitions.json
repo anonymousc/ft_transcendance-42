@@ -1,0 +1,259 @@
+{
+  "rabbit_version": "3.13",
+  "users": [
+    {
+      "name": "${RABBITMQ_USER}",
+      "password_hash": "",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"],
+      "limits": {}
+    }
+  ],
+  "vhosts": [
+    {"name": "/"},
+    {"name": "travel_planning"}
+  ],
+  "permissions": [
+    {
+      "user": "${RABBITMQ_USER}",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "${RABBITMQ_USER}",
+      "vhost": "travel_planning",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "topic_permissions": [
+    {
+      "user": "${RABBITMQ_USER}",
+      "vhost": "travel_planning",
+      "exchange": "amq.topic",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "${RABBITMQ_USER}",
+      "vhost": "travel_planning",
+      "exchange": "events",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "events",
+      "vhost": "travel_planning",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "notifications",
+      "vhost": "travel_planning",
+      "type": "fanout",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "dead_letter",
+      "vhost": "travel_planning",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "user.created",
+      "vhost": "travel_planning",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "dead_letter",
+        "x-dead-letter-routing-key": "user.created.dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "user.updated",
+      "vhost": "travel_planning",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "dead_letter",
+        "x-dead-letter-routing-key": "user.updated.dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "trip.created",
+      "vhost": "travel_planning",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "dead_letter",
+        "x-dead-letter-routing-key": "trip.created.dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "trip.updated",
+      "vhost": "travel_planning",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "dead_letter",
+        "x-dead-letter-routing-key": "trip.updated.dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "trip.deleted",
+      "vhost": "travel_planning",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "dead_letter",
+        "x-dead-letter-routing-key": "trip.deleted.dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "notification.email",
+      "vhost": "travel_planning",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "dead_letter",
+        "x-dead-letter-routing-key": "notification.email.dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "notification.push",
+      "vhost": "travel_planning",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "dead_letter",
+        "x-dead-letter-routing-key": "notification.push.dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "analytics.events",
+      "vhost": "travel_planning",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 604800000
+      }
+    },
+    {
+      "name": "dead_letter_queue",
+      "vhost": "travel_planning",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "events",
+      "vhost": "travel_planning",
+      "destination": "user.created",
+      "destination_type": "queue",
+      "routing_key": "user.created",
+      "arguments": {}
+    },
+    {
+      "source": "events",
+      "vhost": "travel_planning",
+      "destination": "user.updated",
+      "destination_type": "queue",
+      "routing_key": "user.updated",
+      "arguments": {}
+    },
+    {
+      "source": "events",
+      "vhost": "travel_planning",
+      "destination": "trip.created",
+      "destination_type": "queue",
+      "routing_key": "trip.created",
+      "arguments": {}
+    },
+    {
+      "source": "events",
+      "vhost": "travel_planning",
+      "destination": "trip.updated",
+      "destination_type": "queue",
+      "routing_key": "trip.updated",
+      "arguments": {}
+    },
+    {
+      "source": "events",
+      "vhost": "travel_planning",
+      "destination": "trip.deleted",
+      "destination_type": "queue",
+      "routing_key": "trip.deleted",
+      "arguments": {}
+    },
+    {
+      "source": "events",
+      "vhost": "travel_planning",
+      "destination": "analytics.events",
+      "destination_type": "queue",
+      "routing_key": "#",
+      "arguments": {}
+    },
+    {
+      "source": "notifications",
+      "vhost": "travel_planning",
+      "destination": "notification.email",
+      "destination_type": "queue",
+      "routing_key": "",
+      "arguments": {}
+    },
+    {
+      "source": "notifications",
+      "vhost": "travel_planning",
+      "destination": "notification.push",
+      "destination_type": "queue",
+      "routing_key": "",
+      "arguments": {}
+    },
+    {
+      "source": "dead_letter",
+      "vhost": "travel_planning",
+      "destination": "dead_letter_queue",
+      "destination_type": "queue",
+      "routing_key": "#",
+      "arguments": {}
+    }
+  ],
+  "policies": [
+    {
+      "vhost": "travel_planning",
+      "name": "ha-all",
+      "pattern": ".*",
+      "apply-to": "queues",
+      "definition": {
+        "ha-mode": "all",
+        "ha-sync-mode": "automatic"
+      },
+      "priority": 0
+    }
+  ]
+}

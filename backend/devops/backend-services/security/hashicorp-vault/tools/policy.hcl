@@ -13,3 +13,8 @@ path "secret/data/redis"
 {
     capabilities = ["read"]
 }
+
+path "secret/data/rabbitmq"
+{
+    capabilities = ["read"]
+}

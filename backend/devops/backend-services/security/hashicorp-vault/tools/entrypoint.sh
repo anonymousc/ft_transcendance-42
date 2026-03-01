@@ -20,8 +20,6 @@ DB_USER=$(openssl rand -hex 12)
 
 DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@database:${PORT_POSTGRES}/prisma?schema=public"
 
-DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@database:${PORT_POSTGRES}/prisma?schema=public"
-
 vault kv put -mount=secret postgres username="$DB_USER" password="$DB_PASS" database_url="$DATABASE_URL" > /dev/null
 
 JWT_ACCESS_SECRET=$(openssl rand -hex 64)
@@ -55,6 +53,23 @@ vault kv put -mount=secret redis \
     port="$REDIS_PORT" \
     url="redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}" > /dev/null
 
+# Generate RabbitMQ credentials and store in Vault
+RABBITMQ_USER="travel_$(openssl rand -hex 4)"
+RABBITMQ_PASS=$(openssl rand -hex 16)
+RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
+RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
+RABBITMQ_MGMT_PORT=${RABBITMQ_MGMT_PORT:-15672}
+RABBITMQ_VHOST="travel_planning"
+
+vault kv put -mount=secret rabbitmq \
+    username="$RABBITMQ_USER" \
+    password="$RABBITMQ_PASS" \
+    host="$RABBITMQ_HOST" \
+    port="$RABBITMQ_PORT" \
+    mgmt_port="$RABBITMQ_MGMT_PORT" \
+    vhost="$RABBITMQ_VHOST" \
+    url="amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@${RABBITMQ_HOST}:${RABBITMQ_PORT}/${RABBITMQ_VHOST}" > /dev/null
+
 vault token create -policy=postgres -format=json > /shared/token
 
 vault token create -policy=postgres -format=json > /shared/backend_token
@@ -72,7 +87,7 @@ if [ -f /shared/backend_token ];then
 fi
 
 if [ -f /shared/frontend_token ];then
-    chmod 600 /shared/frontend_token
+    chmod 644 /shared/frontend_token
 fi
 
 wait $VAULT_PID
