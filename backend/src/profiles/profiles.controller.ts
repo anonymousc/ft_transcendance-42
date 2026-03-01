@@ -1,5 +1,5 @@
-import { Controller, Get, Query, Param, Body, Post, Put, Delete, HttpCode, HttpStatus, NotFoundException, ValidationPipe} from '@nestjs/common';
-import { CreatProfileDto }  from './dto/create-profile.dto';
+import { Controller, Get, Param, Body, Put, Delete, HttpCode, HttpStatus} from '@nestjs/common';
+// Removed: CreatProfileDto - profiles are auto-created during signup/OAuth, not via API
 import { UpdateProfileDto }  from './dto/update-profile.dto';
 import { ProfilesService } from './profiles.service';
 
@@ -22,12 +22,9 @@ export class ProfilesController
         return this.profilesservice.findone(id);
     }
 
-    @Post()
-    @HttpCode(HttpStatus.CREATED)
-    createProfile(@Body() creatProfileDto : CreatProfileDto)
-    {
-        return this.profilesservice.createprofile(creatProfileDto);
-    }
+    // Removed: POST /profiles endpoint
+    // Profiles are created automatically when users sign up or login via OAuth
+    // See auth.service.ts signup() and validateGoogleUser() methods
 
     @Put(':id')
     updateProfile(@Param('id') id : string, @Body() updateprofiledto : UpdateProfileDto)
