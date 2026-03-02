@@ -4,7 +4,6 @@ set -eu
 
 echo "Starting maptoposter service..."
 
-# Wait for Redis to be available
 until nc -z ${REDIS_HOST:-redis} ${REDIS_PORT:-6379} 2>/dev/null; do
     echo "Waiting for Redis at ${REDIS_HOST:-redis}:${REDIS_PORT:-6379}..."
     sleep 2
@@ -12,7 +11,6 @@ done
 
 echo "Redis is available"
 
-# Fetch Redis credentials from Vault if token exists
 if [ -f /data/frontend_token ]; then
     VAULT_TOKEN=$(jq -r .auth.client_token < /data/frontend_token)
     
@@ -34,7 +32,7 @@ fi
 # Export Redis connection for the application
 export REDIS_URL="${REDIS_URL:-redis://:${REDIS_PASSWORD}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}}"
 
-echo "Maptoposter starting on port 8082..."
+echo "Maptoposter starting on port 5025..."
 
-# Start the maptoposter application
-exec node server.js
+# Start the maptoposter application (Python Flask)
+exec python3 app.py

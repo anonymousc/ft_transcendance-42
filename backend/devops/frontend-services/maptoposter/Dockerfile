@@ -1,30 +1,18 @@
-FROM ghcr.io/cthonney/maptoposter-docker:latest AS build
+FROM ghcr.io/cthonney/maptoposter-docker:latest
 
-FROM alpine:3.21
-
-RUN apk add --no-cache \
-    nodejs \
-    npm \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     jq \
     netcat-openbsd \
-    && rm -rf /var/cache/apk/*
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY --from=build /app/ ./
-
-RUN addgroup -g 1000 maptoposter && \
-    adduser -u 1000 -G maptoposter -s /bin/sh -D maptoposter && \
-    chown -R maptoposter:maptoposter /app
-
 COPY --chmod=755 entrypoint.sh /usr/local/bin/entrypoint.sh
 
-USER maptoposter
-
-EXPOSE 8082
+EXPOSE 5025
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-    CMD curl -f http://localhost:8082/health || exit 1
+    CMD curl -f http://localhost:5025/ || exit 1
 
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["sh", "/usr/local/bin/entrypoint.sh"]

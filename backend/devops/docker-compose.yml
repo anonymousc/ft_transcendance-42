@@ -22,7 +22,7 @@ services:
       vault:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:$PORT_FRONT/"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:$PORT_FRONT/ || exit 1"]
       interval: 30s
       timeout: 30s
       retries: 3
@@ -53,7 +53,7 @@ services:
     env_file:
       - .env
     ports:
-      - "8082:8082"
+      - "5025:5025"
     networks:
       - saas
     volumes:
@@ -64,7 +64,7 @@ services:
       vault:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8082/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:5025/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -125,9 +125,9 @@ services:
       - saas
     restart: on-failure
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 5555 || exit 1"]
-      interval: 60s
-      timeout: 30s
+      test: ["CMD-SHELL", "pg_isready -h localhost -p $PORT_POSTGRES || exit 1"]
+      interval: 30s
+      timeout: 10s
       retries: 3
   # security services:
 
@@ -136,9 +136,12 @@ services:
     build: backend-services/logbull
     restart: on-failure
     container_name: logbull
+    env_file:
+      - .env
     volumes:
       - logs:/app/logs
       - shared_resources:/tmp/token:ro
+      - ./.env:/.env:ro
     depends_on:
       vault:
         condition: service_healthy
