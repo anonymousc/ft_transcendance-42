@@ -2,7 +2,7 @@
 
 set -eu
 
-curl -X GET http://vault:6666/v1/secret/data/postgres --header "X-Vault-Token: $(jq -r .auth.client_token < /token/token)" --silent --output /token/data
+curl -X GET http://vault:$PORT_VAULT/v1/secret/data/postgres --header "X-Vault-Token: $(jq -r .auth.client_token < /token/token)" --silent --output /token/data
 
 jq -r .data.data.password < /token/data > /token/passfile
 
@@ -22,7 +22,7 @@ rm -rf /token/passfile
 
 pg_ctl  -o "-p $PGPORT -c listen_addresses='*'" start 
 
-echo "host all all 0.0.0.0/0 scram-sha-256" >> /var/lib/postgresql/18/docker/pg_hba.conf
+echo "host all all 0.0.0.0/0 scram-sha-256" >> $PGDATA/pg_hba.conf
 
 export PGPASSWORD=$(jq -r .data.data.password < /token/data)
 createdb -U $(jq -r .data.data.username < /token/data) prisma 
