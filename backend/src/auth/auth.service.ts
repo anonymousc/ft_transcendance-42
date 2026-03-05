@@ -34,7 +34,7 @@ export class AuthService {
       include: { user: { include: { profile: true } } },
     });
 
-    if (account) {
+    if (account) { 
       await this.prisma.account.update({
         where: { id: account.id },
         data: { accessToken, refreshToken },
@@ -141,7 +141,7 @@ export class AuthService {
         isEmailVerified: false,
         accounts: {
           create: {
-            provider: 'local',
+            provider: 'local' ,
             providerAccountId: dto.email,
           },
         },
