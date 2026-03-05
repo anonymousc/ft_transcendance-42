@@ -20,8 +20,12 @@ services:
       retries: 3
     restart : on-failure
   auth:
-    build: ./backend-services/auth/
+    build:
+      context: ../../
+      dockerfile: devops/backend-services/auth/Dockerfile
     container_name: auth
+    env_file:
+      - .env
     networks:
       - saas
     volumes:
