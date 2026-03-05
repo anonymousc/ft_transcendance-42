@@ -1,6 +1,6 @@
-import { IsString, Length } from "class-validator";
+import { IsString, isString, Length } from "class-validator";
 
-export class UpdateProfileDto
+export class CreatProfileDto
 {
     @IsString()
     @Length(3)

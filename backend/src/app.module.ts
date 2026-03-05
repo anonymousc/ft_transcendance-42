@@ -14,10 +14,7 @@ import { AppService } from './app.service';
     }),
     AuthModule,
     ProfilesModule,
-    UploadsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
   controllers: [AppController],
   providers: [AppService],
 })

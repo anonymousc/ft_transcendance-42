@@ -1,4 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+// Removed: import { randomUUID } from 'crypto'; - Prisma auto-generates IDs with @default(cuid())
+import { CreatProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { PrismaService } from '../prisma.service';
 
@@ -23,6 +25,18 @@ export class ProfilesService {
         return profile;
     }
 
+    async createprofile(dto : CreatProfileDto)
+    {
+        const newprofile = await this.prisma.profile.create({
+            data: {
+                userId: dto.name,          // TEMPORARY: This needs to come from authenticated user
+                username: dto.name,        // Map 'name' to 'username' 
+                bio: dto.description,      // Map 'description' to 'bio'
+            },
+        });
+        return newprofile;
+    }
+
     async updateprofile(id : string , dto : UpdateProfileDto)
     {
         const existing = await this.prisma.profile.findUnique({
@@ -34,10 +48,8 @@ export class ProfilesService {
         const updatedProfile = await this.prisma.profile.update({
             where: { id: id },
             data: {
-                username: dto.username,       
-                displayName: dto.displayName, 
-                bio: dto.bio,                 
-                avatar: dto.avatar,
+                username: dto.name,
+                bio: dto.description,
             },
         });
         return updatedProfile;

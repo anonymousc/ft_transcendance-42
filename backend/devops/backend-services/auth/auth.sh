@@ -10,4 +10,4 @@ export DATABASE_URL=$(jq -r .data.data.database_url /tmp/data)
 
 rm -f /tmp/data
 
-exec node
+exec node /app/dist/main.js

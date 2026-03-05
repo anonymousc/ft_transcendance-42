@@ -17,7 +17,6 @@ vault policy write postgres /tools/policy.hcl > /dev/null
 
 DB_PASS=$(openssl rand -hex 12)
 DB_USER=$(openssl rand -hex 12)
-
 DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@database:${PORT_POSTGRES}/prisma?schema=public"
 
 vault kv put -mount=secret postgres username="$DB_USER" password="$DB_PASS" database_url="$DATABASE_URL" > /dev/null
