@@ -76,6 +76,9 @@ vault token create -policy=postgres -format=json > /shared/backend_token
 # Create token for frontend (redis policy)
 vault token create -policy=postgres -format=json > /shared/frontend_token
 
+# Create token for auth service
+vault token create -policy=postgres -format=json > /shared/auth_token
+
 if [ -f /shared/token ];then
     chown 70:70 /shared/ && chown 70:70 /shared/token
     chmod 600 /shared/token
@@ -87,6 +90,10 @@ fi
 
 if [ -f /shared/frontend_token ];then
     chmod 644 /shared/frontend_token
+fi
+
+if [ -f /shared/auth_token ];then
+    chmod 644 /shared/auth_token
 fi
 
 wait $VAULT_PID

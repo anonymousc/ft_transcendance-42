@@ -24,8 +24,6 @@ curl -X GET http://vault:$PORT_VAULT/v1/secret/data/postgres --header "X-Vault-T
 
     pg_ctl  -o "-p $PGPORT -c listen_addresses='*'" start 
 
-echo "host all all 0.0.0.0/0 scram-sha-256" >> $PGDATA/pg_hba.conf
-
     export PGPASSWORD=$(jq -r .data.data.password < /token/data)
     createdb -U $(jq -r .data.data.username < /token/data) prisma 
 
@@ -39,6 +37,10 @@ echo "host all all 0.0.0.0/0 scram-sha-256" >> $PGDATA/pg_hba.conf
     pg_ctl stop
 
     rm -rf /token/data 
+fi
+
+if ! grep -q "host all all 0.0.0.0/0" $PGDATA/pg_hba.conf; then
+    echo "host all all 0.0.0.0/0 scram-sha-256" >> $PGDATA/pg_hba.conf
 fi
 
 exec postgres

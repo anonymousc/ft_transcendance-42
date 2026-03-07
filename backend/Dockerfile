@@ -1,14 +1,12 @@
-FROM node:18-alpine AS build
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
 COPY . .
 
-RUN npm ci --production=false
+RUN npm ci && npx nest build
 
-RUN npm run build
-
-FROM node:18-alpine
+FROM node:20-alpine
 
 RUN apk add --no-cache curl jq 
 

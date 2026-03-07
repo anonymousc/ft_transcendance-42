@@ -29,6 +29,12 @@ npx prisma generate
 
 sleep 5
 
-npx prisma migrate deploy
+# Use db push if no migrations exist, otherwise use migrate deploy
+if [ -z "$(ls -A prisma/migrations 2>/dev/null | grep -v migration_lock.toml)" ]; then
+    echo "No migrations found, using prisma db push..."
+    npx prisma db push --accept-data-loss
+else
+    npx prisma migrate deploy
+fi
 
 exec npm run start:dev

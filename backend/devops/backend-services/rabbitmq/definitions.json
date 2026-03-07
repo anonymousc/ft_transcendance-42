@@ -43,9 +43,25 @@
       "exchange": "events",
       "write": ".*",
       "read": ".*"
+    },
+    {
+      "user": "${RABBITMQ_USER}",
+      "vhost": "travel_planning",
+      "exchange": "logs",
+      "write": ".*",
+      "read": ".*"
     }
   ],
   "exchanges": [
+    {
+      "name": "logs",
+      "vhost": "travel_planning",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
     {
       "name": "events",
       "vhost": "travel_planning",
@@ -75,6 +91,51 @@
     }
   ],
   "queues": [
+    {
+      "name": "logs.all",
+      "vhost": "travel_planning",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 604800000
+      }
+    },
+    {
+      "name": "logs.backend",
+      "vhost": "travel_planning",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 604800000
+      }
+    },
+    {
+      "name": "logs.frontend",
+      "vhost": "travel_planning",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 604800000
+      }
+    },
+    {
+      "name": "logs.auth",
+      "vhost": "travel_planning",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 604800000
+      }
+    },
+    {
+      "name": "logs.database",
+      "vhost": "travel_planning",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 604800000
+      }
+    },
     {
       "name": "user.created",
       "vhost": "travel_planning",
@@ -170,6 +231,46 @@
     }
   ],
   "bindings": [
+    {
+      "source": "logs",
+      "vhost": "travel_planning",
+      "destination": "logs.all",
+      "destination_type": "queue",
+      "routing_key": "#",
+      "arguments": {}
+    },
+    {
+      "source": "logs",
+      "vhost": "travel_planning",
+      "destination": "logs.backend",
+      "destination_type": "queue",
+      "routing_key": "backend.#",
+      "arguments": {}
+    },
+    {
+      "source": "logs",
+      "vhost": "travel_planning",
+      "destination": "logs.frontend",
+      "destination_type": "queue",
+      "routing_key": "frontend.#",
+      "arguments": {}
+    },
+    {
+      "source": "logs",
+      "vhost": "travel_planning",
+      "destination": "logs.auth",
+      "destination_type": "queue",
+      "routing_key": "auth.#",
+      "arguments": {}
+    },
+    {
+      "source": "logs",
+      "vhost": "travel_planning",
+      "destination": "logs.database",
+      "destination_type": "queue",
+      "routing_key": "database.#",
+      "arguments": {}
+    },
     {
       "source": "events",
       "vhost": "travel_planning",

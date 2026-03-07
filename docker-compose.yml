@@ -4,15 +4,17 @@ name: travel_planning # for project name <written by czar>
 services: 
   frontend:
     container_name: frontend
-    build: ../../frontend/
+    build: ./frontend/
     env_file:
       - .env
+    environment:
+      - AUTH_SERVICE_URL=http://auth:3001
     ports:
       - "${PORT_FRONT}:${PORT_FRONT}"
     networks:
       - saas
     volumes:
-      - ../../frontend/:/app
+      - ./frontend/:/app
       - shared_resources:/data:ro
     depends_on:
       backend:
@@ -21,15 +23,25 @@ services:
         condition: service_healthy
       vault:
         condition: service_healthy
+      # auth:
+      #   condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:$PORT_FRONT/ || exit 1"]
       interval: 30s
       timeout: 30s
       retries: 3
     restart : on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=frontend"
   redis:
     container_name: redis
-    build: ./frontend-services/redis/
+    build: ./backend/devops/frontend-services/redis/
     env_file:
       - .env
     networks:
@@ -47,9 +59,17 @@ services:
       retries: 3
       start_period: 30s
     restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=redis"
   maptoposter:
     container_name: maptoposter
-    build: ./frontend-services/maptoposter/
+    build: ./backend/devops/frontend-services/maptoposter/
     env_file:
       - .env
     ports:
@@ -69,25 +89,53 @@ services:
       timeout: 10s
       retries: 3
     restart: on-failure
-  auth:
-    build:
-      context: ../../
-      dockerfile: devops/backend-services/auth/Dockerfile
-    container_name: auth
-    env_file:
-      - .env
-    networks:
-      - saas
-    volumes:
-      - shared_resources:/data
-    depends_on:
-      database:
-        condition: service_started
-      vault:
-        condition: service_healthy
-    restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=maptoposter"
+  # auth:
+  #   build:
+  #     context: ./
+  #     dockerfile: backend/devops/backend-services/auth/Dockerfile
+  #   container_name: auth
+  #   ports:
+  #     - "3001:3001"
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - AUTH_PORT=3001
+  #     - NODE_ENV=production
+  #   networks:
+  #     - saas
+  #   volumes:
+  #     - shared_resources:/data
+  #   depends_on:
+  #     database:
+  #       condition: service_started
+  #     vault:
+  #       condition: service_healthy
+      # amq:
+      #   condition: service_healthy
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -f http://localhost:3001/health || exit 1"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    # restart: on-failure
+    # logging:
+    #   driver: json-file
+    #   options:
+    #     max-size: "10m"
+    #     max-file: "3"
+    #     labels: "service"
+    # labels:
+    #   - "service=auth"
   amq:
-    build: ./backend-services/rabbitmq/
+    build: ./backend/devops/backend-services/rabbitmq/
     hostname: rabbitmq
     container_name: rabbitmq
     mem_limit: 512m
@@ -111,9 +159,17 @@ services:
       retries: 3
       start_period: 30s
     restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=rabbitmq"
   database:
     container_name: database
-    build: backend-services/prisma/
+    build: ./backend/devops/backend-services/prisma/
     env_file:
       - .env
     volumes:
@@ -131,26 +187,53 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=database"
   # security services:
 
   #logger
   logger:
-    build: backend-services/logbull
+    build: ./backend/devops/backend-services/logbull
     restart: on-failure
     container_name: logbull
+    ports:
+      - "9100:9100"
     env_file:
       - .env
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_VHOST=travel_planning
+      - RABBITMQ_EXCHANGE=logs
+      - RABBITMQ_QUEUE=logs.all
+      - LOG_LEVEL=info
     volumes:
       - logs:/app/logs
       - shared_resources:/tmp/token:ro
-      - ./.env:/.env:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
       vault:
         condition: service_healthy
       database:
         condition: service_started
+      amq:
+        condition: service_healthy
     networks:
       - saas
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=logbull"
   ######################
   ######################
   swagger:
@@ -159,16 +242,23 @@ services:
     environment:
       - SWAGGER_JSON=/app/swagger.json
     ports:
-      - 8080:8080
-      - 8080:8080
+      - "8080:8080"
     volumes:
-      - ./data/:/app/
+      - ./backend/devops/data/:/app/
     networks:
       - saas
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=swagger"
   #############################
   vault:
     container_name: vault-hashicorp
-    build: backend-services/security/hashicorp-vault/
+    build: ./backend/devops/backend-services/security/hashicorp-vault/
     secrets:
       - google_client_id
       - google_client_secret
@@ -178,9 +268,8 @@ services:
       - .env
     volumes:
       - shared_resources:/shared
-      - ./backend-services/security/hashicorp-vault/tools:/tools:rx
-      - ./secrets~:/secrets:ro
-      - ./secrets~:/secrets:ro
+      - ./backend/devops/backend-services/security/hashicorp-vault/tools:/tools:rx
+      - ./backend/devops/secrets~:/secrets:ro
     networks:
       - saas
     healthcheck:
@@ -190,6 +279,14 @@ services:
       retries: 5
       start_period: 30s
     restart : unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=vault"
   # webserver:
   #   container_name: webserver
   #   build: backend-services/security/modsecurity/
@@ -197,13 +294,17 @@ services:
   #    - "8080:80" #shoud be changed to 443
   #   retries: on-failure
   backend:
-    build: ./..
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: backend
     ports:
       - "3000:3000"
       - "5555:5555"
     env_file:
       - .env
+    environment:
+      - AUTH_SERVICE_URL=http://auth:3001
     networks:
       - saas
     volumes:
@@ -213,12 +314,22 @@ services:
         condition: service_started
       vault:
         condition: service_healthy
+      # auth:
+      #   condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/"]
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
       interval: 1m30s
       timeout: 60s
       retries: 3
     restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=backend"
 
   # Monitoring service - Netdata
   netdata:
@@ -236,7 +347,7 @@ services:
       - netdata_config:/etc/netdata
       - netdata_lib:/var/lib/netdata
       - netdata_cache:/var/cache/netdata
-      - ./backend-services/netdata/go.d/prometheus.conf:/etc/netdata/go.d/prometheus.conf:ro
+      - ./backend/devops/backend-services/netdata/go.d/prometheus.conf:/etc/netdata/go.d/prometheus.conf:ro
       - /etc/passwd:/host/etc/passwd:ro
       - /etc/group:/host/etc/group:ro
       - /etc/localtime:/etc/localtime:ro
@@ -258,6 +369,14 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=netdata"
 
 networks:
   saas :
@@ -276,10 +395,10 @@ volumes:
       device : tmpfs
 secrets:
   google_client_id:
-    file: ./secrets.example/google_client_id
+    file: ./backend/devops/secrets.example/google_client_id
   google_client_secret:
-    file: ./secrets.example/google_client_secret
+    file: ./backend/devops/secrets.example/google_client_secret
   callback_url:
-    file: ./secrets.example/callback_url
+    file: ./backend/devops/secrets.example/callback_url
   frontend_url:
-    file: ./secrets.example/frontend_url
+    file: ./backend/devops/secrets.example/frontend_url
