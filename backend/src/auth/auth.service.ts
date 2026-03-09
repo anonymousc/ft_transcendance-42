@@ -141,7 +141,7 @@ export class AuthService {
         isEmailVerified: false,
         accounts: {
           create: {
-            provider: 'local',
+            provider: 'local' ,
             providerAccountId: dto.email,
           },
         },

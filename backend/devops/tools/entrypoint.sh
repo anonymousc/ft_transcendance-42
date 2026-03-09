@@ -2,15 +2,7 @@
 
 set -eu 
 
-echo "Auth microservice starting..."
-
-# Wait for auth_token file to exist and be readable
-echo "Waiting for vault token..."
-while [ ! -r /data/auth_token ]; do
-    sleep 2
-done
-
-VAULT_TOKEN=$(jq -r .auth.client_token < /data/auth_token)
+VAULT_TOKEN=$(jq -r .auth.client_token < /data/token)
 
 curl -s -X GET http://vault:$PORT_VAULT/v1/secret/data/postgres \
   --header "X-Vault-Token: $VAULT_TOKEN" \
@@ -31,16 +23,18 @@ export JWT_REFRESH_SECRET=$(jq -r .data.data.jwt_refresh_secret /tmp/backend_dat
 export JWT_ACCESS_EXPIRES_IN=$(jq -r .data.data.jwt_access_expires_in /tmp/backend_data)
 export JWT_REFRESH_EXPIRES_IN=$(jq -r .data.data.jwt_refresh_expires_in /tmp/backend_data)
 
-rm -f /tmp/db_data
-
-rm -f /tmp/backend_data
+rm -f /tmp/db_data /tmp/backend_data
 
 npx prisma generate
 
-if [ $? -eq 0 ]; then
-  npx prisma migrate deploy
+sleep 5
+
+# Use db push if no migrations exist, otherwise use migrate deploy
+if [ -z "$(ls -A prisma/migrations 2>/dev/null | grep -v migration_lock.toml)" ]; then
+    echo "No migrations found, using prisma db push..."
+    npx prisma db push --accept-data-loss
+else
+    npx prisma migrate deploy
 fi
 
-echo "Starting auth service on port ${AUTH_PORT:-3001}..."
-
-exec npm run start
+exec npm run start:dev

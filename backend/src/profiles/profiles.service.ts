@@ -1,55 +1,71 @@
-import { Injectable } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+// Removed: import { randomUUID } from 'crypto'; - Prisma auto-generates IDs with @default(cuid())
 import { CreatProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class ProfilesService {
-    private profiles = [
-        {
-            id : randomUUID(), 
-            name : "nigga",
-            description : "zinji"
-        },
-        {
-            id : randomUUID(),
-            name : "3azzi",
-            description : "zinji tana"
-        },
-        {
-            id : randomUUID(),
-            name : "wigga",
-            description : "white nigga"
-        }
-    ]
+   
+    constructor(private prisma: PrismaService) {}
 
-    returnprofiles()
+
+    async returnprofiles()
     {
-        return this.profiles;
+        return this.prisma.profile.findMany();
     }
     
-    findone(id : string)
+    async findone(id : string)
     {
-        return this.profiles.find((profiles) => profiles.id === id);
+        const profile = await this.prisma.profile.findUnique({
+            where: { id: id },
+        });
+        if (!profile)
+            throw new NotFoundException(`Profile with ID ${id} not found`);
+        return profile;
     }
 
-    createprofile(dto : CreatProfileDto)
+    async createprofile(dto : CreatProfileDto)
     {
-        const newprofile = {
-            id : randomUUID(),
-            ...dto
-        };
-        this.profiles.push(newprofile);
-        return this.profiles;
+        const newprofile = await this.prisma.profile.create({
+            data: {
+                userId: dto.name,          // TEMPORARY: This needs to come from authenticated user
+                username: dto.name,        // Map 'name' to 'username' 
+                bio: dto.description,      // Map 'description' to 'bio'
+            },
+        });
+        return newprofile;
     }
 
-    updateprofile(id : string , profile : UpdateProfileDto)
+    async updateprofile(id : string , dto : UpdateProfileDto)
     {
-        let profiletoupdate = this.profiles.find((profiles) => profiles.id === id);
-        if (!profiletoupdate)
-            return {};
-        profiletoupdate.name = profile.name;
-        profiletoupdate.description = profile.description;
-        return profiletoupdate;
+        const existing = await this.prisma.profile.findUnique({
+            where: { id },
+        });
+        if (!existing)
+            throw new NotFoundException(`Profile with ID ${id} not found`);
+
+        const updatedProfile = await this.prisma.profile.update({
+            where: { id: id },
+            data: {
+                username: dto.name,
+                bio: dto.description,
+            },
+        });
+        return updatedProfile;
+    }
+
+    async removeprofile(id : string)
+    {
+        const matchingprofile = await this.prisma.profile.findUnique({
+            where: { id : id },
+        });
+        if (!matchingprofile)
+        {
+            throw new NotFoundException(`Profile with ID ${id} not found`);
+        }
+        await this.prisma.profile.delete({
+            where: { id: id },
+        });
     }
 }
