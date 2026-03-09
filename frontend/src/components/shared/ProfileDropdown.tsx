@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import pdp from "../../assets/pdp1.png";
 import "./ProfileDropdown.css";
 import { useAuth } from "../../context/AuthContext";
 
@@ -13,7 +12,7 @@ interface ProfileDropdownProps {
 }
 
 function ProfileDropdown({
-  profileImage = pdp,
+  profileImage = "/profile.png",
   onProfile,
   onSettings,
   onLanguage,

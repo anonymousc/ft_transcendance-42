@@ -50,7 +50,7 @@
     align-items: left;
     padding: 3rem 2rem 1rem;
     border-bottom: 1px solid #E5E5EA;
-    background-image: url('../../../assets/BigAtlass.png');
+    background-image: url('/default-background-image.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
