@@ -14,6 +14,7 @@ import ProtectedRoute from './components/shared/ProtectedRoute';
 import Webchat from './features/chat/components/Webchat.tsx';
 import FriendsPage from './features/friends/components/FriendsPage';
 import NotificationPage from './features/notifications/NotificationPage';
+import City from './pages/City';
 
 function AppContent() {
   const location = useLocation();
@@ -31,6 +32,7 @@ function AppContent() {
         <Route path="/webchat" element={<Webchat />} />
         <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><NotificationPage /></ProtectedRoute>} />
+        <Route path="/city" element={<ProtectedRoute><City /></ProtectedRoute>} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>
