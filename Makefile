@@ -25,6 +25,8 @@ logs :
 backend:
 	$(DOCKER) compose -f ${COMPOSE} build backend --no-cache
 	$(DOCKER) compose -f ${COMPOSE} up backend -d
+start:
+	$(DOCKER) compose -f ${COMPOSE} start
 stop :
 	$(DOCKER) compose -f ${COMPOSE} stop
 clean :
