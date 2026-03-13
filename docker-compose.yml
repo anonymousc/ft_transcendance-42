@@ -395,10 +395,10 @@ volumes:
       device : tmpfs
 secrets:
   google_client_id:
-    file: ./backend/devops/secrets.example/google_client_id
+    file: ./backend/devops/secrets/google_client_id
   google_client_secret:
-    file: ./backend/devops/secrets.example/google_client_secret
+    file: ./backend/devops/secrets/google_client_secret
   callback_url:
-    file: ./backend/devops/secrets.example/callback_url
+    file: ./backend/devops/secrets/callback_url
   frontend_url:
-    file: ./backend/devops/secrets.example/frontend_url
+    file: ./backend/devops/secrets/frontend_url
