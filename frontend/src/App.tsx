@@ -10,11 +10,13 @@ import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import SettingsPage from './features/Settings/component/SettingsPage';
 import OAuthSuccess from './pages/OAuthSuccess';
+import CityPage from './pages/CityPage';
 import ProtectedRoute from './components/shared/ProtectedRoute';
 import Webchat from './features/chat/components/Webchat.tsx';
 import FriendsPage from './features/friends/components/FriendsPage';
 import NotificationPage from './features/notifications/NotificationPage';
-import City from './pages/City';
+import City from './pages/CityPage';
+// import HealthCheckPage from './pages/healthcheck';
 
 function AppContent() {
   const location = useLocation();
@@ -22,7 +24,8 @@ function AppContent() {
   return (
     <>
       <Routes>
-        <Route path="/" element={<Hero />} />
+        {/* <Route path="/" element={<Hero />} /> */}
+        <Route path="/" element={<CityPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />

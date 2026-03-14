@@ -287,6 +287,30 @@ services:
         labels: "service"
     labels:
       - "service=vault"
+  ai-places:
+    build: ./backend/src/ai-places-service
+    container_name: ai-places
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./backend/src/ai-places-service/.env
+    networks:
+      - saas
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=ai-places"
+
   # webserver:
   #   container_name: webserver
   #   build: backend-services/security/modsecurity/
