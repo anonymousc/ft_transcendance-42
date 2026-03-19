@@ -329,8 +329,6 @@ function CityPage() {
             </button>
           </form>
         </div>
-
-        {/* Scroll prompt */}
         <div className="pb-10 flex flex-col items-center gap-1.5">
           <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-stone-500">
             Scroll to explore
@@ -338,17 +336,14 @@ function CityPage() {
           <ChevronDown
             size={30}
             strokeWidth={1.5}
-            className="animate-bounce text-stone-600"
           />
         </div>
       </div>
 
-      {/* ── AI Recommendations ────────────────────────────────────────── */}
       <section
         ref={sectionRef}
         className="bg-[#faf9f7] dark:bg-[#0e0d0b] py-20 px-4 sm:px-8 lg:px-16"
       >
-        {/* Section header */}
         <div ref={headerRef} className="max-w-3xl mx-auto mb-12 text-center">
           <div
             className={`inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full

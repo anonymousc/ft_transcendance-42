@@ -27,6 +27,7 @@ function GlassSearchBar({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSearch?.(value);
+        
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
