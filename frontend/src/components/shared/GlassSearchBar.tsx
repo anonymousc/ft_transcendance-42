@@ -1,56 +1,153 @@
-import { useState } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Search, MapPin } from "lucide-react";
 import "./GlassSearchBar.css";
 
+const AI_PLACES_URL =
+  (import.meta.env.VITE_AI_PLACES_URL as string) || "http://localhost:4000";
+
 interface GlassSearchBarProps {
-    placeholder?: string;
-    value?: string;
-    onChange?: (value: string) => void;
-    onSearch?: (value: string) => void;
+  placeholder?: string;
+  value?: string;
+  onChange?: (value: string) => void;
+  /** Called when the user submits freetext (no autocomplete pick) */
+  onSearch?: (value: string) => void;
+  /** Called when the user picks a city from the autocomplete dropdown */
+  onSelect?: (city: string) => void;
 }
 
 function GlassSearchBar({
-    placeholder = "Search By Places or By Activities",
-    value: controlledValue,
-    onChange,
-    onSearch,
+  placeholder = "Search By Places or By Activities",
+  value: controlledValue,
+  onChange,
+  onSearch,
+  onSelect,
 }: GlassSearchBarProps) {
-    const [internalValue, setInternalValue] = useState("");
-    const value = controlledValue ?? internalValue;
+  const [internalValue, setInternalValue] = useState("");
+  const value = controlledValue ?? internalValue;
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newValue = e.target.value;
-        setInternalValue(newValue);
-        onChange?.(newValue);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Debounced fetch for autocomplete suggestions
+  useEffect(() => {
+    if (value.trim().length < 1) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `${AI_PLACES_URL}/autocomplete?q=${encodeURIComponent(value.trim())}`,
+        );
+        const data = await res.json();
+        const list: string[] = data.suggestions ?? [];
+        setSuggestions(list);
+        setShowDropdown(list.length > 0);
+        setSelectedIndex(-1);
+      } catch {
+        setSuggestions([]);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [value]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+        setSelectedIndex(-1);
+      }
     };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onSearch?.(value);
-        
-    };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInternalValue(newValue);
+    onChange?.(newValue);
+  };
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "Enter") {
-            onSearch?.(value);
-        }
-    };
+  const handleSelect = (city: string) => {
+    setInternalValue(city);
+    onChange?.(city);
+    setSuggestions([]);
+    setShowDropdown(false);
+    setSelectedIndex(-1);
+    // Prefer onSelect when provided so the caller can distinguish a city
+    // pick (exact match) from a freetext submit (natural language search).
+    if (onSelect) onSelect(city);
+    else onSearch?.(city);
+  };
 
-    return (
-        <form className="glass-search-bar" onSubmit={handleSubmit}>
-            <input
-                type="text"
-                className="glass-search-input"
-                placeholder={placeholder}
-                value={value}
-                onChange={handleChange}
-                onKeyDown={handleKeyDown}
-            />
-            <button type="submit" className="glass-search-button" aria-label="Search">
-                <Search size={24} />
-            </button>
-        </form>
-    );
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedIndex >= 0 && suggestions[selectedIndex]) {
+      handleSelect(suggestions[selectedIndex]);
+    } else {
+      setShowDropdown(false);
+      onSearch?.(value);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showDropdown) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex(i => Math.min(i + 1, suggestions.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex(i => Math.max(i - 1, -1));
+    } else if (e.key === "Escape") {
+      setShowDropdown(false);
+      setSelectedIndex(-1);
+    }
+  };
+
+  return (
+    <div className="glass-search-wrapper" ref={wrapperRef}>
+      <form className="glass-search-bar" onSubmit={handleSubmit}>
+        <input
+          type="text"
+          className="glass-search-input"
+          placeholder={placeholder}
+          value={value}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          autoComplete="off"
+        />
+        <button type="submit" className="glass-search-button" aria-label="Search">
+          <Search size={24} />
+        </button>
+      </form>
+
+      {showDropdown && suggestions.length > 0 && (
+        <ul className="glass-suggestions" role="listbox">
+          {suggestions.map((city, i) => (
+            <li
+              key={city}
+              role="option"
+              aria-selected={i === selectedIndex}
+              className={`glass-suggestion-item${i === selectedIndex ? " active" : ""}`}
+              // mousedown fires before blur, so the input doesn't lose focus first
+              onMouseDown={() => handleSelect(city)}
+            >
+              <MapPin size={13} className="glass-suggestion-icon" />
+              {city}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 export default GlassSearchBar;

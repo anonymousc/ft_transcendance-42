@@ -24,8 +24,8 @@ function AppContent() {
   return (
     <>
       <Routes>
-        {/* <Route path="/" element={<Hero />} /> */}
-        <Route path="/" element={<CityPage />} />
+        <Route path="/" element={<Hero />} />
+        {/* <Route path="/" element={<CityPage />} /> */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />

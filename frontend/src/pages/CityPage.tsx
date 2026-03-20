@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import HomeNavBar from "@/components/shared/HomeNavBar";
 import CityBackground from "@/assets/marrakech_japanese_ink_20260221_014526 2.png";
 import {
   ChevronDown,
   MapPin,
+  Search,
   Star,
   Flame,
   TreePine,
@@ -12,8 +14,6 @@ import {
   Building2,
   BookOpen,
   Bot,
-  Search,
-  Loader2,
   AlertCircle,
 } from "lucide-react";
 
@@ -29,6 +29,15 @@ interface Place {
   must_visit: boolean;
   image_query: string;
   image: string | null;
+  match_reason?: string;
+}
+
+interface ApiEnvelope {
+  ok: boolean;
+  data?: Place[];
+  error?: { code: string; message: string; details?: string };
+  city?: string;
+  intent?: string;
 }
 
 function usePlaces(city: string) {
@@ -45,26 +54,54 @@ function usePlaces(city: string) {
     setPlaces([]);
 
     fetch(`${AI_PLACES_URL}/places?city=${encodeURIComponent(city.trim())}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`Server error ${res.status}`);
-        return res.json();
+      .then((res) => res.json())
+      .then((envelope: ApiEnvelope) => {
+        if (!envelope.ok) throw new Error(envelope.error?.details ?? envelope.error?.message ?? "Unknown error");
+        if (!cancelled) setPlaces(envelope.data ?? []);
       })
-      .then((data: Place[]) => {
-        if (!cancelled) setPlaces(data);
-      })
-      .catch((err: Error) => {
-        if (!cancelled) setError(err.message);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+      .catch((err: Error) => { if (!cancelled) setError(err.message); })
+      .finally(() => { if (!cancelled) setLoading(false); });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [city]);
 
   return { places, loading, error };
+}
+
+function useSearch(q: string) {
+  const [places, setPlaces] = useState<Place[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [resolvedCity, setResolvedCity] = useState("");
+  const [intent, setIntent] = useState("");
+
+  useEffect(() => {
+    if (!q.trim()) return;
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setPlaces([]);
+    setResolvedCity("");
+    setIntent("");
+
+    fetch(`${AI_PLACES_URL}/places/search?q=${encodeURIComponent(q.trim())}`)
+      .then((res) => res.json())
+      .then((envelope: ApiEnvelope) => {
+        if (!envelope.ok) throw new Error(envelope.error?.details ?? envelope.error?.message ?? "Unknown error");
+        if (!cancelled) {
+          setPlaces(envelope.data ?? []);
+          setResolvedCity(envelope.city ?? "");
+          setIntent(envelope.intent ?? "");
+        }
+      })
+      .catch((err: Error) => { if (!cancelled) setError(err.message); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [q]);
+
+  return { places, loading, error, resolvedCity, intent };
 }
 
 interface CategoryStyle {
@@ -276,22 +313,21 @@ function SkeletonCard() {
 }
 
 function CityPage() {
-  const [cityInput, setCityInput] = useState("Marrakesh");
-  const [activeCity, setActiveCity] = useState("Marrakesh");
+  const [searchParams] = useSearchParams();
+  const cityParam = searchParams.get("city");
+  const qParam    = searchParams.get("q");
+  const isSearchMode = !!qParam && !cityParam;
+
   const sectionRef = useRef<HTMLElement>(null);
   const { ref: headerRef, inView: headerInView } = useInView(0.2);
 
-  const { places, loading, error } = usePlaces(activeCity);
+  // Always call both hooks — the inactive one receives an empty string and no-ops.
+  const cityResult   = usePlaces(isSearchMode ? "" : (cityParam ?? "Marrakesh"));
+  const searchResult = useSearch(isSearchMode ? (qParam ?? "") : "");
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmed = cityInput.trim();
-    if (!trimmed || trimmed === activeCity) return;
-    setActiveCity(trimmed);
-    setTimeout(() => {
-      sectionRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 80);
-  }
+  const { places, loading, error } = isSearchMode ? searchResult : cityResult;
+  const displayCity = isSearchMode ? (searchResult.resolvedCity || "…") : (cityParam ?? "Marrakesh");
+  const intent      = isSearchMode ? searchResult.intent : null;
 
   return (
     <div>
@@ -300,43 +336,12 @@ function CityPage() {
         style={{ backgroundImage: `url(${CityBackground})` }}
       >
         <HomeNavBar />
-
-        {/* Search bar — centered in hero */}
-        <div className="flex-1 flex flex-col items-center justify-center px-4">
-          <form
-            onSubmit={handleSubmit}
-            className="w-full max-w-md flex items-center gap-2 bg-white/80 dark:bg-black/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl px-4 py-3 shadow-lg"
-          >
-            <Search size={16} className="shrink-0 text-stone-400" />
-            <input
-              type="text"
-              value={cityInput}
-              onChange={(e) => setCityInput(e.target.value)}
-              placeholder="Enter a city…"
-              className="flex-1 bg-transparent text-sm text-stone-800 dark:text-white placeholder:text-stone-400 outline-none"
-            />
-            <button
-              type="submit"
-              disabled={loading || !cityInput.trim()}
-              className="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors duration-200"
-            >
-              {loading ? (
-                <Loader2 size={13} className="animate-spin" />
-              ) : (
-                <Search size={13} />
-              )}
-              Explore
-            </button>
-          </form>
-        </div>
+        <div className="flex-1" />
         <div className="pb-10 flex flex-col items-center gap-1.5">
           <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-stone-500">
             Scroll to explore
           </span>
-          <ChevronDown
-            size={30}
-            strokeWidth={1.5}
-          />
+          <ChevronDown size={30} strokeWidth={1.5} />
         </div>
       </div>
 
@@ -345,6 +350,8 @@ function CityPage() {
         className="bg-[#faf9f7] dark:bg-[#0e0d0b] py-20 px-4 sm:px-8 lg:px-16"
       >
         <div ref={headerRef} className="max-w-3xl mx-auto mb-12 text-center">
+
+          {/* Mode badge */}
           <div
             className={`inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full
               bg-stone-100 dark:bg-white/[0.06] border border-stone-200 dark:border-white/[0.08]
@@ -353,26 +360,53 @@ function CityPage() {
           >
             <Bot size={13} className="text-orange-500" />
             <span className="text-[11px] font-semibold tracking-widest uppercase text-stone-500 dark:text-stone-400">
-              Curated by Gemini AI
+              {isSearchMode ? "AI Search Results" : "Curated by Gemini AI"}
             </span>
           </div>
 
+          {/* Search query pill — shown only in search mode */}
+          {isSearchMode && qParam && (
+            <div
+              className={`flex items-center justify-center gap-2 mb-3
+                transition-all duration-500 ease-out delay-75
+                ${headerInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}
+            >
+              <span className="inline-flex items-center gap-1.5 text-[12px] text-stone-500 dark:text-stone-400
+                bg-stone-100 dark:bg-white/[0.05] border border-stone-200 dark:border-white/[0.07]
+                rounded-full px-3 py-1 max-w-sm truncate">
+                <Search size={11} className="shrink-0 text-orange-400" />
+                {qParam}
+              </span>
+            </div>
+          )}
+
+          {/* Title */}
           <h2
             className={`text-4xl sm:text-5xl font-bold text-stone-900 dark:text-white tracking-tight mb-4
               transition-all duration-600 ease-out delay-100
               ${headerInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"}`}
           >
-            Discover{" "}
-            <span className="text-orange-500">{activeCity}</span>
+            {isSearchMode ? (
+              loading && !displayCity.trim() ? (
+                <span className="text-stone-400 dark:text-stone-500">Searching…</span>
+              ) : (
+                <>Discover <span className="text-orange-500">{displayCity}</span></>
+              )
+            ) : (
+              <>Discover <span className="text-orange-500">{displayCity}</span></>
+            )}
           </h2>
 
+          {/* Subtitle */}
           <p
             className={`text-[15px] text-stone-500 dark:text-stone-400 max-w-lg mx-auto leading-relaxed
               transition-all duration-500 ease-out delay-200
               ${headerInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
           >
-            AI-powered picks to help you experience the very best of{" "}
-            {activeCity} — from hidden gems to iconic landmarks.
+            {intent
+              ? <><span className="text-orange-400 font-medium">{intent}</span> — matched by Gemini AI</>
+              : <>AI-powered picks to help you experience the very best of {displayCity} — from hidden gems to iconic landmarks.</>
+            }
           </p>
         </div>
 
@@ -381,7 +415,10 @@ function CityPage() {
           <div className="max-w-3xl mx-auto mb-8 flex items-center gap-3 px-5 py-4 rounded-2xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300">
             <AlertCircle size={16} className="shrink-0" />
             <p className="text-sm">
-              Could not load places for <strong>{activeCity}</strong>: {error}
+              {isSearchMode
+                ? <>Could not search for <strong>"{qParam}"</strong>: {error}</>
+                : <>Could not load places for <strong>{displayCity}</strong>: {error}</>
+              }
             </p>
           </div>
         )}
@@ -397,7 +434,7 @@ function CityPage() {
 
         {!loading && !error && places.length === 0 && (
           <p className="text-center text-stone-400 dark:text-stone-600 mt-8 text-sm">
-            No places found. Try a different city.
+            No places found. Try a different {isSearchMode ? "query" : "city"}.
           </p>
         )}
 

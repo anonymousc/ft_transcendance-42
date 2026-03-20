@@ -1,27 +1,32 @@
-// src/routes/autocomplete.js
-const CITIES = [
-  "Casablanca", "Marrakech", "Rabat", "Fes", "Tangier", "Agadir",
-  "Paris", "London", "New York", "Tokyo", "Dubai", "Barcelona",
-  "Rome", "Amsterdam", "Istanbul", "Cairo", "Nairobi", "Lagos",
-  "Dakar", "Tunis", "Algiers", "Beirut", "Amman", "Riyadh"
-  // add more relevant to your target users
-];
+const { Router } = require('express');
+const fs = require('fs');
+const path = require('path');
 
-// in-memory recent searches per user (or store in Favorites service)
-const recentSearches = new Map(); // userId -> string[]
+const router = Router();
 
-app.get('/autocomplete', (req, res) => {
+// Load city names from CSV (one name per line, all-caps)
+const csvPath = path.join(__dirname, '../data/Morocco_City_List.csv');
+const CITIES = fs
+  .readFileSync(csvPath, 'utf8')
+  .split('\n')
+  .map(line => line.trim())
+  .filter(Boolean)
+  // Title-case each word: "BENI MELLAL" → "Beni Mellal"
+  .map(c => c.toLowerCase().replace(/\b\w/g, l => l.toUpperCase()));
+
+// In-memory recent searches per user (userId → string[])
+const recentSearches = new Map();
+
+router.get('/autocomplete', (req, res) => {
   const { q = '', userId } = req.query;
   if (q.length < 1) return res.json({ suggestions: [] });
 
   const query = q.toLowerCase();
 
-  // match static cities
   const matched = CITIES
     .filter(c => c.toLowerCase().startsWith(query))
-    .slice(0, 5);
+    .slice(0, 6);
 
-  // prepend recent searches for this user that match
   const recent = userId ? (recentSearches.get(userId) ?? []) : [];
   const matchedRecent = recent
     .filter(r => r.toLowerCase().startsWith(query) && !matched.includes(r))
@@ -30,8 +35,7 @@ app.get('/autocomplete', (req, res) => {
   res.json({ suggestions: [...matchedRecent, ...matched].slice(0, 6) });
 });
 
-// call this when user actually submits a search
-app.post('/autocomplete/recent', (req, res) => {
+router.post('/autocomplete/recent', (req, res) => {
   const { userId, city } = req.body;
   if (!userId || !city) return res.status(400).json({ error: 'userId and city required' });
 
@@ -40,3 +44,5 @@ app.post('/autocomplete/recent', (req, res) => {
   recentSearches.set(userId, updated);
   res.json({ ok: true });
 });
+
+module.exports = router;
