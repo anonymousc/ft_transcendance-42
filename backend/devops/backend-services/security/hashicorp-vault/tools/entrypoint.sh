@@ -21,6 +21,14 @@ DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@database:${PORT_POSTGRES}/prism
 
 vault kv put -mount=secret postgres username="$DB_USER" password="$DB_PASS" database_url="$DATABASE_URL" > /dev/null
 
+# reviews-places gets its own logical database on the same Postgres instance
+REVIEWS_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@database:${PORT_POSTGRES}/reviews?schema=public"
+vault kv put -mount=secret reviews database_url="$REVIEWS_DATABASE_URL" > /dev/null
+
+# fav-places gets its own logical database on the same Postgres instance
+FAV_PLACES_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@database:${PORT_POSTGRES}/fav_places?schema=public"
+vault kv put -mount=secret fav_places database_url="$FAV_PLACES_DATABASE_URL" > /dev/null
+
 JWT_ACCESS_SECRET=$(openssl rand -hex 64)
 JWT_REFRESH_SECRET=$(openssl rand -hex 64)
 JWT_ACCESS_EXPIRES_IN=15m
@@ -79,6 +87,15 @@ vault token create -policy=postgres -format=json > /shared/frontend_token
 # Create token for auth service
 vault token create -policy=postgres -format=json > /shared/auth_token
 
+# Create token for review-places service
+vault token create -policy=postgres -format=json > /shared/reviews_token
+
+# Create token for fav-places service
+vault token create -policy=postgres -format=json > /shared/fav_places_token
+
+# Create token for profiles service
+vault token create -policy=postgres -format=json > /shared/profiles_token
+
 if [ -f /shared/token ];then
     chown 70:70 /shared/ && chown 70:70 /shared/token
     chmod 600 /shared/token
@@ -94,6 +111,18 @@ fi
 
 if [ -f /shared/auth_token ];then
     chmod 644 /shared/auth_token
+fi
+
+if [ -f /shared/reviews_token ];then
+    chmod 644 /shared/reviews_token
+fi
+
+if [ -f /shared/fav_places_token ];then
+    chmod 644 /shared/fav_places_token
+fi
+
+if [ -f /shared/profiles_token ];then
+    chmod 644 /shared/profiles_token
 fi
 
 wait $VAULT_PID

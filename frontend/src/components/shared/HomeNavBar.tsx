@@ -40,6 +40,7 @@ function HomeNavBar() {
       <div className="profile-dropdown-wrapper">
         <ProfileDropdown
           onProfile={() => navigate("/profile")}
+          onSaved={() => navigate("/saved")}
           onSettings={() => navigate("/settings")}
           onLanguage={() => console.log("Change language")}
           onLogout={() => { logout(); navigate("/login"); }}

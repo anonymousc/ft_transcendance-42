@@ -15,10 +15,37 @@ import {
   BookOpen,
   Bot,
   AlertCircle,
+  MessageSquare,
+  ChevronUp,
+  Send,
+  Trash2,
+  Users,
+  Bookmark,
+  BookmarkCheck,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const AI_PLACES_URL =
   (import.meta.env.VITE_AI_PLACES_URL as string) || "http://localhost:4000";
+
+const REVIEW_PLACES_URL =
+  (import.meta.env.VITE_REVIEW_PLACES_URL as string) || "http://localhost:4001";
+
+const FAV_PLACES_URL =
+  (import.meta.env.VITE_FAV_PLACES_URL as string) || "http://localhost:4002";
+
+// Stable anonymous userId stored in localStorage
+function getAnonymousUserId(): string {
+  const key = "review_user_id";
+  let id = localStorage.getItem(key);
+  if (!id) {
+    id = `anon_${Math.random().toString(36).slice(2, 10)}`;
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+
+// ── Types ──────────────────────────────────────────────────────────────────
 
 interface Place {
   name: string;
@@ -39,6 +66,29 @@ interface ApiEnvelope {
   city?: string;
   intent?: string;
 }
+
+interface Review {
+  id: string;
+  placeName: string;
+  city: string;
+  userId: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+interface ReviewSummary {
+  averageRating: number | null;
+  totalReviews: number;
+}
+
+interface ReviewEnvelope {
+  ok: boolean;
+  data?: Review[] | Review | ReviewSummary | { id: string };
+  error?: { code: string; message: string; details?: string };
+}
+
+// ── Places hooks ───────────────────────────────────────────────────────────
 
 function usePlaces(city: string) {
   const [places, setPlaces] = useState<Place[]>([]);
@@ -104,6 +154,122 @@ function useSearch(q: string) {
   return { places, loading, error, resolvedCity, intent };
 }
 
+// ── Review hooks ───────────────────────────────────────────────────────────
+
+function useReviews(placeName: string, city: string) {
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const reload = () => {
+    if (!placeName || !city) return;
+    setLoading(true);
+    setError(null);
+
+    fetch(
+      `${REVIEW_PLACES_URL}/reviews?place=${encodeURIComponent(placeName)}&city=${encodeURIComponent(city)}`,
+    )
+      .then((r) => r.json())
+      .then((env: ReviewEnvelope) => {
+        if (!env.ok) throw new Error((env.error as { message: string })?.message ?? "Failed");
+        setReviews((env.data as Review[]) ?? []);
+      })
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { reload(); }, [placeName, city]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return { reviews, loading, error, reload };
+}
+
+function useReviewSummary(placeName: string, city: string, refreshKey: number) {
+  const [summary, setSummary] = useState<ReviewSummary | null>(null);
+
+  useEffect(() => {
+    if (!placeName || !city) return;
+
+    fetch(
+      `${REVIEW_PLACES_URL}/reviews/summary?place=${encodeURIComponent(placeName)}&city=${encodeURIComponent(city)}`,
+    )
+      .then((r) => r.json())
+      .then((env: ReviewEnvelope) => {
+        if (env.ok) setSummary(env.data as ReviewSummary);
+      })
+      .catch(() => { /* silent — summary is non-critical */ });
+  }, [placeName, city, refreshKey]);
+
+  return summary;
+}
+
+// ── Fav places hook ────────────────────────────────────────────────────────
+
+interface FavCheckEnvelope {
+  ok: boolean;
+  data?: { saved: boolean; id: string | null };
+  error?: { code: string; message: string };
+}
+
+function useFavPlace(userId: string | null, placeName: string, city: string, placeData: Omit<Place, "match_reason">) {
+  const [saved, setSaved] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [toggling, setToggling] = useState(false);
+
+  useEffect(() => {
+    if (!userId || !placeName || !city) return;
+
+    fetch(
+      `${FAV_PLACES_URL}/fav-places/check?userId=${encodeURIComponent(userId)}&placeName=${encodeURIComponent(placeName)}&city=${encodeURIComponent(city)}`,
+    )
+      .then((r) => r.json())
+      .then((env: FavCheckEnvelope) => {
+        if (env.ok && env.data) {
+          setSaved(env.data.saved);
+          setSavedId(env.data.id);
+        }
+      })
+      .catch(() => { /* silent */ });
+  }, [userId, placeName, city]);
+
+  const toggle = async () => {
+    if (!userId || toggling) return;
+    setToggling(true);
+
+    try {
+      if (saved && savedId) {
+        const res = await fetch(
+          `${FAV_PLACES_URL}/fav-places/${savedId}?userId=${encodeURIComponent(userId)}`,
+          { method: "DELETE" },
+        );
+        const env = await res.json();
+        if (env.ok) { setSaved(false); setSavedId(null); }
+      } else {
+        const res = await fetch(`${FAV_PLACES_URL}/fav-places`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            placeName,
+            city,
+            category: placeData.category,
+            address:  placeData.address,
+            image:    placeData.image ?? undefined,
+            rating:   placeData.rating,
+          }),
+        });
+        const env = await res.json();
+        if (env.ok && env.data) { setSaved(true); setSavedId(env.data.id); }
+      }
+    } catch { /* silent */ } finally {
+      setToggling(false);
+    }
+  };
+
+  return { saved, toggling, toggle };
+}
+
+// ── Category styles ────────────────────────────────────────────────────────
+
 interface CategoryStyle {
   icon: React.ReactNode;
   bg: string;
@@ -167,6 +333,8 @@ function getCategoryStyle(category: string): CategoryStyle {
   );
 }
 
+// ── Shared components ──────────────────────────────────────────────────────
+
 function useInView(threshold = 0.1) {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
@@ -221,15 +389,263 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-function PlaceCard({ place, index }: { place: Place; index: number }) {
+// ── Interactive star picker for review form ────────────────────────────────
+
+function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [hovered, setHovered] = useState(0);
+
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n)}
+          onMouseEnter={() => setHovered(n)}
+          onMouseLeave={() => setHovered(0)}
+          className="focus:outline-none"
+          aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
+        >
+          <Star
+            size={20}
+            className={
+              n <= (hovered || value)
+                ? "fill-orange-400 text-orange-400 transition-colors"
+                : "fill-stone-200 text-stone-300 dark:fill-stone-700 dark:text-stone-600 transition-colors"
+            }
+          />
+        </button>
+      ))}
+      {value > 0 && (
+        <span className="ml-1 text-xs text-stone-500 dark:text-stone-400">
+          {["", "Poor", "Fair", "Good", "Very good", "Excellent"][value]}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ── ReviewSection ──────────────────────────────────────────────────────────
+
+function ReviewSection({
+  placeName,
+  city,
+  summary,
+  onReviewPosted,
+}: {
+  placeName: string;
+  city: string;
+  summary: ReviewSummary | null;
+  onReviewPosted: () => void;
+}) {
+  const userId = getAnonymousUserId();
+  const { reviews, loading, reload } = useReviews(placeName, city);
+
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (rating === 0) { setSubmitError("Please select a star rating."); return; }
+    if (comment.trim().length < 3) { setSubmitError("Comment must be at least 3 characters."); return; }
+
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const res = await fetch(`${REVIEW_PLACES_URL}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ placeName, city, userId, rating, comment: comment.trim() }),
+      });
+      const env: ReviewEnvelope = await res.json();
+      if (!env.ok) throw new Error(env.error?.message ?? "Failed to post review");
+      setRating(0);
+      setComment("");
+      reload();
+      onReviewPosted();
+    } catch (err: unknown) {
+      setSubmitError(err instanceof Error ? err.message : "Failed to post review");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (reviewId: string) => {
+    try {
+      const res = await fetch(
+        `${REVIEW_PLACES_URL}/reviews/${reviewId}?userId=${encodeURIComponent(userId)}`,
+        { method: "DELETE" },
+      );
+      const env: ReviewEnvelope = await res.json();
+      if (!env.ok) throw new Error(env.error?.message ?? "Failed to delete");
+      reload();
+      onReviewPosted();
+    } catch {
+      // silent — delete failure is non-critical
+    }
+  };
+
+  return (
+    <div className="px-5 pb-5 pt-4 border-t border-stone-100 dark:border-white/[0.06]">
+
+      {/* Community rating summary */}
+      {summary && summary.totalReviews > 0 && (
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-1.5">
+            <Users size={12} className="text-stone-400" />
+            <span className="text-[11px] text-stone-500 dark:text-stone-400 font-medium">
+              Community
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            {Array.from({ length: 5 }, (_, i) => (
+              <Star
+                key={i}
+                size={11}
+                className={
+                  i < Math.round(summary.averageRating ?? 0)
+                    ? "fill-orange-400 text-orange-400"
+                    : "fill-stone-200 text-stone-200 dark:fill-stone-700 dark:text-stone-700"
+                }
+              />
+            ))}
+          </div>
+          <span className="text-[11px] font-bold text-orange-500 tabular-nums">
+            {summary.averageRating?.toFixed(1)}
+          </span>
+          <span className="text-[11px] text-stone-400 dark:text-stone-500">
+            ({summary.totalReviews} review{summary.totalReviews !== 1 ? "s" : ""})
+          </span>
+        </div>
+      )}
+
+      {/* Review list */}
+      {loading ? (
+        <div className="space-y-2 mb-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-14 rounded-xl bg-stone-100 dark:bg-stone-800/40 animate-pulse" />
+          ))}
+        </div>
+      ) : reviews.length > 0 ? (
+        <ul className="space-y-3 mb-5 max-h-52 overflow-y-auto pr-1">
+          {reviews.map((r) => (
+            <li
+              key={r.id}
+              className="flex flex-col gap-1 px-3 py-2.5 rounded-xl bg-stone-50 dark:bg-white/[0.03] border border-stone-100 dark:border-white/[0.05]"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <Star
+                      key={i}
+                      size={10}
+                      className={
+                        i < r.rating
+                          ? "fill-orange-400 text-orange-400"
+                          : "fill-stone-200 text-stone-200 dark:fill-stone-700 dark:text-stone-700"
+                      }
+                    />
+                  ))}
+                  <span className="text-[10px] text-stone-400 dark:text-stone-500 ml-1">
+                    {r.userId === userId ? "You" : r.userId.slice(0, 8) + "…"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-stone-300 dark:text-stone-600">
+                    {new Date(r.createdAt).toLocaleDateString()}
+                  </span>
+                  {r.userId === userId && (
+                    <button
+                      onClick={() => handleDelete(r.id)}
+                      className="text-stone-300 hover:text-rose-400 dark:text-stone-600 dark:hover:text-rose-400 transition-colors"
+                      aria-label="Delete review"
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <p className="text-[12px] text-stone-600 dark:text-stone-300 leading-relaxed">
+                {r.comment}
+              </p>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-[12px] text-stone-400 dark:text-stone-600 mb-4">
+          No reviews yet — be the first!
+        </p>
+      )}
+
+      {/* Write-a-review form */}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
+        <StarPicker value={rating} onChange={setRating} />
+
+        <textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Share your experience…"
+          rows={2}
+          className="w-full resize-none rounded-xl px-3 py-2 text-[12.5px] text-stone-800 dark:text-white
+            bg-stone-50 dark:bg-white/[0.04] border border-stone-200 dark:border-white/[0.08]
+            placeholder:text-stone-400 outline-none focus:border-orange-300 dark:focus:border-orange-500/50
+            transition-colors duration-150"
+        />
+
+        {submitError && (
+          <p className="text-[11px] text-rose-500 flex items-center gap-1">
+            <AlertCircle size={11} />
+            {submitError}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="self-end flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600
+            disabled:opacity-50 disabled:cursor-not-allowed
+            text-white text-xs font-semibold px-3 py-1.5 rounded-xl
+            transition-colors duration-200"
+        >
+          <Send size={11} />
+          {submitting ? "Posting…" : "Post Review"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// ── PlaceCard ──────────────────────────────────────────────────────────────
+
+function PlaceCard({
+  place,
+  index,
+  city,
+  userId,
+}: {
+  place: Place;
+  index: number;
+  city: string;
+  userId: string | null;
+}) {
   const style = getCategoryStyle(place.category);
   const { ref, inView } = useInView(0.1);
+
+  const [reviewsOpen, setReviewsOpen] = useState(false);
+  const [summaryRefreshKey, setSummaryRefreshKey] = useState(0);
+  const summary = useReviewSummary(place.name, city, summaryRefreshKey);
+  const { saved, toggling, toggle } = useFavPlace(userId, place.name, city, place);
+
+  const handleReviewPosted = () => setSummaryRefreshKey((k) => k + 1);
 
   return (
     <div
       ref={ref}
       style={{ transitionDelay: inView ? `${index * 60}ms` : "0ms" }}
-      className={`group relative flex flex-row overflow-hidden rounded-2xl h-[200px]
+      className={`group relative flex flex-col overflow-hidden rounded-2xl
         bg-white dark:bg-white/[0.04]
         border ${place.must_visit ? "border-orange-300/70 dark:border-orange-500/30" : "border-stone-200/80 dark:border-white/[0.07]"}
         ${place.must_visit ? "ring-1 ring-orange-200/60 dark:ring-orange-500/10" : ""}
@@ -237,57 +653,128 @@ function PlaceCard({ place, index }: { place: Place; index: number }) {
         transition-all duration-500 ease-out
         ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
     >
-      {place.must_visit && (
-        <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-orange-400 rounded-l-2xl" />
-      )}
-
-      <div className="flex flex-col justify-between flex-1 min-w-0 px-5 py-4 pl-6">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span
-            className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border ${style.bg} ${style.text} ${style.border}`}
-          >
-            {style.icon}
-            {place.category}
-          </span>
-          {place.must_visit && (
-            <span className="inline-flex items-center gap-1 bg-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
-              <Flame size={9} />
-              Must Visit
-            </span>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-1 mt-2">
-          <h3 className="font-bold text-[17px] leading-snug text-stone-900 dark:text-white truncate">
-            {place.name}
-          </h3>
-          <StarRating rating={place.rating} />
-        </div>
-
-        <p className="text-[12.5px] leading-relaxed text-stone-500 dark:text-stone-400 line-clamp-2 mt-2">
-          {place.description}
-        </p>
-
-        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-stone-100 dark:border-white/[0.06]">
-          <MapPin size={11} className="shrink-0 text-orange-400" />
-          <span className="text-[11px] text-stone-400 dark:text-stone-500 truncate">
-            {place.address}
-          </span>
-        </div>
-      </div>
-
-      <div className="relative w-[38%] shrink-0">
-        {place.image ? (
-          <img
-            src={place.image}
-            alt={place.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="w-full h-full bg-stone-100 dark:bg-stone-800/50" />
+      {/* Main card row */}
+      <div className="flex flex-row h-[200px]">
+        {place.must_visit && (
+          <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-orange-400 rounded-l-2xl" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-r from-white dark:from-[#0e0d0b] via-white/30 dark:via-[#0e0d0b]/30 to-transparent" />
+
+        <div className="flex flex-col justify-between flex-1 min-w-0 px-5 py-4 pl-6">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span
+              className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border ${style.bg} ${style.text} ${style.border}`}
+            >
+              {style.icon}
+              {place.category}
+            </span>
+            {place.must_visit && (
+              <span className="inline-flex items-center gap-1 bg-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
+                <Flame size={9} />
+                Must Visit
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1 mt-2">
+            <h3 className="font-bold text-[17px] leading-snug text-stone-900 dark:text-white truncate">
+              {place.name}
+            </h3>
+            <div className="flex items-center gap-3 flex-wrap">
+              <StarRating rating={place.rating} />
+              {/* Community badge */}
+              {summary && summary.totalReviews > 0 && (
+                <button
+                  onClick={() => setReviewsOpen((o) => !o)}
+                  className="inline-flex items-center gap-1 text-[11px] text-stone-400 dark:text-stone-500
+                    hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+                >
+                  <Users size={11} />
+                  {summary.totalReviews} review{summary.totalReviews !== 1 ? "s" : ""}
+                  {summary.averageRating !== null && (
+                    <span className="font-semibold text-orange-400">
+                      {" "}· {summary.averageRating.toFixed(1)}
+                    </span>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <p className="text-[12.5px] leading-relaxed text-stone-500 dark:text-stone-400 line-clamp-2 mt-2">
+            {place.description}
+          </p>
+
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-stone-100 dark:border-white/[0.06]">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <MapPin size={11} className="shrink-0 text-orange-400" />
+              <span className="text-[11px] text-stone-400 dark:text-stone-500 truncate">
+                {place.address}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 ml-3">
+              {/* Save / unsave bookmark */}
+              {userId && (
+                <button
+                  onClick={toggle}
+                  disabled={toggling}
+                  aria-label={saved ? "Remove from saved places" : "Save place"}
+                  className={`flex items-center gap-1 text-[11px] font-medium transition-colors
+                    disabled:opacity-50
+                    ${saved
+                      ? "text-orange-500 dark:text-orange-400 hover:text-orange-600 dark:hover:text-orange-300"
+                      : "text-stone-400 hover:text-orange-500 dark:text-stone-500 dark:hover:text-orange-400"
+                    }`}
+                >
+                  {saved
+                    ? <BookmarkCheck size={13} />
+                    : <Bookmark size={13} />
+                  }
+                  {saved ? "Saved" : "Save"}
+                </button>
+              )}
+
+              {/* Toggle reviews */}
+              <button
+                onClick={() => setReviewsOpen((o) => !o)}
+                className="flex items-center gap-1 text-[11px] font-medium
+                  text-stone-400 hover:text-orange-500 dark:text-stone-500 dark:hover:text-orange-400
+                  transition-colors"
+              >
+                <MessageSquare size={12} />
+                {reviewsOpen ? (
+                  <>Hide <ChevronUp size={11} /></>
+                ) : (
+                  <>Reviews <ChevronDown size={11} /></>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative w-[38%] shrink-0">
+          {place.image ? (
+            <img
+              src={place.image}
+              alt={place.name}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-full bg-stone-100 dark:bg-stone-800/50" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-r from-white dark:from-[#0e0d0b] via-white/30 dark:via-[#0e0d0b]/30 to-transparent" />
+        </div>
       </div>
+
+      {/* Expandable review section */}
+      {reviewsOpen && (
+        <ReviewSection
+          placeName={place.name}
+          city={city}
+          summary={summary}
+          onReviewPosted={handleReviewPosted}
+        />
+      )}
     </div>
   );
 }
@@ -312,16 +799,18 @@ function SkeletonCard() {
   );
 }
 
+// ── Page ───────────────────────────────────────────────────────────────────
+
 function CityPage() {
   const [searchParams] = useSearchParams();
   const cityParam = searchParams.get("city");
   const qParam    = searchParams.get("q");
   const isSearchMode = !!qParam && !cityParam;
+  const { user } = useAuth();
 
   const sectionRef = useRef<HTMLElement>(null);
   const { ref: headerRef, inView: headerInView } = useInView(0.2);
 
-  // Always call both hooks — the inactive one receives an empty string and no-ops.
   const cityResult   = usePlaces(isSearchMode ? "" : (cityParam ?? "Marrakesh"));
   const searchResult = useSearch(isSearchMode ? (qParam ?? "") : "");
 
@@ -364,7 +853,7 @@ function CityPage() {
             </span>
           </div>
 
-          {/* Search query pill — shown only in search mode */}
+          {/* Search query pill */}
           {isSearchMode && qParam && (
             <div
               className={`flex items-center justify-center gap-2 mb-3
@@ -386,12 +875,8 @@ function CityPage() {
               transition-all duration-600 ease-out delay-100
               ${headerInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"}`}
           >
-            {isSearchMode ? (
-              loading && !displayCity.trim() ? (
-                <span className="text-stone-400 dark:text-stone-500">Searching…</span>
-              ) : (
-                <>Discover <span className="text-orange-500">{displayCity}</span></>
-              )
+            {isSearchMode && loading && !displayCity.trim() ? (
+              <span className="text-stone-400 dark:text-stone-500">Searching…</span>
             ) : (
               <>Discover <span className="text-orange-500">{displayCity}</span></>
             )}
@@ -428,7 +913,7 @@ function CityPage() {
           {loading
             ? Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
             : places.map((place, i) => (
-                <PlaceCard key={place.name} place={place} index={i} />
+                <PlaceCard key={place.name} place={place} index={i} city={displayCity} userId={user?.id ?? null} />
               ))}
         </div>
 

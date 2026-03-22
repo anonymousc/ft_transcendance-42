@@ -25,7 +25,9 @@ curl -X GET http://vault:$PORT_VAULT/v1/secret/data/postgres --header "X-Vault-T
     pg_ctl  -o "-p $PGPORT -c listen_addresses='*'" start 
 
     export PGPASSWORD=$(jq -r .data.data.password < /token/data)
-    createdb -U $(jq -r .data.data.username < /token/data) prisma 
+    createdb -U $(jq -r .data.data.username < /token/data) prisma
+    createdb -U $(jq -r .data.data.username < /token/data) reviews
+    createdb -U $(jq -r .data.data.username < /token/data) fav_places
 
     DB_USER=$(jq -r .data.data.username < /token/data)
     RAW_PASS=$(jq -r .data.data.password < /token/data)

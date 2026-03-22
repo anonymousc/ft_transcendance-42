@@ -57,7 +57,6 @@ function setCache(key, data) {
   cache.set(key, { data, timestamp: Date.now() });
 }
 
-// ── Gemini helper ──────────────────────────────────────────────────────────
 async function callGemini(prompt) {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
@@ -106,7 +105,6 @@ function parseGeminiText(json) {
   return parsed;
 }
 
-// ── Unsplash helper ────────────────────────────────────────────────────────
 async function fetchUnsplashImage(query) {
   try {
     const res = await fetch(
@@ -129,7 +127,6 @@ async function enrichWithImages(places) {
   );
 }
 
-// ── /places — browse a city ────────────────────────────────────────────────
 async function fetchPlacesFromGemini(city) {
   const prompt = `List 10 must-visit places in ${city}. Respond ONLY with a valid JSON array, no markdown, no extra text. Each object must have:
 - name: string
@@ -138,7 +135,9 @@ async function fetchPlacesFromGemini(city) {
 - description: string (2 sentences, why it's worth visiting)
 - address: string
 - must_visit: boolean (true for top 3 highlights)
-- image_query: string (3-5 words in English for image search, e.g. "Jemaa el-Fna square Marrakech")`;
+- image_query: string (3-5 words in English for image search, e.g. "Jemaa el-Fna square Marrakech")
+- lat: number (latitude, e.g. 31.6258)
+- lng: number (longitude, e.g. -7.9892)`;
 
   const json = await callGemini(prompt);
   const parsed = parseGeminiText(json);
