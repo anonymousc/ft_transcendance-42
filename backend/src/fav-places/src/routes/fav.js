@@ -3,7 +3,6 @@ const prisma = require('../lib/prisma');
 
 const router = Router();
 
-// ── Envelope helpers ───────────────────────────────────────────────────────
 function ok(res, data, extra = {}) {
   return res.json({ ok: true, data, ...extra });
 }
@@ -14,7 +13,6 @@ function fail(res, status, code, message, details) {
   return res.status(status).json(body);
 }
 
-// ── Validation ─────────────────────────────────────────────────────────────
 function validateSaveBody({ userId, placeName, city, category, address }) {
   if (!userId || typeof userId !== 'string' || !userId.trim())
     return 'userId is required';
@@ -29,7 +27,6 @@ function validateSaveBody({ userId, placeName, city, category, address }) {
   return null;
 }
 
-// ── POST /fav-places ───────────────────────────────────────────────────────
 // Save a place for a user
 router.post('/fav-places', async (req, res) => {
   const validationError = validateSaveBody(req.body);
@@ -60,7 +57,6 @@ router.post('/fav-places', async (req, res) => {
   }
 });
 
-// ── DELETE /fav-places/:id ─────────────────────────────────────────────────
 // Unsave a place. userId must match the owner.
 router.delete('/fav-places/:id', async (req, res) => {
   const { id } = req.params;
@@ -127,7 +123,7 @@ router.get('/fav-places/public/:userId', async (req, res) => {
   }
 });
 
-// ── GET /fav-places/check ──────────────────────────────────────────────────
+// ── GET /fav-places/check
 // Check if a specific place is saved by a user
 router.get('/fav-places/check', async (req, res) => {
   const { userId, placeName, city } = req.query;

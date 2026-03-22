@@ -68,36 +68,36 @@ services:
         labels: "service"
     labels:
       - "service=redis"
-  maptoposter:
-    container_name: maptoposter
-    build: ./backend/devops/frontend-services/maptoposter/
-    env_file:
-      - .env
-    ports:
-      - "5025:5025"
-    networks:
-      - saas
-    volumes:
-      - shared_resources:/data:ro
-    depends_on:
-      redis:
-        condition: service_healthy
-      vault:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5025/ || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    restart: on-failure
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service"
-    labels:
-      - "service=maptoposter"
+  # maptoposter:
+  #   container_name: maptoposter
+  #   build: ./backend/devops/frontend-services/maptoposter/
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - "5025:5025"
+  #   networks:
+  #     - saas
+  #   volumes:
+  #     - shared_resources:/data:ro
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #     vault:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -f http://localhost:5025/ || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   restart: on-failure
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #       labels: "service"
+  #   labels:
+  #     - "service=maptoposter"
   auth:
     build: ./backend/src/auth-service
     container_name: auth
@@ -163,39 +163,39 @@ services:
         labels: "service"
     labels:
       - "service=profiles"
-  amq:
-    build: ./backend/devops/backend-services/rabbitmq/
-    hostname: rabbitmq
-    container_name: rabbitmq
-    mem_limit: 512m
-    env_file:
-      - .env
-    ports:
-      - "5672:5672"
-      - "15692:15692"
-    networks:
-      - saas
-    volumes:
-      - shared_resources:/vault:ro
-      - rabbitmq_data:/var/lib/rabbitmq
-    depends_on:
-      vault:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    restart: on-failure
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service"
-    labels:
-      - "service=rabbitmq"
+  # amq:
+  #   build: ./backend/devops/backend-services/rabbitmq/
+  #   hostname: rabbitmq
+  #   container_name: rabbitmq
+  #   mem_limit: 512m
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - "5672:5672"
+  #     - "15692:15692"
+  #   networks:
+  #     - saas
+  #   volumes:
+  #     - shared_resources:/vault:ro
+  #     - rabbitmq_data:/var/lib/rabbitmq
+  #   depends_on:
+  #     vault:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 30s
+  #   restart: on-failure
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #       labels: "service"
+  #   labels:
+  #     - "service=rabbitmq"
   database:
     container_name: database
     build: ./backend/devops/backend-services/prisma/
@@ -251,8 +251,8 @@ services:
         condition: service_healthy
       database:
         condition: service_started
-      amq:
-        condition: service_healthy
+      # amq:
+      #   condition: service_healthy
     networks:
       - saas
     logging:
@@ -442,9 +442,9 @@ services:
       - DOCKER_HOST=unix:///var/run/docker.sock
     networks:
       - saas
-    depends_on:
-      amq:
-        condition: service_healthy
+    # depends_on:
+    #   amq:
+    #     condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:19999/api/v1/info"]

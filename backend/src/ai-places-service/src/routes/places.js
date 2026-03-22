@@ -6,7 +6,6 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
-// ── Error envelope helpers ─────────────────────────────────────────────────
 function ok(res, data, extra = {}) {
   return res.json({ ok: true, data, ...extra });
 }
@@ -17,7 +16,6 @@ function fail(res, status, code, message, details) {
   return res.status(status).json(body);
 }
 
-// ── Validation ─────────────────────────────────────────────────────────────
 const CITY_MIN = 2;
 const CITY_MAX = 100;
 const CITY_RE = /^[\p{L}\p{M}\s'\-,.]+$/u;
@@ -39,7 +37,6 @@ function validateQuery(raw) {
   return null;
 }
 
-// ── In-memory cache (shared across both routes) ────────────────────────────
 const cache = new Map();
 const CACHE_TTL_MS = 60 * 60 * 1000;
 

@@ -4,17 +4,14 @@ const path = require('path');
 
 const router = Router();
 
-// Load city names from CSV (one name per line, all-caps)
 const csvPath = path.join(__dirname, '../data/Morocco_City_List.csv');
 const CITIES = fs
   .readFileSync(csvPath, 'utf8')
   .split('\n')
   .map(line => line.trim())
   .filter(Boolean)
-  // Title-case each word: "BENI MELLAL" → "Beni Mellal"
   .map(c => c.toLowerCase().replace(/\b\w/g, l => l.toUpperCase()));
 
-// In-memory recent searches per user (userId → string[])
 const recentSearches = new Map();
 
 router.get('/autocomplete', (req, res) => {
