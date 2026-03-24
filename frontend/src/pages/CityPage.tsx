@@ -22,6 +22,7 @@ import {
   Users,
   Bookmark,
   BookmarkCheck,
+  ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -48,14 +49,18 @@ function getAnonymousUserId(): string {
 // ── Types ──────────────────────────────────────────────────────────────────
 
 interface Place {
+  place_id?: string;
   name: string;
   category: string;
   rating: number;
   description: string;
   address: string;
   must_visit: boolean;
-  image_query: string;
+  image_query?: string;
   image: string | null;
+  photos?: string[];
+  lat?: number | null;
+  lng?: number | null;
   match_reason?: string;
 }
 
@@ -734,6 +739,26 @@ function PlaceCard({
                 </button>
               )}
 
+              {/* Open in Google Maps */}
+              {((place.lat != null && place.lng != null) || place.place_id) && (
+                <a
+                  href={
+                    place.lat != null && place.lng != null
+                      ? `https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lng}`
+                      : `https://www.google.com/maps/search/?api=1&query_place_id=${place.place_id}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[11px] font-medium
+                    text-stone-400 hover:text-orange-500 dark:text-stone-500 dark:hover:text-orange-400
+                    transition-colors"
+                  aria-label="Open in Google Maps"
+                >
+                  <ExternalLink size={12} />
+                  Maps
+                </a>
+              )}
+
               {/* Toggle reviews */}
               <button
                 onClick={() => setReviewsOpen((o) => !o)}
@@ -799,6 +824,149 @@ function SkeletonCard() {
   );
 }
 
+// ── Suggest ────────────────────────────────────────────────────────────────
+
+const PREFERENCE_OPTIONS = [
+  "History", "Street Food", "Nature", "Art", "Shopping",
+  "Adventure", "Architecture", "Nightlife", "Relaxation", "Sports",
+];
+
+function useSuggest() {
+  const [suggestions, setSuggestions] = useState<Place[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fetched, setFetched] = useState(false);
+
+  const getSuggestions = async (
+    city: string,
+    preferences: string[],
+    visited: string[],
+    limit = 5,
+  ) => {
+    setLoading(true);
+    setError(null);
+    setSuggestions([]);
+
+    try {
+      const res = await fetch(`${AI_PLACES_URL}/places/suggest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ city, preferences, visited, limit }),
+      });
+      const data = await res.json();
+      if (!Array.isArray(data.suggestions)) {
+        throw new Error(data.error ?? "Failed to get suggestions");
+      }
+      setSuggestions(data.suggestions);
+      setFetched(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to get suggestions");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { suggestions, loading, error, fetched, getSuggestions };
+}
+
+function SuggestSection({
+  city,
+  visitedNames,
+  userId,
+}: {
+  city: string;
+  visitedNames: string[];
+  userId: string | null;
+}) {
+  const [selected, setSelected] = useState<string[]>([]);
+  const { suggestions, loading, error, fetched, getSuggestions } = useSuggest();
+
+  const togglePref = (pref: string) => {
+    setSelected((prev) =>
+      prev.includes(pref) ? prev.filter((p) => p !== pref) : [...prev, pref],
+    );
+  };
+
+  const handleSubmit = () => {
+    if (selected.length === 0 || !city.trim()) return;
+    getSuggestions(city, selected, visitedNames, 5);
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto mt-16 pt-12 border-t border-stone-200 dark:border-white/[0.07]">
+      <div className="mb-6">
+        <h3 className="text-2xl font-bold text-stone-900 dark:text-white mb-2">
+          Personalized <span className="text-orange-500">Suggestions</span>
+        </h3>
+        <p className="text-sm text-stone-500 dark:text-stone-400">
+          Pick what you enjoy and we'll find places that match your interests in {city}.
+        </p>
+      </div>
+
+      {/* Preference chips */}
+      <div className="flex flex-wrap gap-2 mb-5">
+        {PREFERENCE_OPTIONS.map((pref) => (
+          <button
+            key={pref}
+            onClick={() => togglePref(pref)}
+            className={`px-3 py-1.5 rounded-full text-[12px] font-medium border transition-all duration-150
+              ${selected.includes(pref)
+                ? "bg-orange-500 text-white border-orange-500"
+                : "bg-white dark:bg-white/[0.04] text-stone-600 dark:text-stone-300 border-stone-200 dark:border-white/[0.08] hover:border-orange-300 dark:hover:border-orange-500/50"
+              }`}
+          >
+            {pref}
+          </button>
+        ))}
+      </div>
+
+      <button
+        onClick={handleSubmit}
+        disabled={selected.length === 0 || loading || !city.trim()}
+        className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600
+          disabled:opacity-40 disabled:cursor-not-allowed
+          text-white text-sm font-semibold px-5 py-2.5 rounded-xl
+          transition-colors duration-200 mb-8"
+      >
+        {loading ? (
+          <>
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            Finding matches…
+          </>
+        ) : (
+          <>
+            <Bot size={15} />
+            Get Suggestions
+          </>
+        )}
+      </button>
+
+      {error && (
+        <div className="flex items-center gap-3 px-5 py-4 mb-6 rounded-2xl
+          bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800
+          text-rose-700 dark:text-rose-300">
+          <AlertCircle size={16} className="shrink-0" />
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
+
+      {fetched && !loading && suggestions.length === 0 && !error && (
+        <p className="text-center text-stone-400 dark:text-stone-600 text-sm mb-8">
+          No matching places found. Try different preferences.
+        </p>
+      )}
+
+      {suggestions.length > 0 && (
+        <div className="flex flex-col gap-4">
+          {suggestions.map((place, i) => (
+            <PlaceCard key={place.place_id ?? place.name} place={place} index={i} city={city} userId={userId} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────
 
 function CityPage() {
@@ -849,7 +1017,7 @@ function CityPage() {
           >
             <Bot size={13} className="text-orange-500" />
             <span className="text-[11px] font-semibold tracking-widest uppercase text-stone-500 dark:text-stone-400">
-              {isSearchMode ? "AI Search Results" : "Curated by Gemini AI"}
+              {isSearchMode ? "AI Search Results" : "Curated by Google Places"}
             </span>
           </div>
 
@@ -889,8 +1057,8 @@ function CityPage() {
               ${headerInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
           >
             {intent
-              ? <><span className="text-orange-400 font-medium">{intent}</span> — matched by Gemini AI</>
-              : <>AI-powered picks to help you experience the very best of {displayCity} — from hidden gems to iconic landmarks.</>
+              ? <><span className="text-orange-400 font-medium">{intent}</span> — matched by Google Places</>
+              : <>Curated picks to help you experience the very best of {displayCity} — from hidden gems to iconic landmarks.</>
             }
           </p>
         </div>
@@ -923,8 +1091,17 @@ function CityPage() {
           </p>
         )}
 
+        {/* Personalized suggestions section */}
+        {!loading && (
+          <SuggestSection
+            city={displayCity}
+            visitedNames={places.map((p) => p.name)}
+            userId={user?.id ?? null}
+          />
+        )}
+
         <p className="mt-12 text-center text-[11px] text-stone-400 dark:text-stone-600 tracking-wide">
-          Recommendations generated by Google Gemini Flash · Images from Unsplash
+          Powered by Google Places API
         </p>
       </section>
     </div>

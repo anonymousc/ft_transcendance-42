@@ -42,4 +42,50 @@ router.post('/autocomplete/recent', (req, res) => {
   res.json({ ok: true });
 });
 
+// ── /autocomplete/places — Google Places Autocomplete fallback ─────────────
+//
+// Called by the frontend only when the static CSV search returns 0 results.
+// Proxies the Google Places Autocomplete (New) API so the API key stays server-side.
+//
+// Query params: q (required, min 3 chars)
+// Response: { suggestions: string[] }  — up to 5 city name strings
+//
+router.get('/autocomplete/places', async (req, res) => {
+  const { q = '' } = req.query;
+  const input = q.trim();
+
+  if (input.length < 3) return res.json({ suggestions: [] });
+
+  try {
+    const response = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': process.env.GOOGLE_PLACES_API_KEY,
+      },
+      body: JSON.stringify({
+        input,
+        includedPrimaryTypes: ['locality'],
+        languageCode: 'en',
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('[autocomplete/places] Google API error', response.status);
+      return res.json({ suggestions: [] });
+    }
+
+    const data = await response.json();
+    const suggestions = (data.suggestions ?? [])
+      .slice(0, 5)
+      .map(s => s?.placePrediction?.structuredFormat?.mainText?.text)
+      .filter(Boolean);
+
+    res.json({ suggestions });
+  } catch (err) {
+    console.error('[autocomplete/places]', err.message);
+    res.json({ suggestions: [] });
+  }
+});
+
 module.exports = router;

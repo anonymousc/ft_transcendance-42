@@ -104,3 +104,17 @@
     color: rgba(255, 140, 66, 0.75);
     flex-shrink: 0;
 }
+
+/* ── Fallback section separator ────────────────────────────────────────────── */
+.glass-suggestion-separator {
+    padding: 5px 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.3);
+    text-transform: uppercase;
+    cursor: default;
+    user-select: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}

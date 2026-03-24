@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import GlassSearchBar from "../components/shared/GlassSearchBar";
+import TripPlannerBar from "../components/shared/TripPlannerBar";
 import HomeNavBar from "../components/shared/HomeNavBar";
 import "./HomePage.css";
 import bgvideo from "../assets/home-background.mp4";
@@ -28,6 +29,8 @@ function HomePage() {
         <h1 className="header-home">Welcome Back, {firstName} </h1>
         <div className="search-container">
           <GlassSearchBar onSearch={handleSearch} onSelect={handleSelect} />
+          <div className="planner-bar-spacer" />
+          <TripPlannerBar />
         </div>
       </main>
     </div>

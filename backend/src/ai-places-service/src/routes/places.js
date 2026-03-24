@@ -2,9 +2,19 @@ const { Router } = require('express');
 
 const router = Router();
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
+const PLACES_SEARCH_URL = 'https://places.googleapis.com/v1/places:searchText';
+const FIELD_MASK = [
+  'places.id',
+  'places.displayName',
+  'places.location',
+  'places.rating',
+  'places.types',
+  'places.primaryTypeDisplayName',
+  'places.formattedAddress',
+  'places.editorialSummary',
+  'places.photos',
+].join(',');
 
 function ok(res, data, extra = {}) {
   return res.json({ ok: true, data, ...extra });
@@ -54,98 +64,86 @@ function setCache(key, data) {
   cache.set(key, { data, timestamp: Date.now() });
 }
 
-async function callGemini(prompt) {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-      }),
+async function callGoogleTextSearch(textQuery, maxResultCount = 10) {
+  const res = await fetch(PLACES_SEARCH_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+      'X-Goog-FieldMask': FIELD_MASK,
     },
-  );
-
-  if (res.status === 429) {
-    const body = await res.json();
-    const retryStr = body?.error?.details?.find(d => d.retryDelay)?.retryDelay ?? '20s';
-    const retryMs = (parseFloat(retryStr) + 1) * 1000;
-    console.log(`[ai-places] Rate limited — retrying in ${retryStr}…`);
-    await new Promise(r => setTimeout(r, retryMs));
-    return callGemini(prompt);
-  }
+    body: JSON.stringify({ textQuery, maxResultCount }),
+  });
 
   if (!res.ok) {
-    const err = await res.text();
-    const upstreamErr = new Error(`Gemini API error ${res.status}: ${err}`);
-    upstreamErr.code = res.status === 503 ? 'GEMINI_UNAVAILABLE' : 'GEMINI_ERROR';
+    const errText = await res.text();
+    const upstreamErr = new Error(`Google Places API error ${res.status}: ${errText}`);
+    upstreamErr.code = res.status === 503 ? 'PLACES_UNAVAILABLE' : 'PLACES_ERROR';
     upstreamErr.status = 502;
     throw upstreamErr;
   }
 
-  return res.json();
+  const json = await res.json();
+  return json.places ?? [];
 }
 
-function parseGeminiText(json) {
-  const raw = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-  const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+function buildPhotoUrl(photoName) {
+  if (!photoName) return null;
+  return `https://places.googleapis.com/v1/${photoName}/media?maxHeightPx=800&key=${GOOGLE_PLACES_API_KEY}`;
+}
 
-  let parsed;
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch {
-    const err = new Error('Gemini returned non-JSON response');
-    err.code = 'GEMINI_PARSE_ERROR';
-    err.status = 502;
-    throw err;
+function humanizeType(type) {
+  if (!type) return 'Place';
+  return type
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function buildMatchReason(raw, preferences) {
+  const types = (raw.types ?? []).map(t => t.toLowerCase().replace(/_/g, ' '));
+  const primaryType = (raw.primaryTypeDisplayName?.text ?? '').toLowerCase();
+
+  if (preferences && preferences.length > 0) {
+    for (const pref of preferences) {
+      const p = pref.toLowerCase();
+      if (
+        types.some(t => t.includes(p) || p.includes(t)) ||
+        primaryType.includes(p) ||
+        p.includes(primaryType)
+      ) {
+        return `Matches your interest in ${pref}.`;
+      }
+    }
   }
-  return parsed;
-}
 
-async function fetchUnsplashImage(query) {
-  try {
-    const res = await fetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape&client_id=${UNSPLASH_ACCESS_KEY}`,
-    );
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json?.results?.[0]?.urls?.regular ?? null;
-  } catch {
-    return null;
+  const summary = raw.editorialSummary?.text;
+  if (summary) {
+    const firstSentence = summary.split(/[.!?]/)[0].trim();
+    return firstSentence ? `${firstSentence}.` : summary;
   }
+
+  const category = raw.primaryTypeDisplayName?.text || humanizeType(raw.types?.[0]);
+  return `A notable ${category.toLowerCase()} worth visiting.`;
 }
 
-async function enrichWithImages(places) {
-  return Promise.all(
-    places.map(async place => {
-      const image = await fetchUnsplashImage(place.image_query || place.name);
-      return { ...place, image };
-    }),
-  );
-}
+function mapGooglePlace(raw, index, preferences) {
+  const photoUrl = buildPhotoUrl(raw.photos?.[0]?.name);
+  const category = raw.primaryTypeDisplayName?.text || humanizeType(raw.types?.[0]);
 
-async function fetchPlacesFromGemini(city) {
-  const prompt = `List 10 must-visit places in ${city}. Respond ONLY with a valid JSON array, no markdown, no extra text. Each object must have:
-- name: string
-- category: string (e.g. "Museum", "Park", "Restaurant")
-- rating: number (1.0 - 5.0)
-- description: string (2 sentences, why it's worth visiting)
-- address: string
-- must_visit: boolean (true for top 3 highlights)
-- image_query: string (3-5 words in English for image search, e.g. "Jemaa el-Fna square Marrakech")
-- lat: number (latitude, e.g. 31.6258)
-- lng: number (longitude, e.g. -7.9892)`;
-
-  const json = await callGemini(prompt);
-  const parsed = parseGeminiText(json);
-
-  if (!Array.isArray(parsed)) {
-    const err = new Error('Gemini response was not a JSON array');
-    err.code = 'GEMINI_PARSE_ERROR';
-    err.status = 502;
-    throw err;
-  }
-  return parsed;
+  return {
+    place_id: raw.id ?? null,
+    name: raw.displayName?.text ?? 'Unknown',
+    category,
+    rating: raw.rating ?? null,
+    description: raw.editorialSummary?.text ?? `A ${category} worth visiting.`,
+    address: raw.formattedAddress ?? '',
+    must_visit: index < 3,
+    lat: raw.location?.latitude ?? null,
+    lng: raw.location?.longitude ?? null,
+    photos: photoUrl ? [photoUrl] : [],
+    image: photoUrl,
+    match_reason: buildMatchReason(raw, preferences),
+  };
 }
 
 router.get('/places', async (req, res) => {
@@ -159,10 +157,10 @@ router.get('/places', async (req, res) => {
   if (cached) return ok(res, cached, { cached: true });
 
   try {
-    const places = await fetchPlacesFromGemini(city);
-    const enriched = await enrichWithImages(places);
-    setCache(cacheKey, enriched);
-    return ok(res, enriched, { cached: false });
+    const rawPlaces = await callGoogleTextSearch(`places to visit in ${city}`, 10);
+    const places = rawPlaces.map((raw, i) => mapGooglePlace(raw, i, null));
+    setCache(cacheKey, places);
+    return ok(res, places, { cached: false });
   } catch (err) {
     console.error('[ai-places/places]', err.message);
     return fail(res, err.status ?? 500, err.code ?? 'INTERNAL_ERROR', 'Failed to fetch places', err.message);
@@ -172,49 +170,13 @@ router.get('/places', async (req, res) => {
 // ── /places/search — natural language search ───────────────────────────────
 //
 // Accepts freetext like "rooftop dinner with views in Casablanca".
-// Gemini parses the query into city + intent + constraints, then returns
-// matching places. The response envelope adds `city` and `intent` fields
-// so the frontend can display what was interpreted.
+// Google Places Text Search handles the query directly.
+// City is inferred from the first result's formattedAddress.
+// The intent field is the original query string.
 //
 // Response shape:
 //   { ok: true, data: Place[], city: string, intent: string, cached: bool }
 //
-async function searchPlacesFromGemini(q) {
-  const prompt = `You are a travel recommendation assistant. A user searched for: "${q}"
-
-Parse the query and return matching places. Respond ONLY with valid JSON (no markdown, no extra text):
-{
-  "city": "the city name extracted from the query (string)",
-  "intent": "a short phrase describing what the user is looking for, e.g. \\"rooftop restaurants with views\\" (string)",
-  "places": [
-    {
-      "name": "string",
-      "category": "string (e.g. Restaurant, Viewpoint, Museum, Park)",
-      "rating": "number 1.0–5.0",
-      "description": "string — 2 sentences explaining why this place matches the query",
-      "address": "string",
-      "must_visit": "boolean — true for the 3 best matches",
-      "image_query": "string — 3–5 English words for an image search",
-      "match_reason": "string — 1 sentence: which part of the query this place satisfies"
-    }
-  ]
-}
-
-Return exactly 10 places ordered by relevance to the query.`;
-
-  const json = await callGemini(prompt);
-  const parsed = parseGeminiText(json);
-
-  if (!parsed.city || !Array.isArray(parsed.places)) {
-    const err = new Error('Gemini search response has unexpected shape');
-    err.code = 'GEMINI_PARSE_ERROR';
-    err.status = 502;
-    throw err;
-  }
-
-  return parsed; // { city, intent, places }
-}
-
 router.get('/places/search', async (req, res) => {
   const validationError = validateQuery(req.query.q);
   if (validationError) return fail(res, 400, 'INVALID_INPUT', validationError);
@@ -228,15 +190,21 @@ router.get('/places/search', async (req, res) => {
   }
 
   try {
-    const result = await searchPlacesFromGemini(q);
-    const enriched = await enrichWithImages(result.places);
-    const stored = { city: result.city, intent: result.intent, places: enriched };
+    const rawPlaces = await callGoogleTextSearch(q, 10);
+    const places = rawPlaces.map((raw, i) => mapGooglePlace(raw, i, null));
+
+    // Derive city from the first result's formattedAddress (second-to-last comma segment)
+    const firstAddress = rawPlaces[0]?.formattedAddress ?? '';
+    const parts = firstAddress.split(',').map(s => s.trim()).filter(Boolean);
+    const city = parts.length >= 2 ? parts[parts.length - 2] : parts[0] ?? '';
+
+    const stored = { city, intent: q, places };
     setCache(cacheKey, stored);
-    return ok(res, enriched, { cached: false, city: result.city, intent: result.intent });
+    return ok(res, places, { cached: false, city, intent: q });
   } catch (err) {
     console.error('[ai-places/search]', err.message);
     return fail(res, err.status ?? 500, err.code ?? 'INTERNAL_ERROR', 'Failed to search places', err.message);
   }
 });
 
-module.exports = router;
+module.exports = { router, callGoogleTextSearch, buildPhotoUrl, buildMatchReason, mapGooglePlace, cache, CACHE_TTL_MS };

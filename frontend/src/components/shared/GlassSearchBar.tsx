@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, MapPin } from "lucide-react";
+import { Search, MapPin, Globe } from "lucide-react";
 import "./GlassSearchBar.css";
 
 const AI_PLACES_URL =
@@ -25,36 +25,78 @@ function GlassSearchBar({
   const [internalValue, setInternalValue] = useState("");
   const value = controlledValue ?? internalValue;
 
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [staticSuggestions, setStaticSuggestions] = useState<string[]>([]);
+  const [fallbackSuggestions, setFallbackSuggestions] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
+  // Tracks how many static results came back so the fallback timer can decide
+  // whether to fire without a stale-closure issue.
+  const staticCountRef = useRef(0);
+
+  const allSuggestions = [...staticSuggestions, ...fallbackSuggestions];
+
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Debounced fetch for autocomplete suggestions
+  // Debounced fetch: static at 250ms, fallback at 400ms (only when static = 0)
   useEffect(() => {
-    if (value.trim().length < 1) {
-      setSuggestions([]);
+    const q = value.trim();
+
+    if (q.length < 1) {
+      setStaticSuggestions([]);
+      setFallbackSuggestions([]);
+      staticCountRef.current = 0;
       setShowDropdown(false);
       return;
     }
 
-    const timer = setTimeout(async () => {
+    // Timer 1 — 250ms: static CSV search (unchanged behaviour)
+    const staticTimer = setTimeout(async () => {
       try {
         const res = await fetch(
-          `${AI_PLACES_URL}/autocomplete?q=${encodeURIComponent(value.trim())}`,
+          `${AI_PLACES_URL}/autocomplete?q=${encodeURIComponent(q)}`,
         );
         const data = await res.json();
         const list: string[] = data.suggestions ?? [];
-        setSuggestions(list);
-        setShowDropdown(list.length > 0);
+        staticCountRef.current = list.length;
+        setStaticSuggestions(list);
+        if (list.length > 0) {
+          setFallbackSuggestions([]);
+          setShowDropdown(true);
+        }
         setSelectedIndex(-1);
       } catch {
-        setSuggestions([]);
+        staticCountRef.current = 0;
+        setStaticSuggestions([]);
       }
     }, 250);
 
-    return () => clearTimeout(timer);
+    // Timer 2 — 400ms: Google Places fallback, only when q >= 3 chars
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+    if (q.length >= 3) {
+      fallbackTimer = setTimeout(async () => {
+        // Skip if the static search already returned results
+        if (staticCountRef.current > 0) return;
+
+        try {
+          const res = await fetch(
+            `${AI_PLACES_URL}/autocomplete/places?q=${encodeURIComponent(q)}`,
+          );
+          const data = await res.json();
+          const list: string[] = data.suggestions ?? [];
+          setFallbackSuggestions(list);
+          if (list.length > 0) setShowDropdown(true);
+          setSelectedIndex(-1);
+        } catch {
+          setFallbackSuggestions([]);
+        }
+      }, 400);
+    }
+
+    return () => {
+      clearTimeout(staticTimer);
+      if (fallbackTimer !== undefined) clearTimeout(fallbackTimer);
+    };
   }, [value]);
 
   // Close dropdown on outside click
@@ -78,19 +120,18 @@ function GlassSearchBar({
   const handleSelect = (city: string) => {
     setInternalValue(city);
     onChange?.(city);
-    setSuggestions([]);
+    setStaticSuggestions([]);
+    setFallbackSuggestions([]);
     setShowDropdown(false);
     setSelectedIndex(-1);
-    // Prefer onSelect when provided so the caller can distinguish a city
-    // pick (exact match) from a freetext submit (natural language search).
     if (onSelect) onSelect(city);
     else onSearch?.(city);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedIndex >= 0 && suggestions[selectedIndex]) {
-      handleSelect(suggestions[selectedIndex]);
+    if (selectedIndex >= 0 && allSuggestions[selectedIndex]) {
+      handleSelect(allSuggestions[selectedIndex]);
     } else {
       setShowDropdown(false);
       onSearch?.(value);
@@ -102,7 +143,7 @@ function GlassSearchBar({
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelectedIndex(i => Math.min(i + 1, suggestions.length - 1));
+      setSelectedIndex(i => Math.min(i + 1, allSuggestions.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setSelectedIndex(i => Math.max(i - 1, -1));
@@ -129,21 +170,45 @@ function GlassSearchBar({
         </button>
       </form>
 
-      {showDropdown && suggestions.length > 0 && (
+      {showDropdown && allSuggestions.length > 0 && (
         <ul className="glass-suggestions" role="listbox">
-          {suggestions.map((city, i) => (
+          {/* Static results */}
+          {staticSuggestions.map((city, i) => (
             <li
-              key={city}
+              key={`static-${city}`}
               role="option"
               aria-selected={i === selectedIndex}
               className={`glass-suggestion-item${i === selectedIndex ? " active" : ""}`}
-              // mousedown fires before blur, so the input doesn't lose focus first
               onMouseDown={() => handleSelect(city)}
             >
               <MapPin size={13} className="glass-suggestion-icon" />
               {city}
             </li>
           ))}
+
+          {/* Separator — only shown when fallback results exist */}
+          {fallbackSuggestions.length > 0 && (
+            <li className="glass-suggestion-separator" aria-hidden="true">
+              ── More places ──
+            </li>
+          )}
+
+          {/* Fallback results (Google Places) */}
+          {fallbackSuggestions.map((city, i) => {
+            const combinedIndex = staticSuggestions.length + i;
+            return (
+              <li
+                key={`fallback-${city}`}
+                role="option"
+                aria-selected={combinedIndex === selectedIndex}
+                className={`glass-suggestion-item${combinedIndex === selectedIndex ? " active" : ""}`}
+                onMouseDown={() => handleSelect(city)}
+              >
+                <Globe size={13} className="glass-suggestion-icon" />
+                {city}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
