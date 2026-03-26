@@ -9,6 +9,7 @@ services:
       - .env
     environment:
       - AUTH_SERVICE_URL=http://auth:3001
+      - PROFILES_SERVICE_URL=http://profiles:3002
     ports:
       - "${PORT_FRONT}:${PORT_FRONT}"
     networks:
@@ -17,14 +18,14 @@ services:
       - ./frontend/:/app
       - shared_resources:/data:ro
     depends_on:
-      backend:
+      auth:
+        condition: service_healthy
+      profiles:
         condition: service_healthy
       redis:
         condition: service_healthy
       vault:
         condition: service_healthy
-      # auth:
-      #   condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:$PORT_FRONT/ || exit 1"]
       interval: 30s
@@ -67,27 +68,59 @@ services:
         labels: "service"
     labels:
       - "service=redis"
-  maptoposter:
-    container_name: maptoposter
-    build: ./backend/devops/frontend-services/maptoposter/
-    env_file:
-      - .env
+  # maptoposter:
+  #   container_name: maptoposter
+  #   build: ./backend/devops/frontend-services/maptoposter/
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - "5025:5025"
+  #   networks:
+  #     - saas
+  #   volumes:
+  #     - shared_resources:/data:ro
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #     vault:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -f http://localhost:5025/ || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   restart: on-failure
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #       labels: "service"
+  #   labels:
+  #     - "service=maptoposter"
+  auth:
+    build: ./backend/src/auth-service
+    container_name: auth
     ports:
-      - "5025:5025"
+      - "3001:3001"
+    environment:
+      - AUTH_PORT=3001
+      - PORT_VAULT=${PORT_VAULT}
     networks:
       - saas
     volumes:
       - shared_resources:/data:ro
     depends_on:
-      redis:
-        condition: service_healthy
+      database:
+        condition: service_started
       vault:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5025/ || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:3001/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 2m
     restart: on-failure
     logging:
       driver: json-file
@@ -96,68 +129,31 @@ services:
         max-file: "3"
         labels: "service"
     labels:
-      - "service=maptoposter"
-  # auth:
-  #   build:
-  #     context: ./
-  #     dockerfile: backend/devops/backend-services/auth/Dockerfile
-  #   container_name: auth
-  #   ports:
-  #     - "3001:3001"
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     - AUTH_PORT=3001
-  #     - NODE_ENV=production
-  #   networks:
-  #     - saas
-  #   volumes:
-  #     - shared_resources:/data
-  #   depends_on:
-  #     database:
-  #       condition: service_started
-  #     vault:
-  #       condition: service_healthy
-      # amq:
-      #   condition: service_healthy
-    # healthcheck:
-    #   test: ["CMD-SHELL", "curl -f http://localhost:3001/health || exit 1"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-    # restart: on-failure
-    # logging:
-    #   driver: json-file
-    #   options:
-    #     max-size: "10m"
-    #     max-file: "3"
-    #     labels: "service"
-    # labels:
-    #   - "service=auth"
-  amq:
-    build: ./backend/devops/backend-services/rabbitmq/
-    hostname: rabbitmq
-    container_name: rabbitmq
-    mem_limit: 512m
-    env_file:
-      - .env
+      - "service=auth"
+
+  profiles:
+    build: ./backend/src/profiles-service
+    container_name: profiles
     ports:
-      - "5672:5672"
-      - "15692:15692"
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - PORT_VAULT=${PORT_VAULT}
     networks:
       - saas
     volumes:
-      - shared_resources:/vault:ro
-      - rabbitmq_data:/var/lib/rabbitmq
+      - shared_resources:/data:ro
     depends_on:
+      database:
+        condition: service_started
       vault:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      test: ["CMD-SHELL", "curl -f http://localhost:3002/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 2m
     restart: on-failure
     logging:
       driver: json-file
@@ -166,7 +162,40 @@ services:
         max-file: "3"
         labels: "service"
     labels:
-      - "service=rabbitmq"
+      - "service=profiles"
+  # amq:
+  #   build: ./backend/devops/backend-services/rabbitmq/
+  #   hostname: rabbitmq
+  #   container_name: rabbitmq
+  #   mem_limit: 512m
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - "5672:5672"
+  #     - "15692:15692"
+  #   networks:
+  #     - saas
+  #   volumes:
+  #     - shared_resources:/vault:ro
+  #     - rabbitmq_data:/var/lib/rabbitmq
+  #   depends_on:
+  #     vault:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 30s
+  #   restart: on-failure
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #       labels: "service"
+  #   labels:
+  #     - "service=rabbitmq"
   database:
     container_name: database
     build: ./backend/devops/backend-services/prisma/
@@ -222,8 +251,8 @@ services:
         condition: service_healthy
       database:
         condition: service_started
-      amq:
-        condition: service_healthy
+      # amq:
+      #   condition: service_healthy
     networks:
       - saas
     logging:
@@ -287,40 +316,53 @@ services:
         labels: "service"
     labels:
       - "service=vault"
-  # webserver:
-  #   container_name: webserver
-  #   build: backend-services/security/modsecurity/
-  #   ports:
-  #    - "8080:80" #shoud be changed to 443
-  #   retries: on-failure
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: backend
+  ai-places:
+    build: ./backend/src/ai-places-service
+    container_name: ai-places
     ports:
-      - "3000:3000"
-      - "5555:5555"
+      - "4000:4000"
     env_file:
-      - .env
+      - ./backend/src/ai-places-service/.env
+    networks:
+      - saas
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=ai-places"
+
+  review-places:
+    build: ./backend/src/review-places
+    container_name: review-places
+    ports:
+      - "4001:4001"
     environment:
-      - AUTH_SERVICE_URL=http://auth:3001
+      - PORT=4001
+      - PORT_VAULT=${PORT_VAULT}
     networks:
       - saas
     volumes:
-      - shared_resources:/data
+      - shared_resources:/data:ro
     depends_on:
       database:
         condition: service_started
       vault:
         condition: service_healthy
-      # auth:
-      #   condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
-      interval: 1m30s
-      timeout: 60s
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4001/health || exit 1"]
+      interval: 30s
+      timeout: 10s
       retries: 3
+      start_period: 2m
     restart: on-failure
     logging:
       driver: json-file
@@ -329,7 +371,88 @@ services:
         max-file: "3"
         labels: "service"
     labels:
-      - "service=backend"
+      - "service=review-places"
+
+  fav-places:
+    build: ./backend/src/fav-places
+    container_name: fav-places
+    ports:
+      - "4002:4002"
+    environment:
+      - PORT=4002
+      - PORT_VAULT=${PORT_VAULT}
+    networks:
+      - saas
+    volumes:
+      - shared_resources:/data:ro
+    depends_on:
+      database:
+        condition: service_started
+      vault:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4002/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+    restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=fav-places"
+
+  planner:
+    build: ./backend/src/planner-service
+    container_name: planner
+    ports:
+      - "7000:7000"
+    environment:
+      - PORT=7000
+      - PORT_VAULT=${PORT_VAULT}
+      - FAV_PLACES_URL=http://fav-places:4002
+      - REVIEW_PLACES_URL=http://review-places:4001
+    env_file:
+      - ./backend/src/planner-service/.env
+    networks:
+      - saas
+    volumes:
+      - shared_resources:/data:ro
+    depends_on:
+      database:
+        condition: service_started
+      vault:
+        condition: service_healthy
+      fav-places:
+        condition: service_healthy
+      review-places:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+    restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=planner"
+
+  # webserver:
+  #   container_name: webserver
+  #   build: backend-services/security/modsecurity/
+  #   ports:
+  #    - "8080:80" #shoud be changed to 443
+  #   retries: on-failure
 
   # Monitoring service - Netdata
   netdata:
@@ -360,9 +483,9 @@ services:
       - DOCKER_HOST=unix:///var/run/docker.sock
     networks:
       - saas
-    depends_on:
-      amq:
-        condition: service_healthy
+    # depends_on:
+    #   amq:
+    #     condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:19999/api/v1/info"]

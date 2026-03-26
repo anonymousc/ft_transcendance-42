@@ -18,3 +18,13 @@ path "secret/data/rabbitmq"
 {
     capabilities = ["read"]
 }
+
+path "secret/data/reviews"
+{
+    capabilities = ["read"]
+}
+
+path "secret/data/fav_places"
+{
+    capabilities = ["read"]
+}
