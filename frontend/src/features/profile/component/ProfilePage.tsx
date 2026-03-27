@@ -2,9 +2,29 @@ import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import "./ProfilePage.css";
 import { useAuth } from "../../../context/AuthContext";
+import { useEffect, useState } from "react";
+import { fetchMyProfile, toProfileAvatarUrl } from "../../../lib/profilesApi";
 
 function ProfilePage() {
   const { user, loading } = useAuth();
+  const [profileBio, setProfileBio] = useState<string | null>(null);
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchMyProfile()
+      .then((p) => {
+        if (cancelled) return;
+        setProfileBio(p.bio ?? null);
+        setProfileAvatar(toProfileAvatarUrl(p.avatar ?? null));
+      })
+      .catch(() => {
+        // non-critical; fallback to auth-service user fields
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -23,7 +43,7 @@ function ProfilePage() {
       <div className="profile-card">
         <div className="profile-header">
           <img
-            src={user?.avatar || "/profile.png"}
+            src={profileAvatar || user?.avatar || "/profile.png"}
             alt={user?.displayName || "Profile"}
             className="profile-avatar"
           />
@@ -50,7 +70,7 @@ function ProfilePage() {
           </div>
           <div className="profile-info-item">
             <span className="profile-info-label">Bio</span>
-            <span className="profile-info-value">{user?.bio || "—"}</span>
+            <span className="profile-info-value">{profileBio || user?.bio || "—"}</span>
           </div>
           <div className="profile-info-item">
             <span className="profile-info-label">Status</span>
@@ -60,9 +80,7 @@ function ProfilePage() {
           </div>
           <div className="profile-info-item">
             <span className="profile-info-label">Share my profile</span>
-            <span className="profile-info-value">
-              {}
-            </span>
+            <span className="profile-info-value">Private</span>
           </div>
         </div>
       </div>

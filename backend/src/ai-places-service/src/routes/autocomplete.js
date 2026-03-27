@@ -69,12 +69,10 @@ async function googleCityAutocomplete(input) {
 }
 
 // ── GET /autocomplete ─────────────────────────────────────────────────────────
-// Primary autocomplete: static CSV + recent searches.
+// Primary autocomplete: static CSV + recent searches (from token identity).
 // Falls back to Google only if both sources return nothing and q >= 3 chars.
-// The frontend should NOT call /autocomplete/places separately — the fallback
-// is handled here on the server.
 router.get('/autocomplete', async (req, res) => {
-  const { q = '', userId } = req.query;
+  const { q = '' } = req.query;
   const query = q.trim().toLowerCase();
 
   if (query.length < 1) return res.json({ suggestions: [] });
@@ -82,10 +80,11 @@ router.get('/autocomplete', async (req, res) => {
   const matched = CITIES
     .filter(c => c.startsWith(query))
     .slice(0, 6)
-    // Return in Title Case for display
     .map(c => c.replace(/\b\w/g, l => l.toUpperCase()));
 
-  const recent = userId ? (recentSearches.get(String(userId)) ?? []) : [];
+  // userId always comes from the verified JWT — never from the query string
+  const userId = req.user?.id;
+  const recent = userId ? (recentSearches.get(userId) ?? []) : [];
   const matchedRecent = recent
     .filter(r => r.toLowerCase().startsWith(query) && !matched.includes(r))
     .slice(0, 3);
@@ -105,18 +104,16 @@ router.get('/autocomplete', async (req, res) => {
 });
 
 // ── POST /autocomplete/recent ─────────────────────────────────────────────────
-// Records a confirmed city selection for a user's recent searches.
+// Records a confirmed city selection; identity taken from the verified JWT.
 router.post('/autocomplete/recent', (req, res) => {
-  const { userId, city } = req.body;
+  const userId = req.user.id;
+  const { city } = req.body;
 
-  if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
-    return res.status(400).json({ error: 'userId must be a non-empty string' });
-  }
   if (!city || typeof city !== 'string' || city.trim().length === 0 || city.length > 100) {
     return res.status(400).json({ error: 'city must be a non-empty string under 100 chars' });
   }
 
-  setRecent(userId.trim(), city.trim());
+  setRecent(userId, city.trim());
   res.json({ ok: true });
 });
 

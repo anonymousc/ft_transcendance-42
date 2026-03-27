@@ -1,20 +1,13 @@
 import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 function OAuthSuccess(): null {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token: string | null = searchParams.get("token");
-
-    if (token) {
-      localStorage.setItem("token", token);
-      navigate("/home", { replace: true });
-    } else {
-      navigate("/login", { replace: true });
-    }
-  }, [searchParams, navigate]);
+    // Cookie is set by backend during OAuth callback; nothing to store client-side.
+    navigate("/home", { replace: true });
+  }, [navigate]);
 
   return null;
 }

@@ -51,9 +51,10 @@ function setCache(key, data) {
   cache.set(key, { data, timestamp: Date.now() });
 }
 
-function buildPhotoUrl(photoName) {
-  if (!photoName) return null;
-  return `https://places.googleapis.com/v1/${photoName}/media?maxHeightPx=800&key=${GOOGLE_PLACES_API_KEY}`;
+function buildPhotoUrl(_photoName) {
+  // Photo URLs are not included in planner responses — the raw API key must
+  // never be embedded in data returned to clients or persisted in the DB.
+  return null;
 }
 
 function humanizeType(type) {

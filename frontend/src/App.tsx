@@ -3,6 +3,7 @@ import Hero from './pages/Hero';
 import LoginPage from './features/Login/component/LoginPage';
 import RegisterPage from './features/register/component/RegisterPage';
 import ProfilePage from './features/profile/component/ProfilePage';
+import EditProfilePage from './features/profile/component/EditProfilePage';
 import HomePage from './pages/HomePage';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import NotFoundPage from './pages/NotFound';
@@ -31,6 +32,7 @@ function AppContent() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path="/profile/edit" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/oauth-success" element={<OAuthSuccess />} />
         <Route path="/webchat" element={<Webchat />} />

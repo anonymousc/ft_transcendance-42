@@ -16,13 +16,16 @@ const FIELD_MASK = [
   'places.photos',
 ].join(',');
 
+// Regex that matches the photo name format Google returns:
+// places/<place_id>/photos/<photo_id>
+const PHOTO_REF_RE = /^places\/[A-Za-z0-9_-]+\/photos\/[A-Za-z0-9_-]+$/;
+
 function ok(res, data, extra = {}) {
   return res.json({ ok: true, data, ...extra });
 }
 
-function fail(res, status, code, message, details) {
+function fail(res, status, code, message) {
   const body = { ok: false, error: { code, message } };
-  if (details !== undefined) body.error.details = details;
   return res.status(status).json(body);
 }
 
@@ -76,8 +79,7 @@ async function callGoogleTextSearch(textQuery, maxResultCount = 10) {
   });
 
   if (!res.ok) {
-    const errText = await res.text();
-    const upstreamErr = new Error(`Google Places API error ${res.status}: ${errText}`);
+    const upstreamErr = new Error(`Google Places API error ${res.status}`);
     upstreamErr.code = res.status === 503 ? 'PLACES_UNAVAILABLE' : 'PLACES_ERROR';
     upstreamErr.status = 502;
     throw upstreamErr;
@@ -87,9 +89,10 @@ async function callGoogleTextSearch(textQuery, maxResultCount = 10) {
   return json.places ?? [];
 }
 
+// Return a server-proxied URL so the raw API key is never sent to clients
 function buildPhotoUrl(photoName) {
   if (!photoName) return null;
-  return `https://places.googleapis.com/v1/${photoName}/media?maxHeightPx=800&key=${GOOGLE_PLACES_API_KEY}`;
+  return `/places/photos?ref=${encodeURIComponent(photoName)}`;
 }
 
 function humanizeType(type) {
@@ -146,6 +149,33 @@ function mapGooglePlace(raw, index, preferences) {
   };
 }
 
+// GET /places/photos — server-side proxy; keeps API key off the wire to clients
+router.get('/places/photos', async (req, res) => {
+  const { ref } = req.query;
+
+  if (!ref || typeof ref !== 'string' || !PHOTO_REF_RE.test(ref)) {
+    return res.status(400).end();
+  }
+
+  try {
+    const googleUrl =
+      `https://places.googleapis.com/v1/${ref}/media?maxHeightPx=800&key=${GOOGLE_PLACES_API_KEY}`;
+    const upstream = await fetch(googleUrl);
+
+    if (!upstream.ok) return res.status(404).end();
+
+    const contentType = upstream.headers.get('content-type') || 'image/jpeg';
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+
+    const buffer = await upstream.arrayBuffer();
+    return res.send(Buffer.from(buffer));
+  } catch (err) {
+    console.error('[places/photos]', err.message);
+    return res.status(502).end();
+  }
+});
+
 router.get('/places', async (req, res) => {
   const validationError = validateCity(req.query.city);
   if (validationError) return fail(res, 400, 'INVALID_INPUT', validationError);
@@ -163,20 +193,10 @@ router.get('/places', async (req, res) => {
     return ok(res, places, { cached: false });
   } catch (err) {
     console.error('[ai-places/places]', err.message);
-    return fail(res, err.status ?? 500, err.code ?? 'INTERNAL_ERROR', 'Failed to fetch places', err.message);
+    return fail(res, err.status ?? 500, err.code ?? 'INTERNAL_ERROR', 'Failed to fetch places');
   }
 });
 
-// ── /places/search — natural language search ───────────────────────────────
-//
-// Accepts freetext like "rooftop dinner with views in Casablanca".
-// Google Places Text Search handles the query directly.
-// City is inferred from the first result's formattedAddress.
-// The intent field is the original query string.
-//
-// Response shape:
-//   { ok: true, data: Place[], city: string, intent: string, cached: bool }
-//
 router.get('/places/search', async (req, res) => {
   const validationError = validateQuery(req.query.q);
   if (validationError) return fail(res, 400, 'INVALID_INPUT', validationError);
@@ -193,7 +213,6 @@ router.get('/places/search', async (req, res) => {
     const rawPlaces = await callGoogleTextSearch(q, 10);
     const places = rawPlaces.map((raw, i) => mapGooglePlace(raw, i, null));
 
-    // Derive city from the first result's formattedAddress (second-to-last comma segment)
     const firstAddress = rawPlaces[0]?.formattedAddress ?? '';
     const parts = firstAddress.split(',').map(s => s.trim()).filter(Boolean);
     const city = parts.length >= 2 ? parts[parts.length - 2] : parts[0] ?? '';
@@ -203,7 +222,7 @@ router.get('/places/search', async (req, res) => {
     return ok(res, places, { cached: false, city, intent: q });
   } catch (err) {
     console.error('[ai-places/search]', err.message);
-    return fail(res, err.status ?? 500, err.code ?? 'INTERNAL_ERROR', 'Failed to search places', err.message);
+    return fail(res, err.status ?? 500, err.code ?? 'INTERNAL_ERROR', 'Failed to search places');
   }
 });
 

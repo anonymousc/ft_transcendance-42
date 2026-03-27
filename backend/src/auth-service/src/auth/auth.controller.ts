@@ -16,6 +16,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { SignupDto, SigninDto } from './dto';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
+import { randomBytes } from 'crypto';
 
 @Controller('auth')
 export class AuthController {
@@ -24,15 +25,54 @@ export class AuthController {
     private configService: ConfigService,
   ) {}
 
+  private setAuthCookie(res: Response, token: string) {
+    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+    res.cookie('access_token', token, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: (isProd ? 'none' : 'lax') as any,
+      path: '/',
+    });
+  }
+
+  private setCsrfCookie(res: Response, token: string) {
+    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+    res.cookie('csrf_token', token, {
+      httpOnly: false,
+      secure: isProd,
+      sameSite: (isProd ? 'none' : 'lax') as any,
+      path: '/',
+    });
+  }
+
+  @Get('csrf')
+  csrf(@Res({ passthrough: true }) res: Response) {
+    const token = randomBytes(32).toString('hex');
+    this.setCsrfCookie(res, token);
+    return { csrfToken: token };
+  }
+
   @Post('signup')
-  async signup(@Body() dto: SignupDto) {
-    return this.authService.signup(dto);
+  async signup(@Body() dto: SignupDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.signup(dto);
+    this.setAuthCookie(res, result.accessToken);
+    return result.user;
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('signin')
-  async signin(@Body() dto: SigninDto) {
-    return this.authService.signin(dto);
+  async signin(@Body() dto: SigninDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.signin(dto);
+    this.setAuthCookie(res, result.accessToken);
+    return result.user;
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('logout')
+  async logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('access_token', { path: '/' });
+    res.clearCookie('csrf_token', { path: '/' });
+    return { ok: true };
   }
 
   @Get('google')
@@ -46,10 +86,11 @@ export class AuthController {
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
     const user = await this.authService.validateGoogleUser(req.user as any);
     const token = this.authService.generateJwt(user);
+    this.setAuthCookie(res, token);
 
     const frontendUrl =
       this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
-    return res.redirect(`${frontendUrl}/oauth-success?token=${token}`);
+    return res.redirect(`${frontendUrl}/oauth-success`);
   }
 
   @Get('me')
@@ -61,5 +102,18 @@ export class AuthController {
       throw new UnauthorizedException('User not found');
     }
     return profile;
+  }
+
+  /**
+   * Token introspection endpoint.
+   * Other microservices that cannot verify the JWT locally
+   * call GET /auth/validate (Bearer token) to confirm validity.
+   * Returns { valid: true, user: { id, email } } on success.
+   */
+  @Get('validate')
+  @UseGuards(JwtAuthGuard)
+  validate(@Req() req: Request) {
+    const { id, email } = req.user as { id: string; email: string };
+    return { valid: true, user: { id, email } };
   }
 }

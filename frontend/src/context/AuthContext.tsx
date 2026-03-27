@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { API_BASE_URL } from '../lib/api';
+import { API_BASE_URL, clearCachedCsrfToken, ensureCsrfToken } from '../lib/api';
 
 interface UserData {
   id: string;
@@ -41,26 +41,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchUser = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-
     try {
       const res = await fetch(`${API_BASE_URL}/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
 
       if (res.ok) {
         const data = await res.json();
         setUser(data);
       } else {
-        // Token is invalid or expired
-        localStorage.removeItem('token');
         setUser(null);
       }
     } catch {
@@ -70,9 +59,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
+  const logout = async () => {
+    try {
+      const csrf = await ensureCsrfToken();
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'X-CSRF-Token': csrf },
+      });
+    } catch {
+      // ignore
+    } finally {
+      clearCachedCsrfToken();
+      setUser(null);
+    }
   };
 
   const refreshUser = async () => {
@@ -81,32 +81,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signup = async (data: SignupInput) => {
+    const csrf = await ensureCsrfToken();
     const res = await fetch(`${API_BASE_URL}/auth/signup`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
       body: JSON.stringify(data),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error((err as { message?: string }).message || 'Registration failed');
     }
-    const { accessToken } = await res.json();
-    localStorage.setItem('token', accessToken);
+    await res.json().catch(() => ({}));
     await fetchUser();
   };
 
   const signin = async (data: SigninInput) => {
+    const csrf = await ensureCsrfToken();
     const res = await fetch(`${API_BASE_URL}/auth/signin`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+      credentials: 'include',
       body: JSON.stringify(data),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error((err as { message?: string }).message || 'Invalid email or password');
     }
-    const { accessToken } = await res.json();
-    localStorage.setItem('token', accessToken);
+    await res.json().catch(() => ({}));
     await fetchUser();
   };
 
