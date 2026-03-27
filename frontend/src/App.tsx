@@ -35,7 +35,7 @@ function AppContent() {
         <Route path="/profile/edit" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/oauth-success" element={<OAuthSuccess />} />
-        <Route path="/webchat" element={<Webchat />} />
+        <Route path="/webchat" element={<ProtectedRoute><Webchat /></ProtectedRoute>} />
         <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><NotificationPage /></ProtectedRoute>} />
         <Route path="/city" element={<ProtectedRoute><City /></ProtectedRoute>} />
