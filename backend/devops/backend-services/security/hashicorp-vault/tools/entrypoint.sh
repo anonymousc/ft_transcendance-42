@@ -17,15 +17,16 @@ vault policy write postgres /tools/policy.hcl > /dev/null
 
 DB_PASS=$(openssl rand -hex 12)
 DB_USER=$(openssl rand -hex 12)
-DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@database:${PORT_POSTGRES}/prisma?schema=public"
+export DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@database:${PORT_POSTGRES}/prisma?schema=public"
 
 vault kv put -mount=secret postgres username="$DB_USER" password="$DB_PASS" database_url="$DATABASE_URL" > /dev/null
 
 REVIEWS_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@database:${PORT_POSTGRES}/reviews?schema=public"
 vault kv put -mount=secret reviews database_url="$REVIEWS_DATABASE_URL" > /dev/null
 
+PLACES=$(cat /run/secrets/google_places_api_key)
 FAV_PLACES_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@database:${PORT_POSTGRES}/fav_places?schema=public"
-vault kv put -mount=secret fav_places database_url="$FAV_PLACES_DATABASE_URL" > /dev/null
+vault kv put -mount=secret fav_places database_url="$FAV_PLACES_DATABASE_URL" api_key="$PLACES" > /dev/null
 
 JWT_ACCESS_SECRET=$(openssl rand -hex 64)
 JWT_REFRESH_SECRET=$(openssl rand -hex 64)
@@ -36,7 +37,10 @@ GOOGLE_CLIENT_SECRET=$(cat /run/secrets/google_client_secret 2>/dev/null || echo
 GOOGLE_CALLBACK_URL=$(cat /run/secrets/callback_url 2>/dev/null || echo "")
 FRONTEND_URL=$(cat /run/secrets/frontend_url 2>/dev/null || echo "")
 
-vault kv put -mount=secret backend \
+GEMINI_API_KEY=$(cat /run/secrets/gemini_api_key)
+vault kv put -mount=secret planner api_key="$GEMINI_API_KEY" url_db="$DATABASE_URL"
+
+vault kv put -mount=secret auth \
     jwt_access_secret="$JWT_ACCESS_SECRET" \
     jwt_refresh_secret="$JWT_REFRESH_SECRET" \
     jwt_access_expires_in="$JWT_ACCESS_EXPIRES_IN" \
@@ -59,8 +63,6 @@ vault kv put -mount=secret redis \
 
 vault token create -policy=postgres -format=json > /shared/token
 
-vault token create -policy=postgres -format=json > /shared/backend_token
-
 vault token create -policy=postgres -format=json > /shared/frontend_token
 
 vault token create -policy=postgres -format=json > /shared/auth_token
@@ -68,6 +70,8 @@ vault token create -policy=postgres -format=json > /shared/auth_token
 vault token create -policy=postgres -format=json > /shared/reviews_token
 
 vault token create -policy=postgres -format=json > /shared/fav_places_token
+
+vault token create -policy=planner -format=json > /shared/planner
 
 vault token create -policy=postgres -format=json > /shared/profiles_token
 

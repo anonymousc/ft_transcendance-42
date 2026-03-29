@@ -5,7 +5,7 @@ const planRouter = require('./routes/plan');
 const healthRouter = require('./routes/health');
 
 const app = express();
-const PORT = process.env.PORT || 7000;
+const PORT = process.env.PORT_PLAN || 7000;
 
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',

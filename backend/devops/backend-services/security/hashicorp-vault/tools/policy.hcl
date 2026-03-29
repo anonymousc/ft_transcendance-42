@@ -4,7 +4,7 @@ path "secret/data/postgres"
     capabilities = ["read"]
 }
 
-path "secret/data/backend"
+path "secret/data/auth"
 {
     capabilities = ["read"]
 }
@@ -20,6 +20,11 @@ path "secret/data/reviews"
 }
 
 path "secret/data/fav_places"
+{
+    capabilities = ["read"]
+}
+
+path "secret/data/planner"
 {
     capabilities = ["read"]
 }

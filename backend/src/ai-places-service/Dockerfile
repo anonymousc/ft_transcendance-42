@@ -6,16 +6,10 @@ COPY package*.json ./
 
 COPY src ./src
 
-RUN npm ci --omit=dev
+RUN apk add --no-cache jq curl && npm ci --omit=dev
 
-FROM node:22-alpine
-
-WORKDIR /app
-
-COPY --from=builder /app/node_modules ./node_modules
-
-COPY src/server.js ./src/server.js
+COPY --chmod=700 entrypoint.sh ./entrypoint.sh
 
 EXPOSE 4000
 
-CMD ["node", "src/server.js"]
+ENTRYPOINT ["/app/entrypoint.sh"]
