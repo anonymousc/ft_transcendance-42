@@ -8,11 +8,9 @@ import { useAuth } from "@/context/AuthContext";
 
 function HomePage() {
   const navigate = useNavigate();
-  // Freetext submit → natural language search (/places/search?q=)
   const handleSearch = (query: string) => {
     if (query.trim()) navigate(`/city?q=${encodeURIComponent(query.trim())}`);
   };
-  // Autocomplete city pick → exact browse (/places?city=)
   const handleSelect = (city: string) => {
     if (city.trim()) navigate(`/city?city=${encodeURIComponent(city.trim())}`);
   };

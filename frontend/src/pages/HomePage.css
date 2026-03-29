@@ -47,9 +47,9 @@
     max-width: 600px;
     padding: 0 2rem;
     display: flex;
-    flex-direction: column;
+    flex-direction: row; /* changed from column */
     align-items: center;
-    gap: 0;
+    gap: 0.5rem; /* add some spacing between the two bars */
 }
 
 .planner-bar-spacer {

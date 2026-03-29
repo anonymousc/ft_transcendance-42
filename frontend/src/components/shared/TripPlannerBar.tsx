@@ -6,14 +6,6 @@ import "./TripPlannerBar.css";
 const PLANNER_URL =
   (import.meta.env.VITE_PLANNER_URL as string) || "http://localhost:7000";
 
-const PREFERENCE_OPTIONS = [
-  { label: "Food", emoji: "🍜" },
-  { label: "History", emoji: "🏛️" },
-  { label: "Outdoor", emoji: "🌿" },
-  { label: "Shopping", emoji: "🛍️" },
-  { label: "Art", emoji: "🎨" },
-  { label: "Nightlife", emoji: "🌙" },
-];
 
 interface TripPlan {
   id: string;
@@ -119,15 +111,15 @@ function TripPlannerBar({ defaultCity = "" }: TripPlannerBarProps) {
   return (
     <>
       <div className="planner-bar-wrapper">
-        <div className="planner-bar-label">
+        {/* <div className="planner-bar-label">
           <Sparkles size={13} />
           <span>AI Trip Planner</span>
-        </div>
+        </div> */}
 
         <form className="planner-bar" onSubmit={handleSubmit}>
           {/* City input */}
           <div className="planner-bar-field">
-            <MapPin size={16} className="planner-bar-icon" />
+            {/* <MapPin size={16} className="planner-bar-icon" /> */}
             <input
               type="text"
               className="planner-bar-input"
@@ -183,7 +175,7 @@ function TripPlannerBar({ defaultCity = "" }: TripPlannerBarProps) {
         </form>
 
         {/* Preference chips */}
-        <div className="planner-bar-prefs">
+        {/* <div className="planner-bar-prefs">
           {PREFERENCE_OPTIONS.map(({ label, emoji }) => (
             <button
               key={label}
@@ -195,7 +187,7 @@ function TripPlannerBar({ defaultCity = "" }: TripPlannerBarProps) {
               <span>{label}</span>
             </button>
           ))}
-        </div>
+        </div> */}
 
         {error && <p className="planner-bar-error">{error}</p>}
       </div>
