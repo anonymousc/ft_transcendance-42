@@ -60,7 +60,7 @@ Rihla is a community-driven travel platform built for students exploring Morocco
 - ✅ **Uploads Module:** File upload handler with Express middleware
 - ✅ **AI Places Service:** Express microservice with Gemini Flash API for place generation & Unsplash API for images
 - **Database:** PostgreSQL with Prisma ORM v6.19, migrations ready
-- **Services:** RabbitMQ, Swagger UI (port 8080), Vault (secrets management), ELK Stack (logging)
+- **Services:** Swagger UI (port 8080), Vault (secrets management), ELK Stack (logging)
 
 ### Frontend (React 19 + Vite 7)
 - ✅ **Pages:** Landing (Hero), Home, Login, Register, Profile, Settings, OAuth callback, 404 error page
@@ -74,7 +74,7 @@ Rihla is a community-driven travel platform built for students exploring Morocco
 
 ### DevOps & Infrastructure
 - **Docker Compose:** Multi-service orchestration with environment configuration
-- **Services:** Frontend, Backend API, PostgreSQL, RabbitMQ, Redis, Netdata, Kibana, Elasticsearch, Vault
+- **Services:** Frontend, Backend API, PostgreSQL, Restapi, Redis, Netdata, Kibana, Elasticsearch, Vault
 - **Makefile Targets:** Build, start, stop, clean, and manage services easily
 - **Health Monitoring:** Netdata for real-time system metrics
 
@@ -115,7 +115,6 @@ Rihla is a community-driven travel platform built for students exploring Morocco
 |---------|---------|------|
 | PostgreSQL | Primary database | 5432 |
 | Redis | Caching & sessions | 6379 |
-| RabbitMQ | Message queue | 5672 / 15672 (UI) |
 | Elasticsearch | Log aggregation | 9200 |
 | Kibana | Log visualization | 5601 |
 | Swagger API Docs | API documentation | 8080 |
@@ -228,7 +227,6 @@ ft_transcendance-42/
 │       ├── backend-services/   # Service containers
 │       │   ├── auth/          # Auth gateway
 │       │   ├── prisma/        # Prisma migrations
-│       │   ├── rabbitmq/      # Message broker
 │       │   ├── logbull/       # Log aggregation
 │       │   ├── netdata/       # Monitoring
 │       │   └── security/      # Vault secrets
@@ -413,17 +411,6 @@ POSTGRES_PORT=5432
 # Redis
 REDIS_PORT=6379
 
-# RabbitMQ
-RABBITMQ_USER=guest
-RABBITMQ_PASSWORD=guest
-RABBITMQ_PORT=5672
-
-# Elasticsearch
-ELASTICSEARCH_PORT=9200
-
-# Kibana
-KIBANA_PORT=5601
-
 # Swagger UI
 SWAGGER_PORT=8080
 
@@ -524,7 +511,6 @@ make logs service-name  # View logs for specific service
 | Backend API | http://localhost:3001 | 3001 |
 | PostgreSQL | postgres://... | 5432 |
 | Redis | redis://localhost | 6379 |
-| RabbitMQ UI | http://localhost:15672 | 15672 |
 | Swagger API Docs | http://localhost:8080 | 8080 |
 | Kibana (Logs) | http://localhost:5601 | 5601 |
 | Netdata (Monitoring) | http://localhost:19999 | 19999 |
@@ -770,7 +756,6 @@ When running the full stack (`make all`):
 - **Netdata:** System metrics dashboard at http://localhost:19999
 - **Kibana + Elasticsearch:** Centralized logging at http://localhost:5601
 - **Redis:** Caching layer for improved performance
-- **RabbitMQ:** Message queue for async operations
 
 ## Common Issues & Solutions
 

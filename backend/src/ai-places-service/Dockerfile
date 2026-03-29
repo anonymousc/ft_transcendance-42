@@ -1,13 +1,15 @@
-FROM node:22-alpine
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci --omit=dev
-
 COPY src ./src
+
+RUN apk add --no-cache jq curl && npm ci --omit=dev
+
+COPY --chmod=700 entrypoint.sh ./entrypoint.sh
 
 EXPOSE 4000
 
-CMD ["node", "src/server.js"]
+ENTRYPOINT ["/app/entrypoint.sh"]
