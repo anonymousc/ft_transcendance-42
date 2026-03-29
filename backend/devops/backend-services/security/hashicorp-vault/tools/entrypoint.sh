@@ -21,11 +21,9 @@ DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@database:${PORT_POSTGRES}/prism
 
 vault kv put -mount=secret postgres username="$DB_USER" password="$DB_PASS" database_url="$DATABASE_URL" > /dev/null
 
-# reviews-places gets its own logical database on the same Postgres instance
 REVIEWS_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@database:${PORT_POSTGRES}/reviews?schema=public"
 vault kv put -mount=secret reviews database_url="$REVIEWS_DATABASE_URL" > /dev/null
 
-# fav-places gets its own logical database on the same Postgres instance
 FAV_PLACES_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@database:${PORT_POSTGRES}/fav_places?schema=public"
 vault kv put -mount=secret fav_places database_url="$FAV_PLACES_DATABASE_URL" > /dev/null
 
@@ -33,10 +31,10 @@ JWT_ACCESS_SECRET=$(openssl rand -hex 64)
 JWT_REFRESH_SECRET=$(openssl rand -hex 64)
 JWT_ACCESS_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d
-GOOGLE_CLIENT_ID=$(cat /secrets/google_client_id 2>/dev/null || echo "")
-GOOGLE_CLIENT_SECRET=$(cat /secrets/google_client_secret 2>/dev/null || echo "")
-GOOGLE_CALLBACK_URL=$(cat /secrets/callback_url 2>/dev/null || echo "")
-FRONTEND_URL=$(cat /secrets/frontend_url 2>/dev/null || echo "")
+GOOGLE_CLIENT_ID=$(cat /run/secrets/google_client_id 2>/dev/null || echo "")
+GOOGLE_CLIENT_SECRET=$(cat /run/secrets/google_client_secret 2>/dev/null || echo "")
+GOOGLE_CALLBACK_URL=$(cat /run/secrets/callback_url 2>/dev/null || echo "")
+FRONTEND_URL=$(cat /run/secrets/frontend_url 2>/dev/null || echo "")
 
 vault kv put -mount=secret backend \
     jwt_access_secret="$JWT_ACCESS_SECRET" \
@@ -49,7 +47,6 @@ vault kv put -mount=secret backend \
     frontend_url="$FRONTEND_URL" \
     database_url="$DATABASE_URL" > /dev/null
 
-# Generate Redis password and store in Vault
 REDIS_PASSWORD=$(openssl rand -hex 16)
 REDIS_HOST=${REDIS_HOST:-redis}
 REDIS_PORT=${REDIS_PORT:-6379}
@@ -60,40 +57,18 @@ vault kv put -mount=secret redis \
     port="$REDIS_PORT" \
     url="redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}" > /dev/null
 
-# Generate RabbitMQ credentials and store in Vault
-RABBITMQ_USER="travel_$(openssl rand -hex 4)"
-RABBITMQ_PASS=$(openssl rand -hex 16)
-RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
-RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
-RABBITMQ_MGMT_PORT=${RABBITMQ_MGMT_PORT:-15672}
-RABBITMQ_VHOST="travel_planning"
-
-vault kv put -mount=secret rabbitmq \
-    username="$RABBITMQ_USER" \
-    password="$RABBITMQ_PASS" \
-    host="$RABBITMQ_HOST" \
-    port="$RABBITMQ_PORT" \
-    mgmt_port="$RABBITMQ_MGMT_PORT" \
-    vhost="$RABBITMQ_VHOST" \
-    url="amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@${RABBITMQ_HOST}:${RABBITMQ_PORT}/${RABBITMQ_VHOST}" > /dev/null
-
 vault token create -policy=postgres -format=json > /shared/token
 
 vault token create -policy=postgres -format=json > /shared/backend_token
 
-# Create token for frontend (redis policy)
 vault token create -policy=postgres -format=json > /shared/frontend_token
 
-# Create token for auth service
 vault token create -policy=postgres -format=json > /shared/auth_token
 
-# Create token for review-places service
 vault token create -policy=postgres -format=json > /shared/reviews_token
 
-# Create token for fav-places service
 vault token create -policy=postgres -format=json > /shared/fav_places_token
 
-# Create token for profiles service
 vault token create -policy=postgres -format=json > /shared/profiles_token
 
 if [ -f /shared/token ];then

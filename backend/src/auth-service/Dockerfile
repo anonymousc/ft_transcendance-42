@@ -12,7 +12,6 @@ COPY tsconfig*.json nest-cli.json ./
 COPY src ./src
 RUN npx nest build
 
-# ── Runtime ────────────────────────────────────────────────────────────────
 FROM node:20-alpine
 
 RUN apk add --no-cache curl jq

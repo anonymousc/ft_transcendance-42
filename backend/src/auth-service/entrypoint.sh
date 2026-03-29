@@ -30,6 +30,9 @@ export JWT_ACCESS_SECRET=$(jq -r .data.data.jwt_access_secret /tmp/backend_data)
 export JWT_REFRESH_SECRET=$(jq -r .data.data.jwt_refresh_secret /tmp/backend_data)
 export JWT_ACCESS_EXPIRES_IN=$(jq -r .data.data.jwt_access_expires_in /tmp/backend_data)
 export JWT_REFRESH_EXPIRES_IN=$(jq -r .data.data.jwt_refresh_expires_in /tmp/backend_data)
+echo $GOOGLE_CLIENT_ID
+echo $GOOGLE_CLIENT_SECRET
+echo "test"
 
 rm -f /tmp/db_data /tmp/backend_data
 
