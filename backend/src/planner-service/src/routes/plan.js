@@ -36,7 +36,7 @@ function validateGenerateBody({ city, days, preferences }) {
 }
 
 // POST /plan/generate
-router.post('/plan/generate', authMiddleware, async (req, res) => {
+router.post('/plan/generate', authMiddleware, (req, res, next) => req.app.get('planGenerateLimiter')(req, res, next), async (req, res) => {
   const validationError = validateGenerateBody(req.body);
   if (validationError) return fail(res, 400, 'INVALID_INPUT', validationError);
 

@@ -27,26 +27,13 @@ import {
 import { useAuth } from "@/context/AuthContext";
 
 const AI_PLACES_URL =
-  (import.meta.env.VITE_AI_PLACES_URL as string) || "http://localhost:4000";
+  (import.meta.env.VITE_AI_PLACES_URL as string) || "http://localhost:4000"; // TODO: Store in .env after czar done with dev
 
 const REVIEW_PLACES_URL =
-  (import.meta.env.VITE_REVIEW_PLACES_URL as string) || "http://localhost:4001";
+  (import.meta.env.VITE_REVIEW_PLACES_URL as string) || "http://localhost:4001"; //same as above
 
 const FAV_PLACES_URL =
-  (import.meta.env.VITE_FAV_PLACES_URL as string) || "http://localhost:4002";
-
-// Stable anonymous userId stored in localStorage
-function getAnonymousUserId(): string {
-  const key = "review_user_id";
-  let id = localStorage.getItem(key);
-  if (!id) {
-    id = `anon_${Math.random().toString(36).slice(2, 10)}`;
-    localStorage.setItem(key, id);
-  }
-  return id;
-}
-
-// ── Types ──────────────────────────────────────────────────────────────────
+  (import.meta.env.VITE_FAV_PLACES_URL as string) || "http://localhost:4002"; // TODO: Store in .env after czar done with dev
 
 interface Place {
   place_id?: string;
@@ -92,8 +79,6 @@ interface ReviewEnvelope {
   data?: Review[] | Review | ReviewSummary | { id: string };
   error?: { code: string; message: string; details?: string };
 }
-
-// ── Places hooks ───────────────────────────────────────────────────────────
 
 function usePlaces(city: string) {
   const [places, setPlaces] = useState<Place[]>([]);
@@ -159,8 +144,6 @@ function useSearch(q: string) {
   return { places, loading, error, resolvedCity, intent };
 }
 
-// ── Review hooks ───────────────────────────────────────────────────────────
-
 function useReviews(placeName: string, city: string) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
@@ -173,6 +156,7 @@ function useReviews(placeName: string, city: string) {
 
     fetch(
       `${REVIEW_PLACES_URL}/reviews?place=${encodeURIComponent(placeName)}&city=${encodeURIComponent(city)}`,
+      { credentials: "include" },
     )
       .then((r) => r.json())
       .then((env: ReviewEnvelope) => {
@@ -196,6 +180,7 @@ function useReviewSummary(placeName: string, city: string, refreshKey: number) {
 
     fetch(
       `${REVIEW_PLACES_URL}/reviews/summary?place=${encodeURIComponent(placeName)}&city=${encodeURIComponent(city)}`,
+      { credentials: "include" },
     )
       .then((r) => r.json())
       .then((env: ReviewEnvelope) => {
@@ -206,8 +191,6 @@ function useReviewSummary(placeName: string, city: string, refreshKey: number) {
 
   return summary;
 }
-
-// ── Fav places hook ────────────────────────────────────────────────────────
 
 interface FavCheckEnvelope {
   ok: boolean;
@@ -273,8 +256,6 @@ function useFavPlace(userId: string | null, placeName: string, city: string, pla
   return { saved, toggling, toggle };
 }
 
-// ── Category styles ────────────────────────────────────────────────────────
-
 interface CategoryStyle {
   icon: React.ReactNode;
   bg: string;
@@ -338,8 +319,6 @@ function getCategoryStyle(category: string): CategoryStyle {
   );
 }
 
-// ── Shared components ──────────────────────────────────────────────────────
-
 function useInView(threshold = 0.1) {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
@@ -394,8 +373,6 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-// ── Interactive star picker for review form ────────────────────────────────
-
 function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hovered, setHovered] = useState(0);
 
@@ -430,20 +407,19 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
   );
 }
 
-// ── ReviewSection ──────────────────────────────────────────────────────────
-
 function ReviewSection({
   placeName,
   city,
+  userId,
   summary,
   onReviewPosted,
 }: {
   placeName: string;
   city: string;
+  userId: string | null;
   summary: ReviewSummary | null;
   onReviewPosted: () => void;
 }) {
-  const userId = getAnonymousUserId();
   const { reviews, loading, reload } = useReviews(placeName, city);
 
   const [rating, setRating] = useState(0);
@@ -453,6 +429,7 @@ function ReviewSection({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!userId) { setSubmitError("Please sign in to post a review."); return; }
     if (rating === 0) { setSubmitError("Please select a star rating."); return; }
     if (comment.trim().length < 3) { setSubmitError("Comment must be at least 3 characters."); return; }
 
@@ -463,7 +440,8 @@ function ReviewSection({
       const res = await fetch(`${REVIEW_PLACES_URL}/reviews`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ placeName, city, userId, rating, comment: comment.trim() }),
+        credentials: "include",
+        body: JSON.stringify({ placeName, city, rating, comment: comment.trim() }),
       });
       const env: ReviewEnvelope = await res.json();
       if (!env.ok) throw new Error(env.error?.message ?? "Failed to post review");
@@ -481,8 +459,8 @@ function ReviewSection({
   const handleDelete = async (reviewId: string) => {
     try {
       const res = await fetch(
-        `${REVIEW_PLACES_URL}/reviews/${reviewId}?userId=${encodeURIComponent(userId)}`,
-        { method: "DELETE" },
+        `${REVIEW_PLACES_URL}/reviews/${reviewId}`,
+        { method: "DELETE", credentials: "include" },
       );
       const env: ReviewEnvelope = await res.json();
       if (!env.ok) throw new Error(env.error?.message ?? "Failed to delete");
@@ -796,6 +774,7 @@ function PlaceCard({
         <ReviewSection
           placeName={place.name}
           city={city}
+          userId={userId}
           summary={summary}
           onReviewPosted={handleReviewPosted}
         />

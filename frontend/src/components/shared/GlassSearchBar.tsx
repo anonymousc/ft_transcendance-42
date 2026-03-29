@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, MapPin, Globe } from "lucide-react";
+import { Search, MapPin } from "lucide-react";
 import "./GlassSearchBar.css";
 
 const AI_PLACES_URL =
@@ -26,76 +26,42 @@ function GlassSearchBar({
   const value = controlledValue ?? internalValue;
 
   const [staticSuggestions, setStaticSuggestions] = useState<string[]>([]);
-  const [fallbackSuggestions, setFallbackSuggestions] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
-  // Tracks how many static results came back so the fallback timer can decide
-  // whether to fire without a stale-closure issue.
-  const staticCountRef = useRef(0);
-
-  const allSuggestions = [...staticSuggestions, ...fallbackSuggestions];
+  const allSuggestions = staticSuggestions;
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Debounced fetch: static at 250ms, fallback at 400ms (only when static = 0)
+  // Debounced fetch: backend handles static + Google fallback in one route.
   useEffect(() => {
     const q = value.trim();
 
     if (q.length < 1) {
       setStaticSuggestions([]);
-      setFallbackSuggestions([]);
-      staticCountRef.current = 0;
       setShowDropdown(false);
       return;
     }
 
-    // Timer 1 — 250ms: static CSV search (unchanged behaviour)
-    const staticTimer = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       try {
         const res = await fetch(
           `${AI_PLACES_URL}/autocomplete?q=${encodeURIComponent(q)}`,
         );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const list: string[] = data.suggestions ?? [];
-        staticCountRef.current = list.length;
         setStaticSuggestions(list);
-        if (list.length > 0) {
-          setFallbackSuggestions([]);
-          setShowDropdown(true);
-        }
+        setShowDropdown(list.length > 0);
         setSelectedIndex(-1);
       } catch {
-        staticCountRef.current = 0;
         setStaticSuggestions([]);
+        setShowDropdown(false);
       }
     }, 250);
 
-    // Timer 2 — 400ms: Google Places fallback, only when q >= 3 chars
-    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
-    if (q.length >= 3) {
-      fallbackTimer = setTimeout(async () => {
-        // Skip if the static search already returned results
-        if (staticCountRef.current > 0) return;
-
-        try {
-          const res = await fetch(
-            `${AI_PLACES_URL}/autocomplete/places?q=${encodeURIComponent(q)}`,
-          );
-          const data = await res.json();
-          const list: string[] = data.suggestions ?? [];
-          setFallbackSuggestions(list);
-          if (list.length > 0) setShowDropdown(true);
-          setSelectedIndex(-1);
-        } catch {
-          setFallbackSuggestions([]);
-        }
-      }, 400);
-    }
-
     return () => {
-      clearTimeout(staticTimer);
-      if (fallbackTimer !== undefined) clearTimeout(fallbackTimer);
+      clearTimeout(timer);
     };
   }, [value]);
 
@@ -121,7 +87,6 @@ function GlassSearchBar({
     setInternalValue(city);
     onChange?.(city);
     setStaticSuggestions([]);
-    setFallbackSuggestions([]);
     setShowDropdown(false);
     setSelectedIndex(-1);
     if (onSelect) onSelect(city);
@@ -172,7 +137,6 @@ function GlassSearchBar({
 
       {showDropdown && allSuggestions.length > 0 && (
         <ul className="glass-suggestions" role="listbox">
-          {/* Static results */}
           {staticSuggestions.map((city, i) => (
             <li
               key={`static-${city}`}
@@ -185,30 +149,6 @@ function GlassSearchBar({
               {city}
             </li>
           ))}
-
-          {/* Separator — only shown when fallback results exist */}
-          {fallbackSuggestions.length > 0 && (
-            <li className="glass-suggestion-separator" aria-hidden="true">
-              ── More places ──
-            </li>
-          )}
-
-          {/* Fallback results (Google Places) */}
-          {fallbackSuggestions.map((city, i) => {
-            const combinedIndex = staticSuggestions.length + i;
-            return (
-              <li
-                key={`fallback-${city}`}
-                role="option"
-                aria-selected={combinedIndex === selectedIndex}
-                className={`glass-suggestion-item${combinedIndex === selectedIndex ? " active" : ""}`}
-                onMouseDown={() => handleSelect(city)}
-              >
-                <Globe size={13} className="glass-suggestion-icon" />
-                {city}
-              </li>
-            );
-          })}
         </ul>
       )}
     </div>
