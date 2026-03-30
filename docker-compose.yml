@@ -413,40 +413,40 @@ services:
   #    - "8080:80" #shoud be changed to 443
   #   retries: on-failure
 
-  nginx:
-    build: ./backend/devops/nginx
-    container_name: nginx-gateway
-    ports:
-      - "80:80"
-    networks:
-      - saas
-    depends_on:
-      auth:
-        condition: service_healthy
-      profiles:
-        condition: service_healthy
-      ai-places:
-        condition: service_healthy
-      review-places:
-        condition: service_healthy
-      fav-places:
-        condition: service_healthy
-      planner:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    restart: on-failure
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service"
-    labels:
-      - "service=nginx-gateway"
+  # nginx:
+  #   build: ./backend/devops/nginx
+  #   container_name: nginx-gateway
+  #   ports:
+  #     - "80:80"
+  #   networks:
+  #     - saas
+  #   depends_on:
+  #     auth:
+  #       condition: service_healthy
+  #     profiles:
+  #       condition: service_healthy
+  #     ai-places:
+  #       condition: service_healthy
+  #     review-places:
+  #       condition: service_healthy
+  #     fav-places:
+  #       condition: service_healthy
+  #     planner:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   restart: on-failure
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #       labels: "service"
+  #   labels:
+  #     - "service=nginx-gateway"
 
   # Monitoring service - Netdata
   # netdata:
