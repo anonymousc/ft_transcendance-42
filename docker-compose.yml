@@ -110,7 +110,7 @@ services:
       vault:
         condition: service_healthy
       database:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3001/health || exit 1"]
       interval: 30s
@@ -139,8 +139,8 @@ services:
     volumes:
       - shared_resources:/data:ro
     depends_on:
-      database: 
-        condition: service_started
+      database:
+        condition: service_healthy
       vault:
         condition: service_healthy
     healthcheck:
@@ -175,9 +175,10 @@ services:
     restart: on-failure
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -h localhost -p $PORT_POSTGRES || exit 1"]
-      interval: 30s
+      interval: 10s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 60s
     logging:
       driver: json-file
       options:
@@ -205,7 +206,7 @@ services:
       vault:
         condition: service_healthy
       database:
-        condition: service_started
+        condition: service_healthy
     networks:
       - saas
     logging:
@@ -315,7 +316,7 @@ services:
       - shared_resources:/data:ro
     depends_on:
       database:
-        condition: service_started
+        condition: service_healthy
       vault:
         condition: service_healthy
     healthcheck:
@@ -348,7 +349,7 @@ services:
       - shared_resources:/data:ro
     depends_on:
       database:
-        condition: service_started
+        condition: service_healthy
       vault:
         condition: service_healthy
     healthcheck:
@@ -383,7 +384,7 @@ services:
       - shared_resources:/data:ro
     depends_on:
       database:
-        condition: service_started
+        condition: service_healthy
       vault:
         condition: service_healthy
       fav-places:
