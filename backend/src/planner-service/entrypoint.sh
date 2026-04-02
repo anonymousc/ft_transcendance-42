@@ -14,6 +14,9 @@ echo $VAULT_TOKEN
 
 echo "[planner] Fetching secrets from Vault..."
 
+curl -s -X GET http://vault:${PORT_VAULT}/v1/secret/data/postgres \
+  --header "X-Vault-Token: $VAULT_TOKEN" \
+  --output /tmp/db_data
 curl -s -X GET http://vault:${PORT_VAULT}/v1/secret/data/planner \
   --header "X-Vault-Token: $VAULT_TOKEN" \
   --output /tmp/planner
@@ -32,7 +35,7 @@ export GOOGLE_PLACES_API_KEY=$(jq -r .data.data.api_key /tmp/fav_places)
 export JWT_ACCESS_SECRET=$(jq -r .data.data.jwt_access_secret /tmp/auth_data)
 export GEMINI_API_KEY=$(jq -r .data.data.api_key /tmp/planner)
 
-rm -f  /tmp/planner
+rm -f /tmp/db_data /tmp/planner /tmp/auth_data /tmp/fav_places
 
 echo "[planner] Running Prisma migrations..."
 npx prisma migrate deploy

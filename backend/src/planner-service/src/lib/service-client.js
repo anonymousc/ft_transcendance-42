@@ -3,7 +3,8 @@ const REVIEW_PLACES_URL = process.env.REVIEW_PLACES_URL || 'http://localhost:400
 
 async function fetchUserFavorites(userId, city) {
   try {
-    const url = `${FAV_PLACES_URL}/fav-places?userId=${encodeURIComponent(userId)}`;
+    let url = `${FAV_PLACES_URL}/fav-places/internal/${encodeURIComponent(userId)}`;
+    if (city) url += `?city=${encodeURIComponent(city)}`;
     const res = await fetch(url);
 
     if (!res.ok) {
@@ -13,11 +14,6 @@ async function fetchUserFavorites(userId, city) {
 
     const json = await res.json();
     if (!json.ok || !Array.isArray(json.data)) return [];
-
-    if (city) {
-      const cityLower = city.toLowerCase().trim();
-      return json.data.filter(fav => fav.city?.toLowerCase().trim() === cityLower);
-    }
 
     return json.data;
   } catch (err) {

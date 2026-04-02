@@ -2,14 +2,20 @@ const jwt = require('jsonwebtoken');
 
 function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({
-      ok: false,
-      error: { code: 'UNAUTHORIZED', message: 'Authorization header with Bearer token is required' },
-    });
+  let token = null;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.slice(7);
+  } else if (req.cookies?.access_token) {
+    token = req.cookies.access_token;
   }
 
-  const token = authHeader.slice(7);
+  if (!token) {
+    return res.status(401).json({
+      ok: false,
+      error: { code: 'UNAUTHORIZED', message: 'Authorization header with Bearer token or access_token cookie is required' },
+    });
+  }
   const secret = process.env.JWT_ACCESS_SECRET;
 
   if (!secret) {

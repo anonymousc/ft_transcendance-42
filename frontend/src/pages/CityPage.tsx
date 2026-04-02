@@ -35,6 +35,14 @@ const REVIEW_PLACES_URL =
 const FAV_PLACES_URL =
   (import.meta.env.VITE_FAV_PLACES_URL as string) || "http://localhost:4002"; // TODO: Store in .env after czar done with dev
 
+/** API returns paths like `/places/photos?...` — must hit ai-places origin, not the SPA host */
+function resolvePlaceImageUrl(src: string | null | undefined): string | null {
+  if (!src) return null;
+  if (src.startsWith("http://") || src.startsWith("https://")) return src;
+  if (src.startsWith("/")) return `${AI_PLACES_URL}${src}`;
+  return src;
+}
+
 interface Place {
   place_id?: string;
   name: string;
@@ -93,7 +101,7 @@ function usePlaces(city: string) {
     setError(null);
     setPlaces([]);
 
-    fetch(`${AI_PLACES_URL}/places?city=${encodeURIComponent(city.trim())}`)
+    fetch(`${AI_PLACES_URL}/places?city=${encodeURIComponent(city.trim())}`, { credentials: 'include' })
       .then((res) => res.json())
       .then((envelope: ApiEnvelope) => {
         if (!envelope.ok) throw new Error(envelope.error?.details ?? envelope.error?.message ?? "Unknown error");
@@ -125,7 +133,7 @@ function useSearch(q: string) {
     setResolvedCity("");
     setIntent("");
 
-    fetch(`${AI_PLACES_URL}/places/search?q=${encodeURIComponent(q.trim())}`)
+    fetch(`${AI_PLACES_URL}/places/search?q=${encodeURIComponent(q.trim())}`, { credentials: 'include' })
       .then((res) => res.json())
       .then((envelope: ApiEnvelope) => {
         if (!envelope.ok) throw new Error(envelope.error?.details ?? envelope.error?.message ?? "Unknown error");
@@ -208,6 +216,7 @@ function useFavPlace(userId: string | null, placeName: string, city: string, pla
 
     fetch(
       `${FAV_PLACES_URL}/fav-places/check?userId=${encodeURIComponent(userId)}&placeName=${encodeURIComponent(placeName)}&city=${encodeURIComponent(city)}`,
+      { credentials: "include" },
     )
       .then((r) => r.json())
       .then((env: FavCheckEnvelope) => {
@@ -227,13 +236,14 @@ function useFavPlace(userId: string | null, placeName: string, city: string, pla
       if (saved && savedId) {
         const res = await fetch(
           `${FAV_PLACES_URL}/fav-places/${savedId}?userId=${encodeURIComponent(userId)}`,
-          { method: "DELETE" },
+          { method: "DELETE", credentials: "include" },
         );
         const env = await res.json();
         if (env.ok) { setSaved(false); setSavedId(null); }
       } else {
         const res = await fetch(`${FAV_PLACES_URL}/fav-places`, {
           method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId,
@@ -623,6 +633,7 @@ function PlaceCard({
   const { saved, toggling, toggle } = useFavPlace(userId, place.name, city, place);
 
   const handleReviewPosted = () => setSummaryRefreshKey((k) => k + 1);
+  const imageSrc = resolvePlaceImageUrl(place.image);
 
   return (
     <div
@@ -756,9 +767,9 @@ function PlaceCard({
         </div>
 
         <div className="relative w-[38%] shrink-0">
-          {place.image ? (
+          {imageSrc ? (
             <img
-              src={place.image}
+              src={imageSrc}
               alt={place.name}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
@@ -829,6 +840,7 @@ function useSuggest() {
     try {
       const res = await fetch(`${AI_PLACES_URL}/places/suggest`, {
         method: "POST",
+        credentials: 'include',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ city, preferences, visited, limit }),
       });

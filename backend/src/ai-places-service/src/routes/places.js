@@ -149,8 +149,8 @@ function mapGooglePlace(raw, index, preferences) {
   };
 }
 
-// GET /places/photos — server-side proxy; keeps API key off the wire to clients
-router.get('/places/photos', async (req, res) => {
+// GET /places/photos — server-side proxy; mounted publicly in server.js (img tags cannot send auth cookies cross-origin)
+async function photoProxyHandler(req, res) {
   const { ref } = req.query;
 
   if (!ref || typeof ref !== 'string' || !PHOTO_REF_RE.test(ref)) {
@@ -174,7 +174,7 @@ router.get('/places/photos', async (req, res) => {
     console.error('[places/photos]', err.message);
     return res.status(502).end();
   }
-});
+}
 
 router.get('/places', async (req, res) => {
   const validationError = validateCity(req.query.city);
@@ -226,4 +226,13 @@ router.get('/places/search', async (req, res) => {
   }
 });
 
-module.exports = { router, callGoogleTextSearch, buildPhotoUrl, buildMatchReason, mapGooglePlace, cache, CACHE_TTL_MS };
+module.exports = {
+  router,
+  photoProxyHandler,
+  callGoogleTextSearch,
+  buildPhotoUrl,
+  buildMatchReason,
+  mapGooglePlace,
+  cache,
+  CACHE_TTL_MS,
+};

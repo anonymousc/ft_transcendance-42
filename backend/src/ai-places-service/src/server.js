@@ -1,10 +1,11 @@
 // require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const authMiddleware = require('./middleware/auth');
 const autocompleteRouter = require('./routes/autocomplete');
-const { router: placesRouter } = require('./routes/places');
+const { router: placesRouter, photoProxyHandler } = require('./routes/places');
 const suggestRouter = require('./routes/suggest');
 
 const app = express();
@@ -15,6 +16,7 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
+app.use(cookieParser());
 
 // Health check — public, no auth, no rate limit
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
@@ -37,12 +39,15 @@ const placesLimiter = rateLimit({
   message: { ok: false, error: { code: 'RATE_LIMITED', message: 'Places search limit reached, please try again later' } },
 });
 
-// Apply auth to all routes below this point
+// Autocomplete — public GET, no auth required; POST /autocomplete/recent guards itself
 app.use(globalLimiter);
-app.use(authMiddleware);
-
-// Autocomplete — lower cost, higher limit already covered by globalLimiter
 app.use('/', autocompleteRouter);
+
+// Photo proxy — public; <img> requests are cross-origin and cannot attach session cookies reliably
+app.get('/places/photos', placesLimiter, photoProxyHandler);
+
+// Apply auth to all routes below this point
+app.use(authMiddleware);
 
 // Places routes — expensive Google API calls, tighter limit
 app.use(placesLimiter);

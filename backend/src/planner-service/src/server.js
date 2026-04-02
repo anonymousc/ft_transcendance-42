@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const planRouter = require('./routes/plan');
 const healthRouter = require('./routes/health');
@@ -13,6 +14,7 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
+app.use(cookieParser());
 
 // Strict rate limit for plan generation — each request calls Gemini Flash
 const planGenerateLimiter = rateLimit({

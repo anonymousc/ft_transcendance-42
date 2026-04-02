@@ -274,8 +274,8 @@ services:
   ai-places:
     build: ./backend/src/ai-places-service
     container_name: ai-places
-    expose:
-      - "4000"
+    ports:
+      - "4000:4000"
     env_file:
       - .env
     networks:
@@ -305,8 +305,8 @@ services:
   review-places:
     build: ./backend/src/review-places
     container_name: review-places
-    expose:
-      - "4001"
+    ports:
+      - "4001:4001"
     environment:
       - PORT=4001
       - PORT_VAULT=${PORT_VAULT}
@@ -338,8 +338,8 @@ services:
   fav-places:
     build: ./backend/src/fav-places
     container_name: fav-places
-    expose:
-      - "4002"
+    ports:
+      - "4002:4002"
     environment:
       - PORT=4002
       - PORT_VAULT=${PORT_VAULT}
@@ -371,8 +371,8 @@ services:
   planner:
     build: ./backend/src/planner-service
     container_name: planner
-    expose:
-      - "7000"
+    ports:
+      - "7000:7000"
     environment:
       - FAV_PLACES_URL=http://fav-places:4002
       - REVIEW_PLACES_URL=http://review-places:4001

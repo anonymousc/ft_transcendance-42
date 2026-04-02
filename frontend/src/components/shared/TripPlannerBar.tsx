@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CalendarDays, Sparkles, MapPin, Minus, Plus } from "lucide-react";
 import TripPlanModal from "./TripPlanModal";
+import { useAuth } from "../../context/AuthContext";
 import "./TripPlannerBar.css";
 
 const PLANNER_URL =
@@ -48,6 +49,7 @@ interface TripPlannerBarProps {
 }
 
 function TripPlannerBar({ defaultCity = "" }: TripPlannerBarProps) {
+  const { user } = useAuth();
   const [city, setCity] = useState(defaultCity);
   const [days, setDays] = useState(3);
   const [preferences, setPreferences] = useState<string[]>([]);
@@ -70,8 +72,7 @@ function TripPlannerBar({ defaultCity = "" }: TripPlannerBarProps) {
     e.preventDefault();
     if (!city.trim()) return;
 
-    const token = localStorage.getItem("token");
-    if (!token) {
+    if (!user) {
       setError("Please sign in to generate a trip plan.");
       return;
     }
@@ -82,9 +83,9 @@ function TripPlannerBar({ defaultCity = "" }: TripPlannerBarProps) {
     try {
       const res = await fetch(`${PLANNER_URL}/plan/generate`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           city: city.trim(),

@@ -121,6 +121,28 @@ router.get('/fav-places/public/:userId', async (req, res) => {
   }
 });
 
+// GET /fav-places/internal/:userId — no auth; for server-to-server calls (planner service)
+router.get('/fav-places/internal/:userId', async (req, res) => {
+  const { userId } = req.params;
+  const { city } = req.query;
+  if (!userId || !userId.trim()) return fail(res, 400, 'INVALID_INPUT', 'userId is required');
+
+  try {
+    const where = { userId: userId.trim() };
+    if (city && typeof city === 'string' && city.trim()) {
+      where.city = { equals: city.trim(), mode: 'insensitive' };
+    }
+    const places = await prisma.savedPlace.findMany({
+      where,
+      orderBy: { savedAt: 'desc' },
+    });
+    return ok(res, places);
+  } catch (err) {
+    console.error('[fav-places/internal]', err.message);
+    return fail(res, 500, 'INTERNAL_ERROR', 'Failed to fetch saved places');
+  }
+});
+
 // GET /fav-places/check — check if the authenticated user has saved a place
 router.get('/fav-places/check', authMiddleware, async (req, res) => {
   const userId = req.user.id;

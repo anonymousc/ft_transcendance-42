@@ -16,9 +16,15 @@ curl -s -X GET http://vault:${PORT_VAULT}/v1/secret/data/fav_places \
   --header "X-Vault-Token: $VAULT_TOKEN" \
   --output /tmp/fav_places_data
 
-export DATABASE_URL=$(jq -r .data.data.database_url /tmp/fav_places_data)
+curl -s -X GET http://vault:${PORT_VAULT}/v1/secret/data/auth \
+  --header "X-Vault-Token: $VAULT_TOKEN" \
+  --output /tmp/auth_data
 
-rm -f /tmp/fav_places_data
+export DATABASE_URL=$(jq -r .data.data.database_url /tmp/fav_places_data)
+export JWT_ACCESS_SECRET=$(jq -r .data.data.jwt_access_secret /tmp/auth_data)
+export FRONTEND_URL=$(jq -r .data.data.frontend_url /tmp/auth_data)
+
+rm -f /tmp/fav_places_data /tmp/auth_data
 
 echo "[fav-places] Running Prisma migrations..."
 npx prisma migrate deploy

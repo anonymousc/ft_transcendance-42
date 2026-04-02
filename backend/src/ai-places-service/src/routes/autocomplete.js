@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const fs = require('fs');
 const path = require('path');
+const authMiddleware = require('../middleware/auth');
 
 const router = Router();
 
@@ -105,7 +106,7 @@ router.get('/autocomplete', async (req, res) => {
 
 // ── POST /autocomplete/recent ─────────────────────────────────────────────────
 // Records a confirmed city selection; identity taken from the verified JWT.
-router.post('/autocomplete/recent', (req, res) => {
+router.post('/autocomplete/recent', authMiddleware, (req, res) => {
   const userId = req.user.id;
   const { city } = req.body;
 
