@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit');
 const planRouter = require('./routes/plan');
 const healthRouter = require('./routes/health');
 
@@ -20,7 +21,7 @@ app.use(cookieParser());
 const planGenerateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 10,
-  keyGenerator: (req) => req.user?.id || req.ip,
+  keyGenerator: (req) => req.user?.id || ipKeyGenerator(req),
   standardHeaders: true,
   legacyHeaders: false,
   message: {
