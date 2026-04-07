@@ -26,6 +26,9 @@ curl -s -X GET http://vault:${PORT_VAULT}/v1/secret/data/auth \
 curl -s -X GET http://vault:${PORT_VAULT}/v1/secret/data/fav_places \
   --header "X-Vault-Token: $VAULT_TOKEN" \
   --output /tmp/fav_places
+curl -s -X GET http://vault:${PORT_VAULT}/v1/secret/data/redis \
+  --header "X-Vault-Token: $VAULT_TOKEN" \
+  --output /tmp/redis_data
 
 export DATABASE_URL=$(jq -r .data.data.database_url /tmp/db_data)
 export FRONTEND_URL=$(jq -r .data.data.frontend_url /tmp/auth_data)
@@ -34,8 +37,9 @@ export GOOGLE_CLIENT_SECRET=$(jq -r .data.data.google_client_secret /tmp/auth_da
 export GOOGLE_PLACES_API_KEY=$(jq -r .data.data.api_key /tmp/fav_places)
 export JWT_ACCESS_SECRET=$(jq -r .data.data.jwt_access_secret /tmp/auth_data)
 export GEMINI_API_KEY=$(jq -r .data.data.api_key /tmp/planner)
+export REDIS_URL=$(jq -r .data.data.url /tmp/redis_data)
 
-rm -f /tmp/db_data /tmp/planner /tmp/auth_data /tmp/fav_places
+rm -f /tmp/db_data /tmp/planner /tmp/auth_data /tmp/fav_places /tmp/redis_data
 
 echo "[planner] Running Prisma migrations..."
 npx prisma migrate deploy

@@ -4,6 +4,8 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const { ipKeyGenerator } = require('express-rate-limit');
+const { RedisStore } = require('rate-limit-redis');
+const redis = require('./lib/redis');
 const planRouter = require('./routes/plan');
 const healthRouter = require('./routes/health');
 
@@ -21,6 +23,10 @@ app.use(cookieParser());
 const planGenerateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 10,
+  store: new RedisStore({
+    sendCommand: (...args) => redis.call(...args),
+    prefix: 'rl:planner:',
+  }),
   keyGenerator: (req) => req.user?.id || ipKeyGenerator(req),
   standardHeaders: true,
   legacyHeaders: false,

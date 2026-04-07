@@ -1,5 +1,8 @@
 const { Router } = require('express');
-const { callGoogleTextSearch, mapGooglePlace, cache, CACHE_TTL_MS } = require('./places');
+const { callGoogleTextSearch, mapGooglePlace } = require('./places');
+const redis = require('../lib/redis');
+
+const CACHE_TTL_S = 60 * 60;
 
 const router = Router();
 
@@ -46,10 +49,15 @@ router.post('/places/suggest', async (req, res) => {
   const safeLimit = Math.min(Math.max(parseInt(limit) || 5, 1), 10);
   const safeCity = city.trim();
 
-  const cacheKey = getSuggestCacheKey(safeCity, preferences, visited);
-  const cached = cache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-    return res.json({ suggestions: cached.data, cached: true });
+  const cacheKey = `ai-places:suggest::${getSuggestCacheKey(safeCity, preferences, visited)}`;
+
+  try {
+    const cachedRaw = await redis.get(cacheKey);
+    if (cachedRaw) {
+      return res.json({ suggestions: JSON.parse(cachedRaw), cached: true });
+    }
+  } catch {
+    // fall through to API call on Redis error
   }
 
   try {
@@ -64,7 +72,12 @@ router.post('/places/suggest', async (req, res) => {
 
     const suggestions = filtered.map((raw, i) => mapGooglePlace(raw, i, preferences));
 
-    cache.set(cacheKey, { data: suggestions, timestamp: Date.now() });
+    try {
+      await redis.set(cacheKey, JSON.stringify(suggestions), 'EX', CACHE_TTL_S);
+    } catch (cacheErr) {
+      console.warn('[ai-places/suggest] cache write failed:', cacheErr.message);
+    }
+
     return res.json({ suggestions, cached: false });
   } catch (err) {
     console.error('[ai-places/suggest]', err.message);

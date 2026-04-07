@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
+const { RedisStore } = require('rate-limit-redis');
+const redis = require('./lib/redis');
 const authMiddleware = require('./middleware/auth');
 const autocompleteRouter = require('./routes/autocomplete');
 const { router: placesRouter, photoProxyHandler } = require('./routes/places');
@@ -25,6 +27,10 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
+  store: new RedisStore({
+    sendCommand: (...args) => redis.call(...args),
+    prefix: 'rl:ai-places:global:',
+  }),
   standardHeaders: true,
   legacyHeaders: false,
   message: { ok: false, error: { code: 'RATE_LIMITED', message: 'Too many requests, please try again later' } },
@@ -34,6 +40,10 @@ const globalLimiter = rateLimit({
 const placesLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,
+  store: new RedisStore({
+    sendCommand: (...args) => redis.call(...args),
+    prefix: 'rl:ai-places:places:',
+  }),
   standardHeaders: true,
   legacyHeaders: false,
   message: { ok: false, error: { code: 'RATE_LIMITED', message: 'Places search limit reached, please try again later' } },

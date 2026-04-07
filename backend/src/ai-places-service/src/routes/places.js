@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const redis = require('../lib/redis');
 
 const router = Router();
 
@@ -50,21 +51,23 @@ function validateQuery(raw) {
   return null;
 }
 
-const cache = new Map();
-const CACHE_TTL_MS = 60 * 60 * 1000;
+const CACHE_TTL_S = 60 * 60;
 
-function getCached(key) {
-  const entry = cache.get(key);
-  if (!entry) return null;
-  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
-    cache.delete(key);
+async function getCached(key) {
+  try {
+    const raw = await redis.get(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
     return null;
   }
-  return entry.data;
 }
 
-function setCache(key, data) {
-  cache.set(key, { data, timestamp: Date.now() });
+async function setCache(key, data) {
+  try {
+    await redis.set(key, JSON.stringify(data), 'EX', CACHE_TTL_S);
+  } catch (err) {
+    console.warn('[ai-places] cache write failed:', err.message);
+  }
 }
 
 async function callGoogleTextSearch(textQuery, maxResultCount = 10) {
@@ -137,7 +140,7 @@ function mapGooglePlace(raw, index, preferences) {
     place_id: raw.id ?? null,
     name: raw.displayName?.text ?? 'Unknown',
     category,
-    rating: raw.rating ?? null,
+    rating: raw.rating ?? 0,
     description: raw.editorialSummary?.text ?? `A ${category} worth visiting.`,
     address: raw.formattedAddress ?? '',
     must_visit: index < 3,
@@ -181,15 +184,15 @@ router.get('/places', async (req, res) => {
   if (validationError) return fail(res, 400, 'INVALID_INPUT', validationError);
 
   const city = req.query.city.trim();
-  const cacheKey = `city::${city.toLowerCase()}`;
+  const cacheKey = `ai-places:city::${city.toLowerCase()}`;
 
-  const cached = getCached(cacheKey);
+  const cached = await getCached(cacheKey);
   if (cached) return ok(res, cached, { cached: true });
 
   try {
     const rawPlaces = await callGoogleTextSearch(`places to visit in ${city}`, 10);
     const places = rawPlaces.map((raw, i) => mapGooglePlace(raw, i, null));
-    setCache(cacheKey, places);
+    await setCache(cacheKey, places);
     return ok(res, places, { cached: false });
   } catch (err) {
     console.error('[ai-places/places]', err.message);
@@ -202,9 +205,9 @@ router.get('/places/search', async (req, res) => {
   if (validationError) return fail(res, 400, 'INVALID_INPUT', validationError);
 
   const q = req.query.q.trim();
-  const cacheKey = `search::${q.toLowerCase()}`;
+  const cacheKey = `ai-places:search::${q.toLowerCase()}`;
 
-  const cached = getCached(cacheKey);
+  const cached = await getCached(cacheKey);
   if (cached) {
     return ok(res, cached.places, { cached: true, city: cached.city, intent: cached.intent });
   }
@@ -218,7 +221,7 @@ router.get('/places/search', async (req, res) => {
     const city = parts.length >= 2 ? parts[parts.length - 2] : parts[0] ?? '';
 
     const stored = { city, intent: q, places };
-    setCache(cacheKey, stored);
+    await setCache(cacheKey, stored);
     return ok(res, places, { cached: false, city, intent: q });
   } catch (err) {
     console.error('[ai-places/search]', err.message);
@@ -233,6 +236,4 @@ module.exports = {
   buildPhotoUrl,
   buildMatchReason,
   mapGooglePlace,
-  cache,
-  CACHE_TTL_MS,
 };

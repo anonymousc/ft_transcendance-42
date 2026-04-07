@@ -47,7 +47,7 @@ interface Place {
   place_id?: string;
   name: string;
   category: string;
-  rating: number;
+  rating: number | null;
   description: string;
   address: string;
   must_visit: boolean;
@@ -355,9 +355,10 @@ function useInView(threshold = 0.1) {
   return { ref, inView };
 }
 
-function StarRating({ rating }: { rating: number }) {
-  const full = Math.floor(rating);
-  const hasHalf = rating - full >= 0.3;
+function StarRating({ rating }: { rating: number | null }) {
+  const safeRating = rating ?? 0;
+  const full = Math.floor(safeRating);
+  const hasHalf = safeRating - full >= 0.3;
 
   return (
     <div className="flex items-center gap-1.5">
@@ -377,7 +378,7 @@ function StarRating({ rating }: { rating: number }) {
         ))}
       </div>
       <span className="text-xs font-bold text-orange-500 dark:text-orange-400 tabular-nums">
-        {rating.toFixed(1)}
+        {safeRating.toFixed(1)}
       </span>
     </div>
   );
