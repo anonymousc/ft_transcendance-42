@@ -1,0 +1,25 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SavedPlace {
+  id        String   @id @default(uuid())
+  userId    String
+  placeName String
+  city      String
+  category  String
+  address   String
+  image     String?
+  rating    Float?
+  status    String   @default("favorited")
+  savedAt   DateTime @default(now())
+
+  @@unique([userId, placeName, city])
+  @@index([userId])
+  @@index([userId, status])
+}
