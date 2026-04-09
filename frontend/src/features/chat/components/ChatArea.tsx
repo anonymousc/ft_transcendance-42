@@ -11,6 +11,7 @@ interface ChatAreaProps {
   currentUserId: string;
   contactName: string;
   onSendMessage: (content: string) => void;
+  isDisabled?: boolean | undefined;
   onBack?: (() => void) | undefined;
   className?: string | undefined;
 }
@@ -20,6 +21,7 @@ function ChatArea({
   currentUserId,
   contactName,
   onSendMessage,
+  isDisabled = false,
   onBack,
   className,
 }: ChatAreaProps) {
@@ -53,18 +55,24 @@ function ChatArea({
         className="flex-1 overflow-y-auto px-6 py-6 flex flex-col justify-end scrollbar-thin min-h-0"
       >
         <div className="space-y-3 mt-auto">
-          {messages.map((message) => (
-            <MessageBubble
-              key={message.id}
-              message={message}
-              isOwn={message.senderId === currentUserId}
-            />
-          ))}
+          {messages.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground py-8 select-none">
+              No messages yet — say hi! 👋
+            </p>
+          ) : (
+            messages.map((message) => (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isOwn={message.senderId === currentUserId}
+              />
+            ))
+          )}
         </div>
       </div>
 
-      {/* Input */}
-      <MessageInput onSend={onSendMessage} />
+      {/* Input — disabled while disconnected */}
+      <MessageInput onSend={onSendMessage} disabled={isDisabled} />
     </div>
   );
 }

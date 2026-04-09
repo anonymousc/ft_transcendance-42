@@ -7,8 +7,6 @@ services:
     build: ./frontend/
     env_file:
       - .env
-    environment:
-      - AUTH_SERVICE_URL=http://auth:3001
     ports:
       - "${PORT_FRONT}:${PORT_FRONT}"
     networks:
@@ -17,16 +15,16 @@ services:
       - ./frontend/:/app
       - shared_resources:/data:ro
     depends_on:
-      backend:
+      auth:
+        condition: service_healthy
+      profiles:
         condition: service_healthy
       redis:
         condition: service_healthy
       vault:
         condition: service_healthy
-      # auth:
-      #   condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:$PORT_FRONT/ || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://frontend:$PORT_FRONT/ || exit 1"]
       interval: 30s
       timeout: 30s
       retries: 3
@@ -67,27 +65,58 @@ services:
         labels: "service"
     labels:
       - "service=redis"
-  maptoposter:
-    container_name: maptoposter
-    build: ./backend/devops/frontend-services/maptoposter/
-    env_file:
-      - .env
+  # maptoposter:
+  #   container_name: maptoposter
+  #   build: ./backend/devops/frontend-services/maptoposter/
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - "5025:5025"
+  #   networks:
+  #     - saas
+  #   volumes:
+  #     - shared_resources:/data:ro
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #     vault:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -f http://localhost:5025/ || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   restart: on-failure
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #       labels: "service"
+  #   labels:
+  #     - "service=maptoposter"
+  auth:
+    build: ./backend/src/auth-service
+    container_name: auth
     ports:
-      - "5025:5025"
+      - "3001:3001"
+    env_file:
+      .env
     networks:
       - saas
     volumes:
       - shared_resources:/data:ro
     depends_on:
-      redis:
-        condition: service_healthy
       vault:
         condition: service_healthy
+      database:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5025/ || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:3001/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 2m
     restart: on-failure
     logging:
       driver: json-file
@@ -96,68 +125,30 @@ services:
         max-file: "3"
         labels: "service"
     labels:
-      - "service=maptoposter"
-  # auth:
-  #   build:
-  #     context: ./
-  #     dockerfile: backend/devops/backend-services/auth/Dockerfile
-  #   container_name: auth
-  #   ports:
-  #     - "3001:3001"
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     - AUTH_PORT=3001
-  #     - NODE_ENV=production
-  #   networks:
-  #     - saas
-  #   volumes:
-  #     - shared_resources:/data
-  #   depends_on:
-  #     database:
-  #       condition: service_started
-  #     vault:
-  #       condition: service_healthy
-      # amq:
-      #   condition: service_healthy
-    # healthcheck:
-    #   test: ["CMD-SHELL", "curl -f http://localhost:3001/health || exit 1"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-    # restart: on-failure
-    # logging:
-    #   driver: json-file
-    #   options:
-    #     max-size: "10m"
-    #     max-file: "3"
-    #     labels: "service"
-    # labels:
-    #   - "service=auth"
-  amq:
-    build: ./backend/devops/backend-services/rabbitmq/
-    hostname: rabbitmq
-    container_name: rabbitmq
-    mem_limit: 512m
+      - "service=auth"
+
+  profiles:
+    build: ./backend/src/profiles-service
+    container_name: profiles
+    ports:
+      - "3002:3002"
     env_file:
       - .env
-    ports:
-      - "5672:5672"
-      - "15692:15692"
     networks:
       - saas
     volumes:
-      - shared_resources:/vault:ro
-      - rabbitmq_data:/var/lib/rabbitmq
+      - shared_resources:/data:ro
     depends_on:
+      database:
+        condition: service_healthy
       vault:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      test: ["CMD-SHELL", "curl -f http://localhost:3002/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 2m
     restart: on-failure
     logging:
       driver: json-file
@@ -166,7 +157,7 @@ services:
         max-file: "3"
         labels: "service"
     labels:
-      - "service=rabbitmq"
+      - "service=profiles"
   database:
     container_name: database
     build: ./backend/devops/backend-services/prisma/
@@ -184,9 +175,10 @@ services:
     restart: on-failure
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -h localhost -p $PORT_POSTGRES || exit 1"]
-      interval: 30s
+      interval: 10s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 60s
     logging:
       driver: json-file
       options:
@@ -203,16 +195,9 @@ services:
     restart: on-failure
     container_name: logbull
     ports:
-      - "9100:9100"
+      - "9101:9101"
     env_file:
       - .env
-    environment:
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_VHOST=travel_planning
-      - RABBITMQ_EXCHANGE=logs
-      - RABBITMQ_QUEUE=logs.all
-      - LOG_LEVEL=info
     volumes:
       - logs:/app/logs
       - shared_resources:/tmp/token:ro
@@ -221,8 +206,6 @@ services:
       vault:
         condition: service_healthy
       database:
-        condition: service_started
-      amq:
         condition: service_healthy
     networks:
       - saas
@@ -264,12 +247,13 @@ services:
       - google_client_secret
       - callback_url
       - frontend_url
+      - gemini_api_key
+      - google_places_api_key
     env_file:
       - .env
     volumes:
       - shared_resources:/shared
       - ./backend/devops/backend-services/security/hashicorp-vault/tools:/tools:rx
-      - ./backend/devops/secrets~:/secrets:ro
     networks:
       - saas
     healthcheck:
@@ -287,85 +271,27 @@ services:
         labels: "service"
     labels:
       - "service=vault"
-  # webserver:
-  #   container_name: webserver
-  #   build: backend-services/security/modsecurity/
-  #   ports:
-  #    - "8080:80" #shoud be changed to 443
-  #   retries: on-failure
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: backend
+  ai-places:
+    build: ./backend/src/ai-places-service
+    container_name: ai-places
     ports:
-      - "3000:3000"
-      - "5555:5555"
+      - "4000:4000"
     env_file:
       - .env
-    environment:
-      - AUTH_SERVICE_URL=http://auth:3001
     networks:
       - saas
-    volumes:
-      - shared_resources:/data
-    depends_on:
-      database:
-        condition: service_started
-      vault:
-        condition: service_healthy
-      # auth:
-      #   condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
-      interval: 1m30s
-      timeout: 60s
-      retries: 3
     restart: on-failure
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service"
-    labels:
-      - "service=backend"
-
-  # Monitoring service - Netdata
-  netdata:
-    image: netdata/netdata:stable
-    container_name: netdata
-    hostname: netdata-monitor
-    ports:
-      - "19999:19999"
-    cap_add:
-      - SYS_PTRACE
-      - SYS_ADMIN
-    security_opt:
-      - apparmor:unconfined
-    volumes:
-      - netdata_config:/etc/netdata
-      - netdata_lib:/var/lib/netdata
-      - netdata_cache:/var/cache/netdata
-      - ./backend/devops/backend-services/netdata/go.d/prometheus.conf:/etc/netdata/go.d/prometheus.conf:ro
-      - /etc/passwd:/host/etc/passwd:ro
-      - /etc/group:/host/etc/group:ro
-      - /etc/localtime:/etc/localtime:ro
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      - NETDATA_CLAIM_TOKEN=${NETDATA_CLAIM_TOKEN:-}
-      - NETDATA_CLAIM_URL=${NETDATA_CLAIM_URL:-https://app.netdata.cloud}
-      - DOCKER_HOST=unix:///var/run/docker.sock
-    networks:
-      - saas
     depends_on:
-      amq:
+      vault:
+        condition : service_healthy
+      database: 
+        condition : service_healthy
+      redis:
         condition: service_healthy
-    restart: unless-stopped
+    volumes:
+      - shared_resources:/data/
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:19999/api/v1/info"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -376,7 +302,203 @@ services:
         max-file: "3"
         labels: "service"
     labels:
-      - "service=netdata"
+      - "service=ai-places"
+
+  review-places:
+    build: ./backend/src/review-places
+    container_name: review-places
+    ports:
+      - "4001:4001"
+    environment:
+      - PORT=4001
+      - PORT_VAULT=${PORT_VAULT}
+    networks:
+      - saas
+    volumes:
+      - shared_resources:/data:ro
+    depends_on:
+      database:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4001/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+    restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=review-places"
+
+  fav-places:
+    build: ./backend/src/fav-places
+    container_name: fav-places
+    ports:
+      - "4002:4002"
+    environment:
+      - PORT=4002
+      - PORT_VAULT=${PORT_VAULT}
+    networks:
+      - saas
+    volumes:
+      - shared_resources:/data:ro
+    depends_on:
+      database:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4002/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+    restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=fav-places"
+
+  planner:
+    build: ./backend/src/planner-service
+    container_name: planner
+    ports:
+      - "7000:7000"
+    environment:
+      - FAV_PLACES_URL=http://fav-places:4002
+      - REVIEW_PLACES_URL=http://review-places:4001
+    env_file:
+      - .env
+    networks:
+      - saas
+    volumes:
+      - shared_resources:/data:ro
+    depends_on:
+      database:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
+      fav-places:
+        condition: service_healthy
+      review-places:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+    restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=planner"
+
+  # webserver:
+  #   container_name: webserver
+  #   build: backend-services/security/modsecurity/
+  #   ports:
+  #    - "8080:80" #shoud be changed to 443
+  #   retries: on-failure
+
+  # nginx:
+  #   build: ./backend/devops/nginx
+  #   container_name: nginx-gateway
+  #   ports:
+  #     - "80:80"
+  #   networks:
+  #     - saas
+  #   depends_on:
+  #     auth:
+  #       condition: service_healthy
+  #     profiles:
+  #       condition: service_healthy
+  #     ai-places:
+  #       condition: service_healthy
+  #     review-places:
+  #       condition: service_healthy
+  #     fav-places:
+  #       condition: service_healthy
+  #     planner:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   restart: on-failure
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #       labels: "service"
+  #   labels:
+  #     - "service=nginx-gateway"
+
+  # Monitoring service - Netdata
+  # netdata:
+  #   image: netdata/netdata:stable
+  #   container_name: netdata
+  #   hostname: netdata-monitor
+  #   ports:
+  #     - "19999:19999"
+  #   cap_add:
+  #     - SYS_PTRACE
+  #     - SYS_ADMIN
+  #   security_opt:
+  #     - apparmor:unconfined
+  #   volumes:
+  #     - netdata_config:/etc/netdata
+  #     - netdata_lib:/var/lib/netdata
+  #     - netdata_cache:/var/cache/netdata
+  #     - ./backend/devops/backend-services/netdata/go.d/prometheus.conf:/etc/netdata/go.d/prometheus.conf:ro
+  #     - /etc/passwd:/host/etc/passwd:ro
+  #     - /etc/group:/host/etc/group:ro
+  #     - /etc/localtime:/etc/localtime:ro
+  #     - /proc:/host/proc:ro
+  #     - /sys:/host/sys:ro
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #   environment:
+  #     - NETDATA_CLAIM_TOKEN=${NETDATA_CLAIM_TOKEN:-}
+  #     - NETDATA_CLAIM_URL=${NETDATA_CLAIM_URL:-https://app.netdata.cloud}
+  #     - DOCKER_HOST=unix:///var/run/docker.sock
+  #   networks:
+  #     - saas
+  #   # depends_on:
+  #   #   amq:
+  #   #     condition: service_healthy
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:19999/api/v1/info"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #       labels: "service"
+  #   labels:
+  #     - "service=netdata"
 
 networks:
   saas :
@@ -384,7 +506,6 @@ networks:
 volumes:
   data: {}
   logs: {}
-  rabbitmq_data: {}
   netdata_config: {}
   netdata_lib: {}
   netdata_cache: {}
@@ -395,10 +516,17 @@ volumes:
       device : tmpfs
 secrets:
   google_client_id:
-    file: ./backend/devops/secrets~/google_client_id
+    file: ./backend/devops/secrets/google_client_id
   google_client_secret:
-    file: ./backend/devops/secrets~/google_client_secret
+    file: ./backend/devops/secrets/google_client_secret
   callback_url:
-    file: ./backend/devops/secrets~/callback_url
+    file: ./backend/devops/secrets/callback_url
   frontend_url:
-    file: ./backend/devops/secrets~/frontend_url
+    file: ./backend/devops/secrets/frontend_url
+  gemini_api_key:
+    file: ./backend/devops/secrets/gemini_api_key
+  google_places_api_key:
+    file: ./backend/devops/secrets/google_places
+
+
+
