@@ -12,9 +12,15 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: 19%;
     object-fit: cover;
     z-index: -1;
+    transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Full-screen video before any search */
+.home-page--hero .videoTag {
+    height: 100%;
 }
 
 .home-content {
@@ -23,9 +29,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    min-height: 60vh;
     padding: 0 2rem;
     z-index: 1;
+    transition: min-height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.home-page--hero .home-content {
+    min-height: 100vh;
 }
 
 .header-home{
@@ -211,4 +222,14 @@
     60% {
         transform: translateX(-50%) translateY(-5px);
     }
+}
+
+/* ── Inline city results ───────────────────────────────────────────────────── */
+.city-results {
+    animation: results-fade-in 0.35s ease;
+}
+
+@keyframes results-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }

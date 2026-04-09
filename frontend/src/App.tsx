@@ -1,11 +1,10 @@
-import Header from './components/Header';
 import Hero from './pages/Hero';
 import LoginPage from './features/Login/component/LoginPage';
 import RegisterPage from './features/register/component/RegisterPage';
 import ProfilePage from './features/profile/component/ProfilePage';
 import EditProfilePage from './features/profile/component/EditProfilePage';
 import HomePage from './pages/HomePage';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import NotFoundPage from './pages/NotFound';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
@@ -16,13 +15,10 @@ import ProtectedRoute from './components/shared/ProtectedRoute';
 import Webchat from './features/chat/components/Webchat.tsx';
 import FriendsPage from './features/friends/components/FriendsPage';
 import NotificationPage from './features/notifications/NotificationPage';
-import City from './pages/CityPage';
 import SavedPlacesPage from './pages/SavedPlacesPage';
 // import HealthCheckPage from './pages/healthcheck';
 
 function AppContent() {
-  const location = useLocation();
-
   return (
     <>
       <Routes>
@@ -38,7 +34,7 @@ function AppContent() {
         <Route path="/webchat" element={<ProtectedRoute><Webchat /></ProtectedRoute>} />
         <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><NotificationPage /></ProtectedRoute>} />
-        <Route path="/city" element={<ProtectedRoute><City /></ProtectedRoute>} />
+        <Route path="/city" element={<ProtectedRoute><CityPage /></ProtectedRoute>} />
         <Route path="/saved" element={<ProtectedRoute><SavedPlacesPage /></ProtectedRoute>} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

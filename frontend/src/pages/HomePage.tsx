@@ -1,26 +1,36 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import GlassSearchBar from "../components/shared/GlassSearchBar";
 import TripPlannerBar from "../components/shared/TripPlannerBar";
 import HomeNavBar from "../components/shared/HomeNavBar";
+import CityResults from "../components/shared/CityResults";
 import "./HomePage.css";
 import bgvideo from "../assets/home-background.mp4";
 import { useAuth } from "@/context/AuthContext";
 
+type SearchState =
+  | { mode: "query"; q: string }
+  | { mode: "city"; city: string }
+  | null;
+
 function HomePage() {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'explore' | 'plan'>('explore');
+  const [searchState, setSearchState] = useState<SearchState>(null);
+
   const handleSearch = (query: string) => {
-    if (query.trim()) navigate(`/city?q=${encodeURIComponent(query.trim())}`);
+    if (query.trim()) setSearchState({ mode: "query", q: query.trim() });
   };
   const handleSelect = (city: string) => {
-    if (city.trim()) navigate(`/city?city=${encodeURIComponent(city.trim())}`);
+    if (city.trim()) setSearchState({ mode: "city", city: city.trim() });
   };
+
   const { user } = useAuth();
   const userName = user ? user.displayName : "";
   const firstName = userName ? userName.split(" ")[0] : "";
+
+  const hasResults = searchState !== null;
+
   return (
-    <div className="home-page">
+    <div className={`home-page${!hasResults ? " home-page--hero" : ""}`}>
       <video className="videoTag" autoPlay loop muted>
         <source src={bgvideo} type="video/mp4" />
       </video>
@@ -52,6 +62,13 @@ function HomePage() {
           </div>
         </div>
       </main>
+
+      {hasResults && searchState.mode === "query" && (
+        <CityResults query={searchState.q} />
+      )}
+      {hasResults && searchState.mode === "city" && (
+        <CityResults city={searchState.city} />
+      )}
     </div>
   );
 }
