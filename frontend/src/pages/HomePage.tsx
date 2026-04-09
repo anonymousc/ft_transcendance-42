@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GlassSearchBar from "../components/shared/GlassSearchBar";
 import TripPlannerBar from "../components/shared/TripPlannerBar";
@@ -8,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 
 function HomePage() {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'explore' | 'plan'>('explore');
   const handleSearch = (query: string) => {
     if (query.trim()) navigate(`/city?q=${encodeURIComponent(query.trim())}`);
   };
@@ -26,9 +28,28 @@ function HomePage() {
       <main className="home-content">
         <h1 className="header-home">Welcome Back, {firstName} </h1>
         <div className="search-container">
-          <GlassSearchBar onSearch={handleSearch} onSelect={handleSelect} />
-          <div className="planner-bar-spacer" />
-          <TripPlannerBar />
+          <div className="tab-switcher">
+            <button
+              className={`tab-btn${activeTab === 'explore' ? ' tab-btn--active' : ''}`}
+              onClick={() => setActiveTab('explore')}
+            >
+              Explore
+            </button>
+            <button
+              className={`tab-btn${activeTab === 'plan' ? ' tab-btn--active' : ''}`}
+              onClick={() => setActiveTab('plan')}
+            >
+              Plan a Trip
+            </button>
+          </div>
+          <div className="tab-bar-surface">
+            <div className={`tab-panel${activeTab === 'explore' ? ' tab-panel--active' : ''}`}>
+              <GlassSearchBar onSearch={handleSearch} onSelect={handleSelect} />
+            </div>
+            <div className={`tab-panel${activeTab === 'plan' ? ' tab-panel--active' : ''}`}>
+              <TripPlannerBar />
+            </div>
+          </div>
         </div>
       </main>
     </div>
