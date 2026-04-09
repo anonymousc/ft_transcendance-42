@@ -21,6 +21,9 @@ export class SignupDto {
   lastName: string;
 
   @IsEmail()
+  @Matches(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/, {
+    message: 'Invalid email format',
+  })
   @IsNotEmpty()
   email: string;
 
@@ -37,6 +40,9 @@ export class SignupDto {
 
 export class SigninDto {
   @IsEmail()
+  @Matches(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/, {
+    message: 'Invalid email format',
+  })
   @IsNotEmpty()
   email: string;
 
