@@ -48,6 +48,116 @@
   gap: 1rem;
 }
 
+/* ── Hamburger button (mobile only) ─────────────────────────────────────── */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
 
+.nav-hamburger:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
 
+:is(.dark) .nav-hamburger:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
 
+.nav-hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background-color: #000000;
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+:is(.dark) .nav-hamburger span {
+  background-color: #ffffff;
+}
+
+.nav-hamburger.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.nav-hamburger.open span:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-hamburger.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ── Mobile menu drawer ──────────────────────────────────────────────────── */
+.mobile-menu {
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  padding: 0.5rem 1.5rem 1rem;
+  background-color: #F5F5F7;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  transition: background-color 0.3s ease;
+}
+
+:is(.dark) .mobile-menu {
+  background-color: #1C1C1E;
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.mobile-menu.open {
+  display: flex;
+}
+
+.mobile-nav-link {
+  color: #000000;
+  text-decoration: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  transition: color 0.2s ease;
+}
+
+:is(.dark) .mobile-nav-link {
+  color: #ffffff;
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.mobile-nav-link:hover,
+.mobile-nav-link.active {
+  color: #FF6600;
+}
+
+.mobile-menu-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .nav-hamburger {
+    display: flex;
+  }
+
+  .nav {
+    padding: 0 1.25rem;
+  }
+
+  /* Hide desktop login button in nav-right on mobile (shown in mobile menu) */
+  .nav-right .cta-container {
+    display: none;
+  }
+}

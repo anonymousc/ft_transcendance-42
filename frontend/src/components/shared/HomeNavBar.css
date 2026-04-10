@@ -15,3 +15,20 @@
     display: flex;
     align-items: center;
 }
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .home-nav {
+        padding: 0.75rem 1rem;
+    }
+}
+
+/*
+ * Add bottom clearance to every page that uses HomeNavBar so content
+ * is never hidden behind the bottom GlassNavBar pill on mobile.
+ */
+@media (max-width: 768px) {
+    .home-nav ~ * {
+        padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+    }
+}

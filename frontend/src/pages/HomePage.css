@@ -12,9 +12,15 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: 19%;
     object-fit: cover;
     z-index: -1;
+    transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Full-screen video before any search */
+.home-page--hero .videoTag {
+    height: 100%;
 }
 
 .home-content {
@@ -23,9 +29,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    min-height: 60vh;
     padding: 0 2rem;
     z-index: 1;
+    transition: min-height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.home-page--hero .home-content {
+    min-height: 100vh;
 }
 
 .header-home{
@@ -47,13 +58,9 @@
     max-width: 600px;
     padding: 0 2rem;
     display: flex;
-    flex-direction: row; /* changed from column */
+    flex-direction: column;
     align-items: center;
-    gap: 0.5rem; /* add some spacing between the two bars */
-}
-
-.planner-bar-spacer {
-    height: 14px;
+    gap: 0;
 }
 
 .clouds-container {
@@ -107,6 +114,89 @@
     right: 15%;
 }
 
+/* ── Tab switcher ──────────────────────────────────────────────────────────── */
+.tab-switcher {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 50px;
+    margin-bottom: 12px;
+}
+
+.tab-btn {
+    padding: 0.45rem 1.4rem;
+    border: none;
+    border-radius: 50px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+    letter-spacing: 0.02em;
+}
+
+.tab-btn--active {
+    background: rgba(255, 140, 66, 0.25);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* ── Shared glass surface ──────────────────────────────────────────────────── */
+.tab-bar-surface {
+    width: 100%;
+    max-width: 700px;
+    position: relative;
+}
+
+/* ── Panels: always mounted, cross-fade with frost transition ──────────────── */
+.tab-panel {
+    width: 100%;
+    /* stack panels; inactive ones collapse out of flow */
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(6px);
+
+    /* transition opacity + frost blur together */
+    transition:
+        opacity 0.28s ease,
+        transform 0.28s ease,
+        visibility 0s linear 0.28s;
+}
+
+/* The active panel sits in normal flow to give the surface its height */
+.tab-panel--active {
+    position: relative;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+    transition:
+        opacity 0.28s ease,
+        transform 0.28s ease,
+        visibility 0s linear 0s;
+}
+
+/* Frost bloom: blur starts at 0 on inactive, eases to full on active */
+.tab-panel > * {
+    transition: filter 0.28s ease, backdrop-filter 0.28s ease;
+    filter: blur(2px);
+}
+
+.tab-panel--active > * {
+    filter: blur(0px);
+}
+
 /* Scroll indicator */
 .scroll-indicator {
     position: absolute;
@@ -131,5 +221,73 @@
     }
     60% {
         transform: translateX(-50%) translateY(-5px);
+    }
+}
+
+/* ── Inline city results ───────────────────────────────────────────────────── */
+.city-results {
+    animation: results-fade-in 0.35s ease;
+}
+
+@keyframes results-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .home-content {
+        padding: 0 1rem;
+        min-height: 55vh;
+    }
+
+    .home-page--hero .home-content {
+        min-height: 100svh;
+    }
+
+    .header-home {
+        font-size: 2.8rem;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .search-container {
+        padding: 0 0.5rem;
+        max-width: 100%;
+    }
+
+    .tab-bar-surface {
+        max-width: 100%;
+    }
+
+    .clouds-container {
+        left: 0;
+    }
+
+    .cloud-large {
+        width: 500px;
+    }
+
+    .cloud-small-left,
+    .cloud-small-right,
+    .cloud-medium-top,
+    .cloud-medium-bottom {
+        display: none;
+    }
+
+    .scroll-indicator {
+        bottom: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-home {
+        font-size: 2rem;
+        margin-bottom: 20px;
+    }
+
+    .tab-btn {
+        padding: 0.4rem 1rem;
+        font-size: 0.8rem;
     }
 }

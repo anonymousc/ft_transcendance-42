@@ -1,11 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import HomeNavBar from "@/components/shared/HomeNavBar";
-import CityBackground from "@/assets/marrakech_japanese_ink_20260221_014526 2.png";
+import { useState } from "react";
 import {
-  ChevronDown,
   MapPin,
-  Search,
   Star,
   Flame,
   TreePine,
@@ -16,6 +11,7 @@ import {
   Bot,
   AlertCircle,
   MessageSquare,
+  ChevronDown,
   ChevronUp,
   Send,
   Trash2,
@@ -24,247 +20,18 @@ import {
   BookmarkCheck,
   ExternalLink,
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
+import {
+  useReviews,
+  useReviewSummary,
+  useFavPlace,
+  useSuggest,
+  resolvePlaceImageUrl,
+  type Place,
+  type ReviewSummary,
+} from "@/hooks/useCityPlaces";
+import { useInView } from "@/hooks/useInView";
 
-const AI_PLACES_URL =
-  (import.meta.env.VITE_AI_PLACES_URL as string) || "http://localhost:4000"; // TODO: Store in .env after czar done with dev
-
-const REVIEW_PLACES_URL =
-  (import.meta.env.VITE_REVIEW_PLACES_URL as string) || "http://localhost:4001"; //same as above
-
-const FAV_PLACES_URL =
-  (import.meta.env.VITE_FAV_PLACES_URL as string) || "http://localhost:4002"; // TODO: Store in .env after czar done with dev
-
-/** API returns paths like `/places/photos?...` — must hit ai-places origin, not the SPA host */
-function resolvePlaceImageUrl(src: string | null | undefined): string | null {
-  if (!src) return null;
-  if (src.startsWith("http://") || src.startsWith("https://")) return src;
-  if (src.startsWith("/")) return `${AI_PLACES_URL}${src}`;
-  return src;
-}
-
-interface Place {
-  place_id?: string;
-  name: string;
-  category: string;
-  rating: number | null;
-  description: string;
-  address: string;
-  must_visit: boolean;
-  image_query?: string;
-  image: string | null;
-  photos?: string[];
-  lat?: number | null;
-  lng?: number | null;
-  match_reason?: string;
-}
-
-interface ApiEnvelope {
-  ok: boolean;
-  data?: Place[];
-  error?: { code: string; message: string; details?: string };
-  city?: string;
-  intent?: string;
-}
-
-interface Review {
-  id: string;
-  placeName: string;
-  city: string;
-  userId: string;
-  rating: number;
-  comment: string;
-  createdAt: string;
-}
-
-interface ReviewSummary {
-  averageRating: number | null;
-  totalReviews: number;
-}
-
-interface ReviewEnvelope {
-  ok: boolean;
-  data?: Review[] | Review | ReviewSummary | { id: string };
-  error?: { code: string; message: string; details?: string };
-}
-
-function usePlaces(city: string) {
-  const [places, setPlaces] = useState<Place[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!city.trim()) return;
-
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setPlaces([]);
-
-    fetch(`${AI_PLACES_URL}/places?city=${encodeURIComponent(city.trim())}`, { credentials: 'include' })
-      .then((res) => res.json())
-      .then((envelope: ApiEnvelope) => {
-        if (!envelope.ok) throw new Error(envelope.error?.details ?? envelope.error?.message ?? "Unknown error");
-        if (!cancelled) setPlaces(envelope.data ?? []);
-      })
-      .catch((err: Error) => { if (!cancelled) setError(err.message); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-
-    return () => { cancelled = true; };
-  }, [city]);
-
-  return { places, loading, error };
-}
-
-function useSearch(q: string) {
-  const [places, setPlaces] = useState<Place[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [resolvedCity, setResolvedCity] = useState("");
-  const [intent, setIntent] = useState("");
-
-  useEffect(() => {
-    if (!q.trim()) return;
-
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setPlaces([]);
-    setResolvedCity("");
-    setIntent("");
-
-    fetch(`${AI_PLACES_URL}/places/search?q=${encodeURIComponent(q.trim())}`, { credentials: 'include' })
-      .then((res) => res.json())
-      .then((envelope: ApiEnvelope) => {
-        if (!envelope.ok) throw new Error(envelope.error?.details ?? envelope.error?.message ?? "Unknown error");
-        if (!cancelled) {
-          setPlaces(envelope.data ?? []);
-          setResolvedCity(envelope.city ?? "");
-          setIntent(envelope.intent ?? "");
-        }
-      })
-      .catch((err: Error) => { if (!cancelled) setError(err.message); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-
-    return () => { cancelled = true; };
-  }, [q]);
-
-  return { places, loading, error, resolvedCity, intent };
-}
-
-function useReviews(placeName: string, city: string) {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const reload = () => {
-    if (!placeName || !city) return;
-    setLoading(true);
-    setError(null);
-
-    fetch(
-      `${REVIEW_PLACES_URL}/reviews?place=${encodeURIComponent(placeName)}&city=${encodeURIComponent(city)}`,
-      { credentials: "include" },
-    )
-      .then((r) => r.json())
-      .then((env: ReviewEnvelope) => {
-        if (!env.ok) throw new Error((env.error as { message: string })?.message ?? "Failed");
-        setReviews((env.data as Review[]) ?? []);
-      })
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { reload(); }, [placeName, city]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return { reviews, loading, error, reload };
-}
-
-function useReviewSummary(placeName: string, city: string, refreshKey: number) {
-  const [summary, setSummary] = useState<ReviewSummary | null>(null);
-
-  useEffect(() => {
-    if (!placeName || !city) return;
-
-    fetch(
-      `${REVIEW_PLACES_URL}/reviews/summary?place=${encodeURIComponent(placeName)}&city=${encodeURIComponent(city)}`,
-      { credentials: "include" },
-    )
-      .then((r) => r.json())
-      .then((env: ReviewEnvelope) => {
-        if (env.ok) setSummary(env.data as ReviewSummary);
-      })
-      .catch(() => { /* silent — summary is non-critical */ });
-  }, [placeName, city, refreshKey]);
-
-  return summary;
-}
-
-interface FavCheckEnvelope {
-  ok: boolean;
-  data?: { saved: boolean; id: string | null };
-  error?: { code: string; message: string };
-}
-
-function useFavPlace(userId: string | null, placeName: string, city: string, placeData: Omit<Place, "match_reason">) {
-  const [saved, setSaved] = useState(false);
-  const [savedId, setSavedId] = useState<string | null>(null);
-  const [toggling, setToggling] = useState(false);
-
-  useEffect(() => {
-    if (!userId || !placeName || !city) return;
-
-    fetch(
-      `${FAV_PLACES_URL}/fav-places/check?userId=${encodeURIComponent(userId)}&placeName=${encodeURIComponent(placeName)}&city=${encodeURIComponent(city)}`,
-      { credentials: "include" },
-    )
-      .then((r) => r.json())
-      .then((env: FavCheckEnvelope) => {
-        if (env.ok && env.data) {
-          setSaved(env.data.saved);
-          setSavedId(env.data.id);
-        }
-      })
-      .catch(() => { /* silent */ });
-  }, [userId, placeName, city]);
-
-  const toggle = async () => {
-    if (!userId || toggling) return;
-    setToggling(true);
-
-    try {
-      if (saved && savedId) {
-        const res = await fetch(
-          `${FAV_PLACES_URL}/fav-places/${savedId}?userId=${encodeURIComponent(userId)}`,
-          { method: "DELETE", credentials: "include" },
-        );
-        const env = await res.json();
-        if (env.ok) { setSaved(false); setSavedId(null); }
-      } else {
-        const res = await fetch(`${FAV_PLACES_URL}/fav-places`, {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId,
-            placeName,
-            city,
-            category: placeData.category,
-            address:  placeData.address,
-            image:    placeData.image ?? undefined,
-            rating:   placeData.rating,
-          }),
-        });
-        const env = await res.json();
-        if (env.ok && env.data) { setSaved(true); setSavedId(env.data.id); }
-      }
-    } catch { /* silent */ } finally {
-      setToggling(false);
-    }
-  };
-
-  return { saved, toggling, toggle };
-}
+// ── Category styles ─────────────────────────────────────────────────────────
 
 interface CategoryStyle {
   icon: React.ReactNode;
@@ -329,33 +96,9 @@ function getCategoryStyle(category: string): CategoryStyle {
   );
 }
 
-function useInView(threshold = 0.1) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
+// ── StarRating ───────────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry?.isIntersecting) {
-          setInView(true);
-          observer.disconnect();
-        }
-      },
-      { threshold },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [threshold]);
-
-  return { ref, inView };
-}
-
-function StarRating({ rating }: { rating: number | null }) {
+export function StarRating({ rating }: { rating: number | null }) {
   const safeRating = rating ?? 0;
   const full = Math.floor(safeRating);
   const hasHalf = safeRating - full >= 0.3;
@@ -384,7 +127,9 @@ function StarRating({ rating }: { rating: number | null }) {
   );
 }
 
-function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+// ── StarPicker ───────────────────────────────────────────────────────────────
+
+export function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hovered, setHovered] = useState(0);
 
   return (
@@ -418,7 +163,18 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
   );
 }
 
-function ReviewSection({
+// ── ReviewSection ────────────────────────────────────────────────────────────
+
+const REVIEW_PLACES_URL =
+  (import.meta.env.VITE_REVIEW_PLACES_URL as string) || "http://localhost:4001";
+
+interface ReviewEnvelopeLocal {
+  ok: boolean;
+  data?: unknown;
+  error?: { code: string; message: string; details?: string };
+}
+
+export function ReviewSection({
   placeName,
   city,
   userId,
@@ -454,8 +210,8 @@ function ReviewSection({
         credentials: "include",
         body: JSON.stringify({ placeName, city, rating, comment: comment.trim() }),
       });
-      const env: ReviewEnvelope = await res.json();
-      if (!env.ok) throw new Error(env.error?.message ?? "Failed to post review");
+      const env: ReviewEnvelopeLocal = await res.json();
+      if (!env.ok) throw new Error((env.error as { message: string })?.message ?? "Failed to post review");
       setRating(0);
       setComment("");
       reload();
@@ -473,8 +229,8 @@ function ReviewSection({
         `${REVIEW_PLACES_URL}/reviews/${reviewId}`,
         { method: "DELETE", credentials: "include" },
       );
-      const env: ReviewEnvelope = await res.json();
-      if (!env.ok) throw new Error(env.error?.message ?? "Failed to delete");
+      const env: ReviewEnvelopeLocal = await res.json();
+      if (!env.ok) throw new Error((env.error as { message: string })?.message ?? "Failed to delete");
       reload();
       onReviewPosted();
     } catch {
@@ -483,7 +239,7 @@ function ReviewSection({
   };
 
   return (
-    <div className="px-5 pb-5 pt-4 border-t border-stone-100 dark:border-white/6">
+    <div className="px-5 pb-5 pt-4 border-t border-stone-100 dark:border-white/[0.06]">
 
       {/* Community rating summary */}
       {summary && summary.totalReviews > 0 && (
@@ -612,9 +368,9 @@ function ReviewSection({
   );
 }
 
-// ── PlaceCard ──────────────────────────────────────────────────────────────
+// ── PlaceCard ────────────────────────────────────────────────────────────────
 
-function PlaceCard({
+export function PlaceCard({
   place,
   index,
   city,
@@ -641,15 +397,15 @@ function PlaceCard({
       ref={ref}
       style={{ transitionDelay: inView ? `${index * 60}ms` : "0ms" }}
       className={`group relative flex flex-col overflow-hidden rounded-2xl
-        bg-white dark:bg-white/[0.04]
+        bg-white dark:bg-white/4
         border ${place.must_visit ? "border-orange-300/70 dark:border-orange-500/30" : "border-stone-200/80 dark:border-white/[0.07]"}
         ${place.must_visit ? "ring-1 ring-orange-200/60 dark:ring-orange-500/10" : ""}
-        shadow-sm hover:shadow-md
+        shadow-sm
         transition-all duration-500 ease-out
         ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
     >
       {/* Main card row */}
-      <div className="flex flex-col sm:flex-row sm:h-[200px]">
+      <div className="flex flex-row h-[200px]">
         {place.must_visit && (
           <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-orange-400 rounded-l-2xl" />
         )}
@@ -676,7 +432,6 @@ function PlaceCard({
             </h3>
             <div className="flex items-center gap-3 flex-wrap">
               <StarRating rating={place.rating} />
-              {/* Community badge */}
               {summary && summary.totalReviews > 0 && (
                 <button
                   onClick={() => setReviewsOpen((o) => !o)}
@@ -699,7 +454,7 @@ function PlaceCard({
             {place.description}
           </p>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-3 pt-3 border-t border-stone-100 dark:border-white/[0.06]">
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-stone-100 dark:border-white/[0.06]">
             <div className="flex items-center gap-1.5 min-w-0">
               <MapPin size={11} className="shrink-0 text-orange-400" />
               <span className="text-[11px] text-stone-400 dark:text-stone-500 truncate">
@@ -707,8 +462,7 @@ function PlaceCard({
               </span>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap justify-start sm:justify-end shrink-0 sm:ml-3">
-              {/* Save / unsave bookmark */}
+            <div className="flex items-center gap-2 shrink-0 ml-3">
               {userId && (
                 <button
                   onClick={toggle}
@@ -721,15 +475,11 @@ function PlaceCard({
                       : "text-stone-400 hover:text-orange-500 dark:text-stone-500 dark:hover:text-orange-400"
                     }`}
                 >
-                  {saved
-                    ? <BookmarkCheck size={13} />
-                    : <Bookmark size={13} />
-                  }
+                  {saved ? <BookmarkCheck size={13} /> : <Bookmark size={13} />}
                   {saved ? "Saved" : "Save"}
                 </button>
               )}
 
-              {/* Open in Google Maps */}
               {((place.lat != null && place.lng != null) || place.place_id) && (
                 <a
                   href={
@@ -749,7 +499,6 @@ function PlaceCard({
                 </a>
               )}
 
-              {/* Toggle reviews */}
               <button
                 onClick={() => setReviewsOpen((o) => !o)}
                 className="flex items-center gap-1 text-[11px] font-medium
@@ -767,21 +516,20 @@ function PlaceCard({
           </div>
         </div>
 
-        <div className="relative w-full sm:w-[38%] shrink-0 h-44 sm:h-auto">
+        <div className="relative w-[38%] shrink-0">
           {imageSrc ? (
             <img
               src={imageSrc}
               alt={place.name}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full object-cover"
             />
           ) : (
             <div className="w-full h-full bg-stone-100 dark:bg-stone-800/50" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-white dark:from-[#0e0d0b] via-white/30 dark:via-[#0e0d0b]/30 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-r from-white dark:from-[#0e0d0b] via-white/30 dark:via-[#0e0d0b]/30 to-transparent" />
         </div>
       </div>
 
-      {/* Expandable review section */}
       {reviewsOpen && (
         <ReviewSection
           placeName={place.name}
@@ -795,9 +543,11 @@ function PlaceCard({
   );
 }
 
-function SkeletonCard() {
+// ── SkeletonCard ─────────────────────────────────────────────────────────────
+
+export function SkeletonCard() {
   return (
-    <div className="flex flex-col sm:flex-row overflow-hidden rounded-2xl sm:h-[200px] bg-white dark:bg-white/[0.04] border border-stone-200/80 dark:border-white/[0.07] shadow-sm animate-pulse">
+    <div className="flex flex-row overflow-hidden rounded-2xl h-[200px] bg-white dark:bg-white/[0.04] border border-stone-200/80 dark:border-white/[0.07] shadow-sm animate-pulse">
       <div className="flex flex-col justify-between flex-1 min-w-0 px-5 py-4 pl-6 gap-3">
         <div className="h-6 w-28 rounded-full bg-stone-100 dark:bg-stone-800" />
         <div className="space-y-2">
@@ -810,58 +560,19 @@ function SkeletonCard() {
         </div>
         <div className="h-3 w-40 rounded bg-stone-100 dark:bg-stone-800 mt-1" />
       </div>
-      <div className="w-full sm:w-[38%] h-44 sm:h-auto shrink-0 bg-stone-100 dark:bg-stone-800" />
+      <div className="w-[38%] shrink-0 bg-stone-100 dark:bg-stone-800" />
     </div>
   );
 }
 
-// ── Suggest ────────────────────────────────────────────────────────────────
+// ── SuggestSection ───────────────────────────────────────────────────────────
 
 const PREFERENCE_OPTIONS = [
   "History", "Street Food", "Nature", "Art", "Shopping",
   "Adventure", "Architecture", "Nightlife", "Relaxation", "Sports",
 ];
 
-function useSuggest() {
-  const [suggestions, setSuggestions] = useState<Place[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [fetched, setFetched] = useState(false);
-
-  const getSuggestions = async (
-    city: string,
-    preferences: string[],
-    visited: string[],
-    limit = 5,
-  ) => {
-    setLoading(true);
-    setError(null);
-    setSuggestions([]);
-
-    try {
-      const res = await fetch(`${AI_PLACES_URL}/places/suggest`, {
-        method: "POST",
-        credentials: 'include',
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ city, preferences, visited, limit }),
-      });
-      const data = await res.json();
-      if (!Array.isArray(data.suggestions)) {
-        throw new Error(data.error ?? "Failed to get suggestions");
-      }
-      setSuggestions(data.suggestions);
-      setFetched(true);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to get suggestions");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return { suggestions, loading, error, fetched, getSuggestions };
-}
-
-function SuggestSection({
+export function SuggestSection({
   city,
   visitedNames,
   userId,
@@ -885,9 +596,9 @@ function SuggestSection({
   };
 
   return (
-    <div className="max-w-3xl mx-auto mt-16 pt-12 border-t border-stone-200 dark:border-white/[0.07]">
-      <div className="mb-6">
-        <h3 className="text-2xl font-bold text-stone-900 dark:text-white mb-2">
+    <div className="max-w-3xl mx-auto mt-10 pt-8 border-t border-stone-200 dark:border-white/[0.07]">
+      <div className="mb-4">
+        <h3 className="text-xl font-bold text-stone-900 dark:text-white mb-1.5">
           Personalized <span className="text-orange-500">Suggestions</span>
         </h3>
         <p className="text-sm text-stone-500 dark:text-stone-400">
@@ -895,8 +606,7 @@ function SuggestSection({
         </p>
       </div>
 
-      {/* Preference chips */}
-      <div className="flex flex-wrap gap-2 mb-5">
+      <div className="flex flex-wrap gap-2 mb-4">
         {PREFERENCE_OPTIONS.map((pref) => (
           <button
             key={pref}
@@ -927,7 +637,6 @@ function SuggestSection({
           </>
         ) : (
           <>
-            <Bot size={15} />
             Get Suggestions
           </>
         )}
@@ -958,146 +667,3 @@ function SuggestSection({
     </div>
   );
 }
-
-// ── Page ───────────────────────────────────────────────────────────────────
-
-function CityPage() {
-  const [searchParams] = useSearchParams();
-  const cityParam = searchParams.get("city");
-  const qParam    = searchParams.get("q");
-  const isSearchMode = !!qParam && !cityParam;
-  const { user } = useAuth();
-
-  const sectionRef = useRef<HTMLElement>(null);
-  const { ref: headerRef, inView: headerInView } = useInView(0.2);
-
-  const cityResult   = usePlaces(isSearchMode ? "" : (cityParam ?? "Marrakesh"));
-  const searchResult = useSearch(isSearchMode ? (qParam ?? "") : "");
-
-  const { places, loading, error } = isSearchMode ? searchResult : cityResult;
-  const displayCity = isSearchMode ? (searchResult.resolvedCity || "…") : (cityParam ?? "Marrakesh");
-  const intent      = isSearchMode ? searchResult.intent : null;
-
-  return (
-    <div>
-      <div
-        className="bg-cover bg-bottom h-screen w-full relative flex flex-col"
-        style={{ backgroundImage: `url(${CityBackground})` }}
-      >
-        <HomeNavBar />
-        <div className="flex-1" />
-        <div className="pb-10 flex flex-col items-center gap-1.5">
-          <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-stone-500">
-            Scroll to explore
-          </span>
-          <ChevronDown size={30} strokeWidth={1.5} />
-        </div>
-      </div>
-
-      <section
-        ref={sectionRef}
-        className="bg-[#faf9f7] dark:bg-[#0e0d0b] py-12 sm:py-20 px-4 sm:px-8 lg:px-16"
-      >
-        <div ref={headerRef} className="max-w-3xl mx-auto mb-8 sm:mb-12 text-center">
-
-          {/* Mode badge */}
-          <div
-            className={`inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full
-              bg-stone-100 dark:bg-white/[0.06] border border-stone-200 dark:border-white/[0.08]
-              transition-all duration-500 ease-out
-              ${headerInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-          >
-            <Bot size={13} className="text-orange-500" />
-            <span className="text-[11px] font-semibold tracking-widest uppercase text-stone-500 dark:text-stone-400">
-              {isSearchMode ? "AI Search Results" : "Curated by Google Places"}
-            </span>
-          </div>
-
-          {/* Search query pill */}
-          {isSearchMode && qParam && (
-            <div
-              className={`flex items-center justify-center gap-2 mb-3
-                transition-all duration-500 ease-out delay-75
-                ${headerInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}
-            >
-              <span className="inline-flex items-center gap-1.5 text-[12px] text-stone-500 dark:text-stone-400
-                bg-stone-100 dark:bg-white/[0.05] border border-stone-200 dark:border-white/[0.07]
-                rounded-full px-3 py-1 max-w-sm truncate">
-                <Search size={11} className="shrink-0 text-orange-400" />
-                {qParam}
-              </span>
-            </div>
-          )}
-
-          {/* Title */}
-          <h2
-            className={`text-4xl sm:text-5xl font-bold text-stone-900 dark:text-white tracking-tight mb-4
-              transition-all duration-600 ease-out delay-100
-              ${headerInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"}`}
-          >
-            {isSearchMode && loading && !displayCity.trim() ? (
-              <span className="text-stone-400 dark:text-stone-500">Searching…</span>
-            ) : (
-              <>Discover <span className="text-orange-500">{displayCity}</span></>
-            )}
-          </h2>
-
-          {/* Subtitle */}
-          <p
-            className={`text-[15px] text-stone-500 dark:text-stone-400 max-w-lg mx-auto leading-relaxed
-              transition-all duration-500 ease-out delay-200
-              ${headerInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-          >
-            {intent
-              ? <><span className="text-orange-400 font-medium">{intent}</span> — matched by Google Places</>
-              : <>Curated picks to help you experience the very best of {displayCity} — from hidden gems to iconic landmarks.</>
-            }
-          </p>
-        </div>
-
-        {/* Error state */}
-        {error && (
-          <div className="max-w-3xl mx-auto mb-8 flex items-center gap-3 px-5 py-4 rounded-2xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300">
-            <AlertCircle size={16} className="shrink-0" />
-            <p className="text-sm">
-              {isSearchMode
-                ? <>Could not search for <strong>"{qParam}"</strong>: {error}</>
-                : <>Could not load places for <strong>{displayCity}</strong>: {error}</>
-              }
-            </p>
-          </div>
-        )}
-
-        {/* Cards list */}
-        <div className="max-w-3xl mx-auto flex flex-col gap-4">
-          {loading
-            ? Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
-            : places.map((place, i) => (
-                <PlaceCard key={place.name} place={place} index={i} city={displayCity} userId={user?.id ?? null} />
-              ))}
-        </div>
-
-        {!loading && !error && places.length === 0 && (
-          <p className="text-center text-stone-400 dark:text-stone-600 mt-8 text-sm">
-            No places found. Try a different {isSearchMode ? "query" : "city"}.
-          </p>
-        )}
-
-        {/* Personalized suggestions section */}
-        {!loading && (
-          <SuggestSection
-            city={displayCity}
-            visitedNames={places.map((p) => p.name)}
-            userId={user?.id ?? null}
-          />
-        )}
-
-        <p className="mt-12 text-center text-[11px] text-stone-400 dark:text-stone-600 tracking-wide">
-          Powered by Google Places API
-        </p>
-      </section>
-    </div>
-  );
-}
-
-export default CityPage;

@@ -28,3 +28,14 @@
 .footer-bottom a:hover {
   color: #ffffff;
 }
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .footer-bottom {
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+  }
+}

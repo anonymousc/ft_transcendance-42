@@ -9,16 +9,18 @@ import ThemeToggle from './shared/ThemeToggle';
 function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       const heroHeight = window.innerHeight;
       setIsScrolled(window.scrollY >= heroHeight - 64);
+      if (mobileMenuOpen) setMobileMenuOpen(false);
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [mobileMenuOpen]);
 
   useEffect(() => {
     const sections = ['about', 'how-it-works', 'features'];
@@ -49,6 +51,12 @@ function Header() {
     return () => observer.disconnect();
   }, []);
 
+  const navLinks = [
+    { href: '#about', label: 'About Us', id: 'about' },
+    { href: '#how-it-works', label: 'How it Works', id: 'how-it-works' },
+    { href: '#features', label: 'Features', id: 'features' },
+  ];
+
   return (
     <header className={`Header ${isScrolled ? 'scrolled' : ''}`}>
       <nav className="nav">
@@ -58,9 +66,34 @@ function Header() {
           <div className="nav-right">
             <ThemeToggle />
             <LoginBtn />
+            <button
+              className={`nav-hamburger ${mobileMenuOpen ? 'open' : ''}`}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle navigation menu"
+              aria-expanded={mobileMenuOpen}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
           </div>
         </div>
       </nav>
+      <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
+        {navLinks.map((link) => (
+          <a
+            key={link.id}
+            href={link.href}
+            className={`mobile-nav-link ${activeSection === link.id ? 'active' : ''}`}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            {link.label}
+          </a>
+        ))}
+        <div className="mobile-menu-actions">
+          <LoginBtn />
+        </div>
+      </div>
     </header>
   );
 }

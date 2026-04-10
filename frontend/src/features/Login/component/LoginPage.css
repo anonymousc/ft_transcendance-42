@@ -124,3 +124,52 @@
     color: #cccccc;
 }
 
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .login-page {
+        padding: 1.5rem 1rem;
+        align-items: flex-start;
+        padding-top: 4rem;
+    }
+
+    .login-card {
+        flex-direction: column;
+        max-width: 480px;
+        margin: 0 auto;
+    }
+
+    /* Hide the passport/glass card side on mobile */
+    .login-card .passport-side {
+        display: none;
+    }
+
+    .signin-side {
+        margin-left: 0;
+        border-radius: 20px;
+        padding: 2rem 1.5rem;
+    }
+
+    .signin-side h2 {
+        font-size: 2.2rem;
+    }
+
+    .blob {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-page {
+        padding: 1rem;
+        padding-top: 3.5rem;
+    }
+
+    .signin-side {
+        padding: 1.75rem 1.25rem;
+    }
+
+    .signin-side h2 {
+        font-size: 1.9rem;
+    }
+}
+
