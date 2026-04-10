@@ -61,10 +61,12 @@ function RegisterForm({ handleSubmit, submitting = false }: RegisterFormProps) {
       <div className="w-full h-px bg-gray-300 dark:bg-gray-600"></div>
 
       <div className="oauth-section">
-        <div className="flex items-center justify-center gap-1">
-          <span className="text-sm text-gray-600 dark:text-gray-400">You already have an account?</span>
-          <Link to="/login" className="text-sm font-semibold text-[#FF8C42] hover:underline">Sign in</Link>
-        </div>
+        <p className="auth-footer-switch text-center text-sm text-gray-600 dark:text-gray-400">
+          You already have an account?{" "}
+          <Link to="/login" className="auth-footer-link font-semibold text-[#FF8C42] hover:underline">
+            Sign in
+          </Link>
+        </p>
       </div>
     </form>
   );

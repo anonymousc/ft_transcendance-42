@@ -48,9 +48,19 @@ button, a, [role="button"] {
 /* Override for small inline elements that shouldn't be 44px */
 .tab-btn, .planner-pref-chip, .tpm-tab,
 .glass-suggestion-item, .profile-dropdown-item,
-.mobile-nav-link, .settings-row-clickable {
+.mobile-nav-link, .settings-row-clickable,
+[data-slot="checkbox"] {
   min-height: unset;
   min-width: unset;
+}
+
+/* Auth pages: inline “Sign up” / “Sign in” next to sentence (global <a> is 44×44 for touch) */
+.auth-footer-link {
+  min-height: unset;
+  min-width: unset;
+  display: inline;
+  line-height: inherit;
+  vertical-align: baseline;
 }
 
 #root {
