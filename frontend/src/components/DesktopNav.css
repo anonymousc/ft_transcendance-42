@@ -1,9 +1,18 @@
 .desktop-nav {
   display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 700;
   font-size: 1.3rem;
   font-family: 'Inter', sans-serif;
-  gap: 2.5rem;
+  gap: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .desktop-nav {
+    font-size: 1.1rem;
+    gap: 1.25rem;
+  }
 }
 
 @media (max-width: 768px) {

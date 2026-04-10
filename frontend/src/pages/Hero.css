@@ -95,6 +95,8 @@
   justify-content: flex-start;
   padding: 4rem;
   transition: background-color 0.3s ease;
+  /* Clouds use negative left/right; keep them from expanding document width */
+  overflow-x: clip;
 }
 
 :is(.dark) .about-section {

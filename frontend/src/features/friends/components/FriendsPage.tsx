@@ -35,23 +35,21 @@ function FriendsPage() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <HomeNavBar />
+    <div className="flex min-h-0 flex-col h-dvh overflow-hidden bg-background">
+      <HomeNavBar hideMobileGlassNav={Boolean(activeFriend)} />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="home-nav-main-offset flex min-h-0 flex-1 overflow-hidden">
         <aside
           className={cn(
-            "flex flex-col bg-white dark:bg-zinc-900 border-r border-border/40 h-full",
-            "w-full md:w-80 lg:w-72 xl:w-80 shrink-0",
+            "flex min-h-0 flex-col border-r border-border/40 bg-white h-full dark:bg-zinc-900",
+            "w-full shrink-0 md:w-80 lg:w-72 xl:w-80",
             showSidebar ? "flex" : "hidden md:flex"
           )}
         >
-          <div className="px-6 pt-20 pb-4 border-b border-border/40 shrink-0">
-            {/* <h2 className="text-base font-bold text-foreground">
-              Friends :
-            </h2> */}
+          <div className="shrink-0 border-b border-border/40 px-4 py-3 md:px-6">
+            <h2 className="text-sm font-bold text-foreground">Friends</h2>
           </div>
-          <div className="flex-1 overflow-y-auto scrollbar-thin px-3 py-4 space-y-3 min-h-0">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3 scrollbar-thin">
             {MOCK_FRIENDS.map((friend) => (
               <FriendCard
                 key={friend.id}
@@ -63,18 +61,17 @@ function FriendsPage() {
           </div>
         </aside>
 
-        {/* Main content */}
         <div
           className={cn(
-            "flex-1 min-w-0",
+            "flex min-h-0 min-w-0 flex-1 flex-col",
             !showSidebar ? "flex" : "hidden md:flex"
           )}
         >
           {activeFriend ? (
-            <FriendProfile friend={activeFriend} />
+            <FriendProfile friend={activeFriend} onBack={handleBack} />
           ) : (
-            <div className="flex items-center justify-center h-full w-full px-12 bg-gray-50 dark:bg-zinc-950">
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight select-none">
+            <div className="flex h-full w-full items-center justify-center bg-white px-12 dark:bg-zinc-900 md:bg-gray-50 md:dark:bg-zinc-950">
+              <h1 className="select-none text-5xl font-bold leading-tight text-foreground md:text-6xl lg:text-7xl">
                 <span className="text-primary">Rihla</span> Community
               </h1>
             </div>

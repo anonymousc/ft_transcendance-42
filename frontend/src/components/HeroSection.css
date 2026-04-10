@@ -8,6 +8,8 @@
   position: relative;
   padding-top: 6rem;
   transition: background 0.3s ease;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 :is(.dark) .hero-section {

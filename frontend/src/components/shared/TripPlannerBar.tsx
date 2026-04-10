@@ -135,14 +135,14 @@ function TripPlannerBar({ defaultCity = "" }: TripPlannerBarProps) {
 
           {/* Days selector */}
           <div className="planner-bar-days">
-            <CalendarDays size={15} className="planner-bar-icon" />
+            <CalendarDays size={17} className="planner-bar-icon" />
             <button
               type="button"
               className="planner-bar-step"
               onClick={() => handleDaysChange(-1)}
               aria-label="Fewer days"
             >
-              <Minus size={12} />
+              <Minus size={13} />
             </button>
             <span className="planner-bar-days-value">
               {days} {days === 1 ? "day" : "days"}
@@ -153,7 +153,7 @@ function TripPlannerBar({ defaultCity = "" }: TripPlannerBarProps) {
               onClick={() => handleDaysChange(1)}
               aria-label="More days"
             >
-              <Plus size={12} />
+              <Plus size={13} />
             </button>
           </div>
 
@@ -168,7 +168,7 @@ function TripPlannerBar({ defaultCity = "" }: TripPlannerBarProps) {
               <span className="planner-bar-spinner" />
             ) : (
               <>
-                <Sparkles size={14} />
+                <Sparkles size={16} />
                 <span>Plan</span>
               </>
             )}
