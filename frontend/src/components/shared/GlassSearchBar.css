@@ -105,6 +105,24 @@
     flex-shrink: 0;
 }
 
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .glass-search-bar {
+        padding: 1rem 1.25rem;
+    }
+
+    .glass-search-input {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .glass-search-bar {
+        padding: 0.85rem 1rem;
+        border-radius: 40px;
+    }
+}
+
 /* ── Fallback section separator ────────────────────────────────────────────── */
 .glass-suggestion-separator {
     padding: 5px 20px;

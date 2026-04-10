@@ -198,3 +198,42 @@
   padding-left: 6px;
   margin: 0;
 }
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .planner-bar {
+    flex-wrap: wrap;
+    padding: 0.85rem 1rem;
+    gap: 8px;
+    border-radius: 20px;
+  }
+
+  .planner-bar-field {
+    flex: 1 1 100%;
+  }
+
+  .planner-bar-divider {
+    display: none;
+  }
+
+  .planner-bar-days {
+    flex: 1;
+    justify-content: flex-start;
+  }
+
+  .planner-bar-submit {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .planner-bar-wrapper {
+    max-width: 100%;
+  }
+
+  .planner-pref-chip {
+    font-size: 0.72rem;
+    padding: 4px 10px;
+  }
+}

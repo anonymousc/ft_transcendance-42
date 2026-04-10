@@ -197,3 +197,27 @@
   }
 }
 
+@media (max-width: 480px) {
+  .edit-profile-page {
+    padding: 4rem 0.75rem 1.5rem;
+  }
+
+  .edit-profile-card {
+    padding: 1rem;
+  }
+
+  .avatar-row {
+    flex-wrap: wrap;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .ghost,
+  .primary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+

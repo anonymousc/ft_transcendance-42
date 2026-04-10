@@ -233,3 +233,61 @@
     from { opacity: 0; }
     to   { opacity: 1; }
 }
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .home-content {
+        padding: 0 1rem;
+        min-height: 55vh;
+    }
+
+    .home-page--hero .home-content {
+        min-height: 100svh;
+    }
+
+    .header-home {
+        font-size: 2.8rem;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .search-container {
+        padding: 0 0.5rem;
+        max-width: 100%;
+    }
+
+    .tab-bar-surface {
+        max-width: 100%;
+    }
+
+    .clouds-container {
+        left: 0;
+    }
+
+    .cloud-large {
+        width: 500px;
+    }
+
+    .cloud-small-left,
+    .cloud-small-right,
+    .cloud-medium-top,
+    .cloud-medium-bottom {
+        display: none;
+    }
+
+    .scroll-indicator {
+        bottom: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-home {
+        font-size: 2rem;
+        margin-bottom: 20px;
+    }
+
+    .tab-btn {
+        padding: 0.4rem 1rem;
+        font-size: 0.8rem;
+    }
+}

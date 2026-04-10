@@ -483,7 +483,7 @@ function ReviewSection({
   };
 
   return (
-    <div className="px-5 pb-5 pt-4 border-t border-stone-100 dark:border-white/[0.06]">
+    <div className="px-5 pb-5 pt-4 border-t border-stone-100 dark:border-white/6">
 
       {/* Community rating summary */}
       {summary && summary.totalReviews > 0 && (
@@ -649,7 +649,7 @@ function PlaceCard({
         ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
     >
       {/* Main card row */}
-      <div className="flex flex-row h-[200px]">
+      <div className="flex flex-col sm:flex-row sm:h-[200px]">
         {place.must_visit && (
           <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-orange-400 rounded-l-2xl" />
         )}
@@ -699,7 +699,7 @@ function PlaceCard({
             {place.description}
           </p>
 
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-stone-100 dark:border-white/[0.06]">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-3 pt-3 border-t border-stone-100 dark:border-white/[0.06]">
             <div className="flex items-center gap-1.5 min-w-0">
               <MapPin size={11} className="shrink-0 text-orange-400" />
               <span className="text-[11px] text-stone-400 dark:text-stone-500 truncate">
@@ -707,7 +707,7 @@ function PlaceCard({
               </span>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0 ml-3">
+            <div className="flex items-center gap-2 flex-wrap justify-start sm:justify-end shrink-0 sm:ml-3">
               {/* Save / unsave bookmark */}
               {userId && (
                 <button
@@ -767,7 +767,7 @@ function PlaceCard({
           </div>
         </div>
 
-        <div className="relative w-[38%] shrink-0">
+        <div className="relative w-full sm:w-[38%] shrink-0 h-44 sm:h-auto">
           {imageSrc ? (
             <img
               src={imageSrc}
@@ -777,7 +777,7 @@ function PlaceCard({
           ) : (
             <div className="w-full h-full bg-stone-100 dark:bg-stone-800/50" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-r from-white dark:from-[#0e0d0b] via-white/30 dark:via-[#0e0d0b]/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-white dark:from-[#0e0d0b] via-white/30 dark:via-[#0e0d0b]/30 to-transparent" />
         </div>
       </div>
 
@@ -797,7 +797,7 @@ function PlaceCard({
 
 function SkeletonCard() {
   return (
-    <div className="flex flex-row overflow-hidden rounded-2xl h-[200px] bg-white dark:bg-white/[0.04] border border-stone-200/80 dark:border-white/[0.07] shadow-sm animate-pulse">
+    <div className="flex flex-col sm:flex-row overflow-hidden rounded-2xl sm:h-[200px] bg-white dark:bg-white/[0.04] border border-stone-200/80 dark:border-white/[0.07] shadow-sm animate-pulse">
       <div className="flex flex-col justify-between flex-1 min-w-0 px-5 py-4 pl-6 gap-3">
         <div className="h-6 w-28 rounded-full bg-stone-100 dark:bg-stone-800" />
         <div className="space-y-2">
@@ -810,7 +810,7 @@ function SkeletonCard() {
         </div>
         <div className="h-3 w-40 rounded bg-stone-100 dark:bg-stone-800 mt-1" />
       </div>
-      <div className="w-[38%] shrink-0 bg-stone-100 dark:bg-stone-800" />
+      <div className="w-full sm:w-[38%] h-44 sm:h-auto shrink-0 bg-stone-100 dark:bg-stone-800" />
     </div>
   );
 }
@@ -996,9 +996,9 @@ function CityPage() {
 
       <section
         ref={sectionRef}
-        className="bg-[#faf9f7] dark:bg-[#0e0d0b] py-20 px-4 sm:px-8 lg:px-16"
+        className="bg-[#faf9f7] dark:bg-[#0e0d0b] py-12 sm:py-20 px-4 sm:px-8 lg:px-16"
       >
-        <div ref={headerRef} className="max-w-3xl mx-auto mb-12 text-center">
+        <div ref={headerRef} className="max-w-3xl mx-auto mb-8 sm:mb-12 text-center">
 
           {/* Mode badge */}
           <div

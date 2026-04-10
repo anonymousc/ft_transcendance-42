@@ -40,3 +40,11 @@
 .hero-button:active {
   transform: translateY(0);
 }
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .hero-button {
+    font-size: 1.1rem;
+    padding: 0.85rem 1.5rem;
+  }
+}
