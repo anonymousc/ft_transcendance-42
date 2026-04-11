@@ -18,7 +18,6 @@ export interface Friend {
   status?: string;
   placesVisited?: number;
   friendsCount?: number;
-  mutualFriends?: number;
   lastVisited?: FriendLastVisited;
   /** Flat interest labels (same vocabulary as onboarding chips). */
   interests?: string[];

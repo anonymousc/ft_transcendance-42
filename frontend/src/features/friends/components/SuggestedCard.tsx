@@ -21,7 +21,7 @@ function SuggestedCard({
     <article
       className={cn(
         "flex flex-col gap-3 overflow-hidden rounded-2xl p-4 sm:p-5",
-        "bg-white dark:bg-white/[0.04]",
+        "bg-white dark:bg-white/4",
         "border border-stone-200/80 dark:border-white/[0.07]",
         "shadow-sm transition-all duration-300 hover:shadow-md",
       )}
@@ -49,39 +49,6 @@ function SuggestedCard({
         </div>
       </div>
 
-      {sharedInterestCount > 0 ? (
-        <div
-          className={cn(
-            "flex items-center gap-2 rounded-xl border border-orange-200/70 bg-orange-50/80 px-3 py-2",
-            "dark:border-orange-900/50 dark:bg-orange-950/30",
-          )}
-        >
-          <Sparkles
-            size={16}
-            className="shrink-0 text-orange-500 dark:text-orange-400"
-          />
-          <p className="text-[12px] font-semibold text-orange-900 dark:text-orange-100">
-            {sharedInterestCount} shared interest
-            {sharedInterestCount !== 1 ? "s" : ""}
-          </p>
-        </div>
-      ) : (
-        <div
-          className={cn(
-            "flex items-center gap-2 rounded-xl border border-stone-200/80 bg-stone-50/80 px-3 py-2",
-            "dark:border-white/10 dark:bg-white/[0.04]",
-          )}
-        >
-          <Users
-            size={16}
-            className="shrink-0 text-stone-500 dark:text-stone-400"
-          />
-          <p className="text-[12px] font-medium text-stone-600 dark:text-stone-300">
-            Rihla community — send a request to connect
-          </p>
-        </div>
-      )}
-
       {student.interests.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {student.interests.slice(0, 4).map((label) => (
@@ -89,7 +56,7 @@ function SuggestedCard({
               key={label}
               className={cn(
                 "rounded-full border border-stone-200 bg-stone-50 px-2 py-0.5 text-[10px] font-medium",
-                "text-stone-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-stone-300",
+                "text-stone-600 dark:border-white/10 dark:bg-white/5 dark:text-stone-300",
               )}
             >
               {label}

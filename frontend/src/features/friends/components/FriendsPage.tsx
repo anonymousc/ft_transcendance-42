@@ -42,7 +42,6 @@ const MOCK_FRIENDS: Friend[] = [
     email: "yasmine@rihla.app",
     placesVisited: 34,
     friendsCount: 128,
-    mutualFriends: 12,
     lastVisited: {
       name: "Bou Inania Madrasa",
       city: "Meknes",
@@ -66,7 +65,6 @@ const MOCK_FRIENDS: Friend[] = [
     email: "hamza@rihla.app",
     placesVisited: 52,
     friendsCount: 210,
-    mutualFriends: 8,
     lastVisited: { name: "Hassan II Mosque", city: "Casablanca" },
     interests: [
       "Cooking",
@@ -87,7 +85,6 @@ const MOCK_FRIENDS: Friend[] = [
     email: "cesar@rihla.app",
     placesVisited: 19,
     friendsCount: 64,
-    mutualFriends: 5,
     lastVisited: { name: "Oceanário de Lisboa", city: "Lisbon" },
     interests: [
       "Technology",
@@ -107,7 +104,6 @@ const MOCK_FRIENDS: Friend[] = [
     city: "Agadir",
     placesVisited: 41,
     friendsCount: 95,
-    mutualFriends: 3,
     lastVisited: { name: "Paradise Valley", city: "Agadir" },
     interests: ["Swimming", "Nature & outdoors", "Photography", "Beach"],
   },
@@ -121,7 +117,6 @@ const MOCK_FRIENDS: Friend[] = [
     city: "Rabat",
     placesVisited: 27,
     friendsCount: 302,
-    mutualFriends: 18,
     lastVisited: { name: "Kasbah of the Udayas", city: "Rabat" },
     interests: [
       "Hostels & social",
@@ -141,7 +136,6 @@ const MOCK_FRIENDS: Friend[] = [
     city: "Tokyo",
     placesVisited: 61,
     friendsCount: 156,
-    mutualFriends: 7,
     lastVisited: { name: "TeamLab Borderless", city: "Tokyo" },
     interests: [
       "Art & Design",
@@ -161,7 +155,6 @@ const MOCK_FRIENDS: Friend[] = [
     city: "Ouarzazate",
     placesVisited: 22,
     friendsCount: 88,
-    mutualFriends: 4,
     lastVisited: { name: "Aït Benhaddou", city: "Ouarzazate" },
     interests: ["Camping", "Photography", "Nature & outdoors", "History"],
   },
@@ -175,7 +168,6 @@ const MOCK_FRIENDS: Friend[] = [
     city: "Algiers",
     placesVisited: 15,
     friendsCount: 72,
-    mutualFriends: 9,
     lastVisited: { name: "Casbah of Algiers", city: "Algiers" },
     interests: [
       "Travelling",
@@ -335,7 +327,6 @@ function pendingToFriend(p: PendingFriendRequest): Friend {
     bio: "New connection — say hi and swap travel tips.",
     placesVisited: 0,
     friendsCount: 0,
-    mutualFriends: 1,
     interests: ["Travelling", "Exploring cities"],
   };
   if (p.avatar) base.avatar = p.avatar;
@@ -442,7 +433,7 @@ function FriendsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#faf9f7] dark:bg-[#0e0d0b]">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#1d1d1f]">
       <HomeNavBar />
 
       {profileFriend && (
@@ -517,10 +508,10 @@ function FriendsPage() {
                         onClick={() => handleAccept(req)}
                         className={cn(
                           "flex-1 rounded-xl bg-orange-500 px-4 py-2 text-[13px] font-semibold text-white",
-                          "shadow-sm transition-colors hover:bg-orange-600 sm:flex-none",
+                          "shadow-sm transition-colors hover:bg-orange-400 sm:flex-none",
                         )}
                       >
-                        <Check size={16} strokeWidth={2} />
+                        Accept
                       </button>
                       <button
                         type="button"
@@ -531,7 +522,7 @@ function FriendsPage() {
                           "dark:border-white/15 dark:bg-transparent dark:text-stone-200 dark:hover:bg-white/10 sm:flex-none",
                         )}
                       >
-                        <X size={16} strokeWidth={2} />
+                        Decline
                       </button>
                     </div>
                   </li>
@@ -549,7 +540,7 @@ function FriendsPage() {
               "sm:inline-flex sm:w-auto",
             )}
           >
-            <Tabs.Trigger
+            {/* <Tabs.Trigger
               value="online"
               className={cn(
                 "group flex flex-1 items-center justify-center gap-2 rounded-xl px-6 py-2.5 text-[13px] font-semibold",
@@ -571,7 +562,7 @@ function FriendsPage() {
               >
                 {onlineFriends.length}
               </span>
-            </Tabs.Trigger>
+            </Tabs.Trigger> */}
             <Tabs.Trigger
               value="all"
               className={cn(
@@ -684,16 +675,13 @@ function FriendsPage() {
                 type="search"
                 value={discoverSearch}
                 onChange={(e) => setDiscoverSearch(e.target.value)}
-                placeholder="Search anyone by name, @handle, city, or interest…"
+                placeholder="Search anyone by name"
                 className={cn(
                   "min-w-0 flex-1 bg-transparent py-2 text-[14px] text-stone-900 outline-none",
                   "placeholder:text-stone-400 dark:text-white dark:placeholder:text-stone-500",
                 )}
                 aria-label="Search people to add as friends"
               />
-              <span className="hidden shrink-0 text-[11px] font-medium text-stone-400 sm:inline">
-                Max {SEARCH_LIMIT}
-              </span>
             </div>
             {discoverResults.length === 0 ? (
               <EmptyBlock
@@ -740,10 +728,10 @@ function EmptyBlock({
     <div
       className={cn(
         "flex flex-col items-center justify-center rounded-2xl border border-dashed border-stone-200/90",
-        "bg-white/50 px-8 py-16 text-center dark:border-white/[0.08] dark:bg-white/[0.02]",
+        "bg-white/50 px-8 py-16 text-center dark:border-white/8 dark:bg-white/2",
       )}
     >
-      <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-100 dark:bg-white/[0.05]">
+      <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-100 dark:bg-white/5">
         {icon}
       </div>
       <p className="font-semibold text-stone-800 dark:text-stone-100">

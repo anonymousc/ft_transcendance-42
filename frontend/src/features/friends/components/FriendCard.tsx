@@ -92,7 +92,6 @@ function FriendCard({
 
   const places = friend.placesVisited ?? 0;
   const fCount = friend.friendsCount ?? 0;
-  const mutual = friend.mutualFriends ?? 0;
   const bio =
     friend.bio && friend.bio.length > 90
       ? `${friend.bio.slice(0, 87)}…`
@@ -102,7 +101,7 @@ function FriendCard({
     <article
       className={cn(
         "group flex flex-col overflow-hidden rounded-2xl",
-        "bg-white dark:bg-white/[0.04]",
+        "bg-white dark:bg-white/4",
         "border border-stone-200/80 dark:border-white/[0.07]",
         "shadow-sm hover:shadow-md transition-all duration-300",
       )}
@@ -159,82 +158,13 @@ function FriendCard({
             value={fCount}
             icon={<Users size={11} className="shrink-0 opacity-70" />}
           />
-          <StatPill
-            label="Mutual"
-            value={mutual}
-            accent
-            icon={<UsersRound size={11} className="shrink-0 opacity-70" />}
-          />
         </div>
-
-        {resolvedLast && (
-          <div
-            className={cn(
-              "flex items-center gap-3 rounded-xl border border-stone-100 dark:border-white/[0.06]",
-              "bg-stone-50/80 dark:bg-white/[0.03] p-2.5",
-            )}
-          >
-            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-stone-200 dark:bg-stone-800">
-              {resolvedLast.image ? (
-                <img
-                  src={resolvedLast.image}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <MapPinned size={22} className="text-stone-400" />
-                </div>
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">
-                Last visited
-              </p>
-              <p className="truncate text-[13px] font-semibold text-stone-900 dark:text-white">
-                {resolvedLast.name}
-              </p>
-              {resolvedLast.city && (
-                <p className="truncate text-[11px] text-stone-500 dark:text-stone-400">
-                  {resolvedLast.city}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {sharedInterests.length > 0 && (
-          <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">
-              Shared interests
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {sharedInterests.slice(0, 6).map((label) => (
-                <span
-                  key={label}
-                  className={cn(
-                    "rounded-full border border-orange-200/90 bg-orange-50 px-2.5 py-1",
-                    "text-[11px] font-semibold text-orange-800",
-                    "dark:border-orange-800/60 dark:bg-orange-950/40 dark:text-orange-200",
-                  )}
-                >
-                  {label}
-                </span>
-              ))}
-              {sharedInterests.length > 6 && (
-                <span className="rounded-full px-2 py-1 text-[11px] text-stone-400">
-                  +{sharedInterests.length - 6}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       <div
         className={cn(
           "mt-auto flex flex-wrap items-center gap-2 border-t border-stone-100 px-4 py-3",
-          "dark:border-white/[0.06] sm:px-5",
+          "dark:border-white/6 sm:px-5",
         )}
       >
         <Link
@@ -242,7 +172,7 @@ function FriendCard({
           className={cn(
             "inline-flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-[13px] font-semibold",
             "bg-orange-500 text-white shadow-sm transition-all hover:bg-orange-600",
-            "dark:bg-orange-500 dark:hover:bg-orange-600 min-w-[7rem]",
+            "dark:bg-orange-500 dark:hover:bg-orange-600 min-w-28",
           )}
         >
           <MessageCircle size={16} strokeWidth={2.25} />
@@ -254,7 +184,7 @@ function FriendCard({
           className={cn(
             "inline-flex flex-1 items-center justify-center gap-2 rounded-xl border py-2.5 text-[13px] font-semibold",
             "border-stone-200 bg-white text-stone-800 transition-colors hover:bg-stone-50",
-            "dark:border-white/15 dark:bg-white/5 dark:text-stone-100 dark:hover:bg-white/10 min-w-[7rem]",
+            "dark:border-white/15 dark:bg-white/5 dark:text-stone-100 dark:hover:bg-white/10 min-w-28",
           )}
         >
           <UserRound size={16} strokeWidth={2} />
@@ -279,7 +209,7 @@ function FriendCard({
               sideOffset={6}
               align="end"
               className={cn(
-                "z-50 min-w-[11rem] overflow-hidden rounded-xl p-1",
+                "z-50 min-w-44 overflow-hidden rounded-xl p-1",
                 "border border-stone-200/90 bg-white/95 shadow-lg backdrop-blur-xl",
                 "dark:border-white/10 dark:bg-zinc-900/95",
               )}
@@ -329,7 +259,7 @@ function StatPill({
         "inline-flex items-baseline gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold tabular-nums",
         accent
           ? "border-orange-200 bg-orange-50 text-orange-800 dark:border-orange-800/50 dark:bg-orange-950/35 dark:text-orange-200"
-          : "border-stone-200/90 bg-stone-50 text-stone-700 dark:border-white/10 dark:bg-white/[0.05] dark:text-stone-200",
+          : "border-stone-200/90 bg-stone-50 text-stone-700 dark:border-white/10 dark:bg-white/5 dark:text-stone-200",
       )}
     >
       {icon}

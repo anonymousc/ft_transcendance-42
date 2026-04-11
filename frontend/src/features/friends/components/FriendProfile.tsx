@@ -27,7 +27,7 @@ function FriendProfile({ friend, onBack }: FriendProfileProps) {
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 md:flex md:items-center md:justify-center md:overflow-visible md:p-6">
         <div className="w-full max-w-full overflow-hidden rounded-2xl bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)] dark:bg-[#2C2C2E] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] md:max-w-[720px] md:rounded-3xl">
           <div className="relative flex flex-col items-start border-b border-[#E5E5EA] bg-[url('@/assets/BigAtlass.png')] bg-cover bg-center px-4 pb-4 pt-8 dark:border-[#3A3A3C] md:px-8 md:pt-12">
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+            <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
             <div className="relative z-10">
               <img
                 src={friend.avatar}
