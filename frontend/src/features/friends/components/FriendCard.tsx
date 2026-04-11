@@ -1,45 +1,343 @@
-import { memo } from "react";
+import { memo, useEffect, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { DropdownMenu } from "radix-ui";
+import {
+  MapPin,
+  MapPinned,
+  MessageCircle,
+  MoreHorizontal,
+  UserRound,
+  Users,
+  UsersRound,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChatAvatar from "@/features/chat/components/ChatAvatar";
-import type { Friend } from "../types";
+import type { Friend, FriendLastVisited } from "../types";
 
-interface FriendCardProps {
-  friend: Friend;
-  isActive: boolean;
-  onClick: (id: string) => void;
+const FAV_PLACES_URL =
+  (import.meta.env.VITE_FAV_PLACES_URL as string) || "http://localhost:4002";
+
+async function fetchPublicLastPlace(
+  userId: string,
+): Promise<FriendLastVisited | null> {
+  try {
+    const res = await fetch(
+      `${FAV_PLACES_URL}/fav-places/public/${encodeURIComponent(userId)}`,
+      { credentials: "include" },
+    );
+    if (!res.ok) return null;
+    const json: unknown = await res.json();
+    if (!json || typeof json !== "object") return null;
+    const o = json as Record<string, unknown>;
+    if (o.ok === true && Array.isArray(o.data) && o.data.length > 0) {
+      const p = o.data[0] as Record<string, unknown>;
+      const name =
+        (typeof p.placeName === "string" && p.placeName) ||
+        (typeof p.name === "string" && p.name) ||
+        "Place";
+      const city = typeof p.city === "string" ? p.city : "";
+      const image = typeof p.image === "string" ? p.image : undefined;
+      const out: FriendLastVisited = { name, city };
+      if (image) out.image = image;
+      return out;
+    }
+    if (o.data && typeof o.data === "object" && !Array.isArray(o.data)) {
+      const p = o.data as Record<string, unknown>;
+      const name =
+        (typeof p.placeName === "string" && p.placeName) ||
+        (typeof p.name === "string" && p.name) ||
+        "Place";
+      const city = typeof p.city === "string" ? p.city : "";
+      const image = typeof p.image === "string" ? p.image : undefined;
+      const out: FriendLastVisited = { name, city };
+      if (image) out.image = image;
+      return out;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
-function FriendCard({ friend, isActive, onClick }: FriendCardProps) {
+export interface RichFriendCardProps {
+  friend: Friend;
+  sharedInterests: string[];
+  onViewProfile: () => void;
+  onShareProfile: () => void;
+  onRemoveFriend: () => void;
+}
+
+function FriendCard({
+  friend,
+  sharedInterests,
+  onViewProfile,
+  onShareProfile,
+  onRemoveFriend,
+}: RichFriendCardProps) {
+  const [resolvedLast, setResolvedLast] = useState<FriendLastVisited | null>(
+    friend.lastVisited ?? null,
+  );
+
+  useEffect(() => {
+    setResolvedLast(friend.lastVisited ?? null);
+    let cancelled = false;
+    void (async () => {
+      const fetched = await fetchPublicLastPlace(friend.id);
+      if (!cancelled && fetched) setResolvedLast(fetched);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [friend.id, friend.lastVisited]);
+
+  const places = friend.placesVisited ?? 0;
+  const fCount = friend.friendsCount ?? 0;
+  const mutual = friend.mutualFriends ?? 0;
+  const bio =
+    friend.bio && friend.bio.length > 90
+      ? `${friend.bio.slice(0, 87)}…`
+      : friend.bio;
+
   return (
-    <button
-      onClick={() => onClick(friend.id)}
+    <article
       className={cn(
-        "flex items-center gap-3 w-full px-4 py-3 text-left",
-        "rounded-xl border",
-        "transition-all duration-200 cursor-pointer",
-        "hover:bg-gray-50 dark:hover:bg-zinc-800/60",
-        isActive
-          ? "border-primary/60 bg-primary/5 dark:bg-primary/10 shadow-sm"
-          : "border-border/40 bg-white dark:bg-zinc-900"
+        "group flex flex-col overflow-hidden rounded-2xl",
+        "bg-white dark:bg-white/[0.04]",
+        "border border-stone-200/80 dark:border-white/[0.07]",
+        "shadow-sm hover:shadow-md transition-all duration-300",
       )}
     >
-      <ChatAvatar
-        src={friend.avatar}
-        name={friend.name}
-        size="md"
-        isOnline={friend.isOnline}
-      />
-      <span
+      <div className="flex flex-col gap-3 p-4 sm:p-5">
+        <div className="flex gap-3">
+          <ChatAvatar
+            src={friend.avatar}
+            name={friend.name}
+            size="lg"
+            isOnline={friend.isOnline}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="truncate text-[15px] font-bold text-stone-900 dark:text-white">
+                {friend.name}
+              </h3>
+              <span
+                className={cn(
+                  "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+                  friend.isOnline
+                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                    : "bg-stone-200/80 text-stone-500 dark:bg-white/10 dark:text-stone-400",
+                )}
+              >
+                {friend.isOnline ? "Online" : "Offline"}
+              </span>
+            </div>
+            <p className="truncate text-[12px] font-medium text-orange-500 dark:text-orange-400">
+              @{friend.username}
+            </p>
+            {friend.city && (
+              <p className="mt-1 flex items-center gap-1 text-[12px] text-stone-500 dark:text-stone-400">
+                <MapPin size={12} className="shrink-0 text-orange-400" />
+                <span className="truncate">{friend.city}</span>
+              </p>
+            )}
+            {bio && (
+              <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-stone-600 dark:text-stone-300">
+                {bio}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <StatPill
+            label="Places"
+            value={places}
+            icon={<MapPinned size={11} className="shrink-0 opacity-70" />}
+          />
+          <StatPill
+            label="Friends"
+            value={fCount}
+            icon={<Users size={11} className="shrink-0 opacity-70" />}
+          />
+          <StatPill
+            label="Mutual"
+            value={mutual}
+            accent
+            icon={<UsersRound size={11} className="shrink-0 opacity-70" />}
+          />
+        </div>
+
+        {resolvedLast && (
+          <div
+            className={cn(
+              "flex items-center gap-3 rounded-xl border border-stone-100 dark:border-white/[0.06]",
+              "bg-stone-50/80 dark:bg-white/[0.03] p-2.5",
+            )}
+          >
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-stone-200 dark:bg-stone-800">
+              {resolvedLast.image ? (
+                <img
+                  src={resolvedLast.image}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <MapPinned size={22} className="text-stone-400" />
+                </div>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">
+                Last visited
+              </p>
+              <p className="truncate text-[13px] font-semibold text-stone-900 dark:text-white">
+                {resolvedLast.name}
+              </p>
+              {resolvedLast.city && (
+                <p className="truncate text-[11px] text-stone-500 dark:text-stone-400">
+                  {resolvedLast.city}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {sharedInterests.length > 0 && (
+          <div>
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">
+              Shared interests
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {sharedInterests.slice(0, 6).map((label) => (
+                <span
+                  key={label}
+                  className={cn(
+                    "rounded-full border border-orange-200/90 bg-orange-50 px-2.5 py-1",
+                    "text-[11px] font-semibold text-orange-800",
+                    "dark:border-orange-800/60 dark:bg-orange-950/40 dark:text-orange-200",
+                  )}
+                >
+                  {label}
+                </span>
+              ))}
+              {sharedInterests.length > 6 && (
+                <span className="rounded-full px-2 py-1 text-[11px] text-stone-400">
+                  +{sharedInterests.length - 6}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div
         className={cn(
-          "font-medium text-sm truncate",
-          isActive
-            ? "text-foreground"
-            : "text-foreground/80"
+          "mt-auto flex flex-wrap items-center gap-2 border-t border-stone-100 px-4 py-3",
+          "dark:border-white/[0.06] sm:px-5",
         )}
       >
-        {friend.name}
+        <Link
+          to="/webchat"
+          className={cn(
+            "inline-flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-[13px] font-semibold",
+            "bg-orange-500 text-white shadow-sm transition-all hover:bg-orange-600",
+            "dark:bg-orange-500 dark:hover:bg-orange-600 min-w-[7rem]",
+          )}
+        >
+          <MessageCircle size={16} strokeWidth={2.25} />
+          Message
+        </Link>
+        <button
+          type="button"
+          onClick={onViewProfile}
+          className={cn(
+            "inline-flex flex-1 items-center justify-center gap-2 rounded-xl border py-2.5 text-[13px] font-semibold",
+            "border-stone-200 bg-white text-stone-800 transition-colors hover:bg-stone-50",
+            "dark:border-white/15 dark:bg-white/5 dark:text-stone-100 dark:hover:bg-white/10 min-w-[7rem]",
+          )}
+        >
+          <UserRound size={16} strokeWidth={2} />
+          Profile
+        </button>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <button
+              type="button"
+              className={cn(
+                "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border",
+                "border-stone-200 bg-white text-stone-600 transition-colors hover:bg-stone-50",
+                "dark:border-white/15 dark:bg-white/5 dark:text-stone-300 dark:hover:bg-white/10",
+              )}
+              aria-label="More actions"
+            >
+              <MoreHorizontal size={18} />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              sideOffset={6}
+              align="end"
+              className={cn(
+                "z-50 min-w-[11rem] overflow-hidden rounded-xl p-1",
+                "border border-stone-200/90 bg-white/95 shadow-lg backdrop-blur-xl",
+                "dark:border-white/10 dark:bg-zinc-900/95",
+              )}
+            >
+              <DropdownMenu.Item
+                className={cn(
+                  "flex cursor-pointer select-none items-center rounded-lg px-3 py-2 text-[13px] font-medium",
+                  "text-stone-800 outline-none data-highlighted:bg-stone-100",
+                  "dark:text-stone-100 dark:data-highlighted:bg-white/10",
+                )}
+                onSelect={() => onShareProfile()}
+              >
+                Share profile
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                className={cn(
+                  "flex cursor-pointer select-none items-center rounded-lg px-3 py-2 text-[13px] font-medium",
+                  "text-rose-600 outline-none data-highlighted:bg-rose-50",
+                  "dark:text-rose-400 dark:data-highlighted:bg-rose-950/40",
+                )}
+                onSelect={() => onRemoveFriend()}
+              >
+                Remove friend
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
+      </div>
+    </article>
+  );
+}
+
+function StatPill({
+  label,
+  value,
+  accent,
+  icon,
+}: {
+  label: string;
+  value: number;
+  accent?: boolean;
+  icon: ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-baseline gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold tabular-nums",
+        accent
+          ? "border-orange-200 bg-orange-50 text-orange-800 dark:border-orange-800/50 dark:bg-orange-950/35 dark:text-orange-200"
+          : "border-stone-200/90 bg-stone-50 text-stone-700 dark:border-white/10 dark:bg-white/[0.05] dark:text-stone-200",
+      )}
+    >
+      {icon}
+      <span className="text-[10px] uppercase tracking-wide text-stone-500 dark:text-stone-400">
+        {label}
       </span>
-    </button>
+      <span>{value}</span>
+    </span>
   );
 }
 

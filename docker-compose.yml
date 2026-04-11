@@ -378,6 +378,7 @@ services:
     environment:
       - FAV_PLACES_URL=http://fav-places:4002
       - REVIEW_PLACES_URL=http://review-places:4001
+      - PROFILES_URL=http://profiles:3002
     env_file:
       - .env
     networks:
@@ -388,6 +389,8 @@ services:
       database:
         condition: service_healthy
       vault:
+        condition: service_healthy
+      profiles:
         condition: service_healthy
       fav-places:
         condition: service_healthy

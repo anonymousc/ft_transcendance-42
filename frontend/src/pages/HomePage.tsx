@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import GlassSearchBar from "../components/shared/GlassSearchBar";
 import TripPlannerBar from "../components/shared/TripPlannerBar";
 import HomeNavBar from "../components/shared/HomeNavBar";
@@ -6,6 +7,7 @@ import CityResults from "../components/shared/CityResults";
 import "./HomePage.css";
 import bgvideo from "../assets/home-background.mp4";
 import { useAuth } from "@/context/AuthContext";
+import { needsInterestsOnboarding } from "@/lib/interestsOnboarding";
 
 type SearchState =
   | { mode: "query"; q: string }
@@ -13,6 +15,7 @@ type SearchState =
   | null;
 
 function HomePage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'explore' | 'plan'>('explore');
   const [searchState, setSearchState] = useState<SearchState>(null);
 
@@ -23,9 +26,16 @@ function HomePage() {
     if (city.trim()) setSearchState({ mode: "city", city: city.trim() });
   };
 
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const userName = user ? user.displayName : "";
   const firstName = userName ? userName.split(" ")[0] : "";
+
+  useEffect(() => {
+    if (loading || !user) return;
+    if (needsInterestsOnboarding(user.interests)) {
+      navigate("/interests", { replace: true });
+    }
+  }, [loading, user, navigate]);
 
   const hasResults = searchState !== null;
 

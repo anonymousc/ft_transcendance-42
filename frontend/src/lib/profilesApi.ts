@@ -1,4 +1,5 @@
 import { PROFILES_BASE_URL, ensureCsrfToken } from "./api";
+import type { InterestsProfile } from "./interestsOnboarding";
 
 export interface Profile {
   id: string;
@@ -8,6 +9,7 @@ export interface Profile {
   avatar: string | null;
   bio: string | null;
   status?: string | null;
+  interests?: InterestsProfile | null;
 }
 
 export async function fetchMyProfile(): Promise<Profile> {
@@ -15,6 +17,21 @@ export async function fetchMyProfile(): Promise<Profile> {
     credentials: "include",
   });
   if (!res.ok) throw new Error("Failed to load profile");
+  return (await res.json()) as Profile;
+}
+
+export async function patchMyInterests(profile: InterestsProfile): Promise<Profile> {
+  const csrf = await ensureCsrfToken();
+  const res = await fetch(`${PROFILES_BASE_URL}/profiles/me`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+    body: JSON.stringify({ interests: profile }),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { message?: string };
+    throw new Error(err.message || "Failed to save interests");
+  }
   return (await res.json()) as Profile;
 }
 

@@ -101,6 +101,7 @@ export class AuthService {
       avatar: user.profile?.avatar || null,
       bio: user.profile?.bio || null,
       status: user.profile?.status || 'offline',
+      interests: user.profile?.interests ?? null,
     };
   }
 

@@ -16,6 +16,7 @@ import Webchat from './features/chat/components/Webchat.tsx';
 import FriendsPage from './features/friends/components/FriendsPage';
 import NotificationPage from './features/notifications/NotificationPage';
 import SavedPlacesPage from './pages/SavedPlacesPage';
+import InterestsPage from './features/Interests/InterestsPage';
 // import HealthCheckPage from './pages/healthcheck';
 
 function AppContent() {
@@ -36,6 +37,7 @@ function AppContent() {
         <Route path="/notifications" element={<ProtectedRoute><NotificationPage /></ProtectedRoute>} />
         <Route path="/city" element={<ProtectedRoute><CityPage /></ProtectedRoute>} />
         <Route path="/saved" element={<ProtectedRoute><SavedPlacesPage /></ProtectedRoute>} />
+        <Route path="/interests" element={<ProtectedRoute><InterestsPage /></ProtectedRoute>} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>

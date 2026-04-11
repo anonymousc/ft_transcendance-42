@@ -8,6 +8,7 @@ import passportOverlay from "../../../assets/PassportOverlay.png";
 import GlassCard from "../../../components/glassCard";
 import { useAuth } from "../../../context/AuthContext";
 import { API_BASE_URL } from "../../../lib/api";
+import { needsInterestsOnboarding } from "../../../lib/interestsOnboarding";
 
 function LoginPage() {
   const { signin } = useAuth();
@@ -24,8 +25,12 @@ function LoginPage() {
     if (!email || !password) return;
     setSubmitting(true);
     try {
-      await signin({ email, password });
-      navigate("/home", { replace: true });
+      const me = await signin({ email, password });
+      if (me && needsInterestsOnboarding(me.interests)) {
+        navigate("/interests", { replace: true });
+      } else {
+        navigate("/home", { replace: true });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invalid email or password");
     } finally {

@@ -85,7 +85,7 @@ function SavedPlaceCard({
     try {
       const res = await fetch(
         `${FAV_PLACES_URL}/fav-places/${place.id}?userId=${encodeURIComponent(place.userId)}`,
-        { method: "DELETE" },
+        { method: "DELETE", credentials: "include" },
       );
       const env = await res.json();
       if (env.ok) onUnsave(place.id);
@@ -187,7 +187,9 @@ function SavedPlacesPage() {
     setLoading(true);
     setError(null);
 
-    fetch(`${FAV_PLACES_URL}/fav-places?userId=${encodeURIComponent(user.id)}`)
+    fetch(`${FAV_PLACES_URL}/fav-places?userId=${encodeURIComponent(user.id)}`, {
+      credentials: "include",
+    })
       .then((r) => r.json())
       .then((env: FavEnvelope) => {
         if (!env.ok) throw new Error(env.error?.message ?? "Failed to load saved places");

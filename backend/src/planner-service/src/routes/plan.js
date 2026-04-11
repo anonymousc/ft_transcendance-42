@@ -2,6 +2,7 @@ const { Router } = require('express');
 const prisma = require('../lib/prisma');
 const { callTextSearch } = require('../lib/google-places');
 const { fetchUserFavorites, fetchReviewSummariesForPlaces } = require('../lib/service-client');
+const { fetchUserInterests } = require('../lib/fetchUserInterests');
 const { generateTripPlan } = require('../lib/gemini');
 const authMiddleware = require('../middleware/auth');
 
@@ -46,9 +47,10 @@ router.post('/plan/generate', authMiddleware, (req, res, next) => req.app.get('p
   const userId = req.user.id;
 
   try {
-    const [places, favorites] = await Promise.all([
+    const [places, favorites, interests] = await Promise.all([
       callTextSearch(`best places to visit in ${safeCity}`, 20),
       fetchUserFavorites(userId, safeCity),
+      fetchUserInterests(userId),
     ]);
 
     if (!places.length) {
@@ -64,6 +66,7 @@ router.post('/plan/generate', authMiddleware, (req, res, next) => req.app.get('p
       places,
       favorites,
       reviewSummaries,
+      interests,
     });
 
     const tripPlan = await prisma.tripPlan.create({
