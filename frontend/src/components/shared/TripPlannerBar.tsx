@@ -8,7 +8,7 @@ const PLANNER_URL =
   (import.meta.env.VITE_PLANNER_URL as string) || "http://localhost:7000";
 
 
-interface TripPlan {
+export interface TripPlan {
   id: string;
   city: string;
   days: number;
@@ -46,9 +46,17 @@ export interface Activity {
 
 interface TripPlannerBarProps {
   defaultCity?: string;
+  /** Show generated plan in the document flow instead of a modal overlay. */
+  inlinePlanDisplay?: boolean;
+  /** When set, successful generation calls this instead of opening the modal (e.g. redirect to /planner). */
+  onPlanGenerated?: (plan: TripPlan) => void;
 }
 
-function TripPlannerBar({ defaultCity = "" }: TripPlannerBarProps) {
+function TripPlannerBar({
+  defaultCity = "",
+  inlinePlanDisplay = false,
+  onPlanGenerated,
+}: TripPlannerBarProps) {
   const { user } = useAuth();
   const [city, setCity] = useState(defaultCity);
   const [days, setDays] = useState(3);
@@ -100,8 +108,14 @@ function TripPlannerBar({ defaultCity = "" }: TripPlannerBarProps) {
         throw new Error(data.error?.message ?? "Failed to generate plan");
       }
 
-      setPlan(data.data);
-      setShowModal(true);
+      const row = data.data as TripPlan;
+      if (onPlanGenerated) {
+        onPlanGenerated(row);
+        return;
+      }
+
+      setPlan(row);
+      if (!inlinePlanDisplay) setShowModal(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -193,8 +207,15 @@ function TripPlannerBar({ defaultCity = "" }: TripPlannerBarProps) {
         {error && <p className="planner-bar-error">{error}</p>}
       </div>
 
-      {showModal && plan && (
-        <TripPlanModal plan={plan} onClose={() => setShowModal(false)} />
+      {plan && (inlinePlanDisplay || showModal) && (
+        <TripPlanModal
+          plan={plan}
+          inline={inlinePlanDisplay}
+          onClose={() => {
+            setShowModal(false);
+            if (inlinePlanDisplay) setPlan(null);
+          }}
+        />
       )}
     </>
   );

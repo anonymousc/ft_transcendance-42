@@ -4,6 +4,7 @@ import RegisterPage from './features/register/component/RegisterPage';
 import ProfilePage from './features/profile/component/ProfilePage';
 import EditProfilePage from './features/profile/component/EditProfilePage';
 import HomePage from './pages/HomePage';
+import PlannerPage from './pages/PlannerPage';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import NotFoundPage from './pages/NotFound';
 import { ThemeProvider } from './context/ThemeContext';
@@ -28,6 +29,7 @@ function AppContent() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/planner" element={<ProtectedRoute><PlannerPage /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/profile/edit" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />

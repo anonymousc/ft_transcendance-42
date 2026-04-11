@@ -30,7 +30,7 @@ vault kv put -mount=secret fav_places database_url="$FAV_PLACES_DATABASE_URL" ap
 
 JWT_ACCESS_SECRET=$(openssl rand -hex 64)
 JWT_REFRESH_SECRET=$(openssl rand -hex 64)
-JWT_ACCESS_EXPIRES_IN=15m
+JWT_ACCESS_EXPIRES_IN=30m
 JWT_REFRESH_EXPIRES_IN=7d
 GOOGLE_CLIENT_ID=$(cat /run/secrets/google_client_id 2>/dev/null || echo "")
 GOOGLE_CLIENT_SECRET=$(cat /run/secrets/google_client_secret 2>/dev/null || echo "")

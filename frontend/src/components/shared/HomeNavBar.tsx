@@ -30,7 +30,7 @@ function HomeNavBar({ hideMobileGlassNav = false }: HomeNavBarProps) {
   const pathname =
     location.pathname.replace(/\/+$/, "") || "/";
   const activeId = PATH_TO_NAV_ID[pathname] ?? "home";
-  const isHomeVideo = pathname === "/home";
+  const isHomeVideo = pathname === "/home" || pathname === "/planner";
 
   const handleNavigation = (id: string) => {
     const path = NAV_ID_TO_PATH[id];

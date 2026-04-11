@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import GlassSearchBar from "../components/shared/GlassSearchBar";
 import TripPlannerBar from "../components/shared/TripPlannerBar";
 import HomeNavBar from "../components/shared/HomeNavBar";
@@ -16,7 +16,8 @@ type SearchState =
 
 function HomePage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'explore' | 'plan'>('explore');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState<"explore" | "plan">("explore");
   const [searchState, setSearchState] = useState<SearchState>(null);
 
   const handleSearch = (query: string) => {
@@ -37,6 +38,14 @@ function HomePage() {
     }
   }, [loading, user, navigate]);
 
+  useEffect(() => {
+    const st = location.state as { openPlanTab?: boolean } | null | undefined;
+    if (st?.openPlanTab) {
+      setActiveTab("plan");
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.pathname, location.state, navigate]);
+
   const hasResults = searchState !== null;
 
   return (
@@ -50,24 +59,26 @@ function HomePage() {
         <div className="search-container">
           <div className="tab-switcher">
             <button
-              className={`tab-btn${activeTab === 'explore' ? ' tab-btn--active' : ''}`}
-              onClick={() => setActiveTab('explore')}
+              type="button"
+              className={`tab-btn${activeTab === "explore" ? " tab-btn--active" : ""}`}
+              onClick={() => setActiveTab("explore")}
             >
               Explore
             </button>
             <button
-              className={`tab-btn${activeTab === 'plan' ? ' tab-btn--active' : ''}`}
-              onClick={() => setActiveTab('plan')}
+              type="button"
+              className={`tab-btn${activeTab === "plan" ? " tab-btn--active" : ""}`}
+              onClick={() => setActiveTab("plan")}
             >
               Plan a Trip
             </button>
           </div>
           <div className="tab-bar-surface">
-            <div className={`tab-panel${activeTab === 'explore' ? ' tab-panel--active' : ''}`}>
+            <div className={`tab-panel${activeTab === "explore" ? " tab-panel--active" : ""}`}>
               <GlassSearchBar onSearch={handleSearch} onSelect={handleSelect} />
             </div>
-            <div className={`tab-panel${activeTab === 'plan' ? ' tab-panel--active' : ''}`}>
-              <TripPlannerBar />
+            <div className={`tab-panel${activeTab === "plan" ? " tab-panel--active" : ""}`}>
+              <TripPlannerBar onPlanGenerated={p => navigate(`/planner?id=${p.id}`)} />
             </div>
           </div>
         </div>

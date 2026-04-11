@@ -14,10 +14,15 @@ import {
   BookOpen,
   AlertCircle,
   ChevronLeft,
+  CalendarDays,
+  ChevronRight,
 } from "lucide-react";
 
 const FAV_PLACES_URL =
   (import.meta.env.VITE_FAV_PLACES_URL as string) || "http://localhost:4002";
+
+const PLANNER_URL =
+  (import.meta.env.VITE_PLANNER_URL as string) || "http://localhost:7000";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -37,6 +42,37 @@ interface FavEnvelope {
   ok: boolean;
   data?: SavedPlace[];
   error?: { code: string; message: string };
+}
+
+interface TripPlanSummary {
+  id: string;
+  city: string;
+  days: number;
+  preferences: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface PlansEnvelope {
+  ok: boolean;
+  data?: TripPlanSummary[];
+  error?: { message?: string };
+}
+
+function formatTripDateRange(createdAt: string, days: number): string {
+  const start = new Date(createdAt);
+  if (Number.isNaN(start.getTime())) return `${days} day${days === 1 ? "" : "s"}`;
+  const end = new Date(start);
+  end.setDate(end.getDate() + Math.max(0, days - 1));
+  const opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
+  return `${start.toLocaleDateString(undefined, opts)} – ${end.toLocaleDateString(undefined, opts)}`;
+}
+
+function tripThumbColor(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = id.charCodeAt(i) + ((h << 5) - h);
+  const hue = Math.abs(h) % 360;
+  return `hsl(${hue} 62% 46%)`;
 }
 
 // ── Category icon map ──────────────────────────────────────────────────────
@@ -173,6 +209,52 @@ function SavedPlaceCard({
   );
 }
 
+// ── SavedTripRow ────────────────────────────────────────────────────────────
+
+function SavedTripCard({
+  trip,
+  onOpen,
+}: {
+  trip: TripPlanSummary;
+  onOpen: (id: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(trip.id)}
+      className="group w-full flex items-stretch text-left rounded-2xl overflow-hidden
+        bg-white dark:bg-white/[0.04]
+        border border-stone-200/80 dark:border-white/[0.07]
+        shadow-sm hover:shadow-md hover:border-orange-200/80 dark:hover:border-orange-500/25
+        transition-all duration-300 min-h-[unset] min-w-[unset]"
+    >
+      <span
+        className="w-1.5 shrink-0 self-stretch"
+        style={{ background: tripThumbColor(trip.id) }}
+        aria-hidden
+      />
+      <div className="flex-1 min-w-0 flex items-center justify-between gap-3 px-4 py-3.5">
+        <div className="min-w-0">
+          <p className="font-semibold text-[15px] text-stone-900 dark:text-white truncate">
+            {trip.city}
+          </p>
+          <p className="mt-0.5 flex items-center gap-1.5 text-[12px] text-stone-500 dark:text-stone-400">
+            <CalendarDays size={12} className="shrink-0 text-orange-400" />
+            <span className="truncate">
+              {formatTripDateRange(trip.createdAt, trip.days)} · {trip.days} day
+              {trip.days === 1 ? "" : "s"}
+            </span>
+          </p>
+        </div>
+        <ChevronRight
+          size={18}
+          className="shrink-0 text-stone-300 dark:text-stone-600 group-hover:text-orange-500 transition-colors"
+        />
+      </div>
+    </button>
+  );
+}
+
 // ── SavedPlacesPage ────────────────────────────────────────────────────────
 
 function SavedPlacesPage() {
@@ -181,6 +263,10 @@ function SavedPlacesPage() {
   const [places, setPlaces] = useState<SavedPlace[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [trips, setTrips] = useState<TripPlanSummary[]>([]);
+  const [tripsLoading, setTripsLoading] = useState(true);
+  const [tripsError, setTripsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -197,6 +283,20 @@ function SavedPlacesPage() {
       })
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    setTripsLoading(true);
+    setTripsError(null);
+    fetch(`${PLANNER_URL}/plans`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((env: PlansEnvelope) => {
+        if (!env.ok) throw new Error(env.error?.message ?? "Failed to load saved trips");
+        setTrips(env.data ?? []);
+      })
+      .catch((err: Error) => setTripsError(err.message))
+      .finally(() => setTripsLoading(false));
   }, [user?.id]);
 
   const handleUnsave = (id: string) => {
@@ -223,13 +323,88 @@ function SavedPlacesPage() {
             Saved <span className="text-orange-500">Places</span>
           </h1>
           <p className="mt-2 text-[14px] text-stone-500 dark:text-stone-400">
+            Your bookmarked spots and AI trip plans in one place.
+          </p>
+        </div>
+
+        {/* Saved trips */}
+        <section className="mb-14" aria-labelledby="saved-trips-heading">
+          <div className="flex items-end justify-between gap-4 mb-4">
+            <h2
+              id="saved-trips-heading"
+              className="text-lg sm:text-xl font-bold text-stone-900 dark:text-white tracking-tight"
+            >
+              Saved trips
+            </h2>
+            {!tripsLoading && trips.length > 0 ? (
+              <span className="text-[12px] text-stone-500 dark:text-stone-400 tabular-nums">
+                {trips.length} trip{trips.length !== 1 ? "s" : ""}
+              </span>
+            ) : null}
+          </div>
+
+          {tripsError && (
+            <div className="flex items-center gap-3 px-4 py-3 mb-4 rounded-xl
+              bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800
+              text-rose-700 dark:text-rose-300 text-sm">
+              <AlertCircle size={14} className="shrink-0" />
+              {tripsError}
+            </div>
+          )}
+
+          {tripsLoading && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-[72px] rounded-2xl bg-stone-100 dark:bg-stone-800/50 animate-pulse border border-stone-200/60 dark:border-white/[0.06]"
+                />
+              ))}
+            </div>
+          )}
+
+          {!tripsLoading && !tripsError && trips.length === 0 && (
+            <p className="text-[13px] text-stone-500 dark:text-stone-400 py-2">
+              No saved trips yet.{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/home", { state: { openPlanTab: true } })}
+                className="text-orange-500 hover:text-orange-600 font-medium transition-colors"
+              >
+                Plan a trip
+              </button>
+            </p>
+          )}
+
+          {!tripsLoading && trips.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {trips.map((trip) => (
+                <SavedTripCard
+                  key={trip.id}
+                  trip={trip}
+                  onOpen={(id) => navigate(`/planner?id=${id}`)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Saved places */}
+        <section className="mb-6" aria-labelledby="saved-places-heading">
+          <h2
+            id="saved-places-heading"
+            className="text-lg sm:text-xl font-bold text-stone-900 dark:text-white tracking-tight mb-4"
+          >
+            Saved places
+          </h2>
+          <p className="text-[13px] text-stone-500 dark:text-stone-400 mb-6 -mt-2">
             {loading
               ? "Loading your saved places…"
               : places.length === 0
                 ? "No saved places yet — start exploring and bookmark places you love."
                 : `${places.length} place${places.length !== 1 ? "s" : ""} saved`}
           </p>
-        </div>
+        </section>
 
         {/* Error */}
         {error && (
