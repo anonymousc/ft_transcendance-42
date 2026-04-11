@@ -28,6 +28,7 @@ curl -X GET http://vault:$PORT_VAULT/v1/secret/data/postgres --header "X-Vault-T
     createdb -U $(jq -r .data.data.username < /token/data) prisma
     createdb -U $(jq -r .data.data.username < /token/data) reviews
     createdb -U $(jq -r .data.data.username < /token/data) fav_places
+    createdb -U $(jq -r .data.data.username < /token/data) friends
 
     DB_USER=$(jq -r .data.data.username < /token/data)
     RAW_PASS=$(jq -r .data.data.password < /token/data)
