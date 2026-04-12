@@ -110,7 +110,8 @@ function formatTripRange(createdAt: string, days: number): string {
 
 function Toast({ message, onDismiss }: { message: string; onDismiss: () => void }) {
   useEffect(() => {
-    const t = window.setTimeout(onDismiss, 2000);
+    const ms = message.length > 100 ? 6500 : 2000;
+    const t = window.setTimeout(onDismiss, ms);
     return () => window.clearTimeout(t);
   }, [message, onDismiss]);
 
@@ -550,16 +551,24 @@ export default function PlannerPage() {
       );
       const data = await parseJson(res);
       if (!data.ok) throw new Error(data.error?.message ?? "Export failed");
-      const payload = data.data as { total: number; failed: number };
-      const { total, failed } = payload;
+      const payload = data.data as {
+        total: number;
+        failed: number;
+        firstError?: string;
+      };
+      const { total, failed, firstError } = payload;
       if (total === 0) {
         showToast("No activities to add to the calendar.");
         return;
       }
       if (failed === 0) {
         showToast(`${total} event${total === 1 ? "" : "s"} added to Google Calendar!`);
+      } else if (failed === total && firstError) {
+        showToast(firstError);
       } else {
-        showToast(`${total - failed}/${total} events added (${failed} failed)`);
+        showToast(
+          `${total - failed}/${total} events added (${failed} failed). ${firstError ?? ""}`.trim()
+        );
       }
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Could not export to calendar");
