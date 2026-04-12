@@ -370,6 +370,39 @@ services:
     labels:
       - "service=fav-places"
 
+  friends:
+    build: ./backend/src/friends-service
+    container_name: friends
+    ports:
+      - "4003:4003"
+    environment:
+      - PORT=4003
+      - PORT_VAULT=${PORT_VAULT}
+    networks:
+      - saas
+    volumes:
+      - shared_resources:/data:ro
+    depends_on:
+      database:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4003/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+    restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=friends"
+
   planner:
     build: ./backend/src/planner-service
     container_name: planner
@@ -513,10 +546,7 @@ volumes:
   netdata_lib: {}
   netdata_cache: {}
   redis_data: {}
-  shared_resources:
-    driver_opts:
-      type : tmpfs
-      device : tmpfs
+  shared_resources: {}
 secrets:
   google_client_id:
     file: ./backend/devops/secrets/google_client_id

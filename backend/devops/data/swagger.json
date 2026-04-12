@@ -1,0 +1,454 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Rihla backend APIs",
+    "description": "OpenAPI documentation. Friends service runs on port 4003 (host) or `friends:4003` inside Docker Compose.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4003",
+      "description": "Friends service (local)"
+    },
+    {
+      "url": "http://friends:4003",
+      "description": "Friends service (Docker network `saas`)"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Friends",
+      "description": "Friend requests and friendships (friends-service)"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Access token from auth-service (same as fav-places / profiles)"
+      }
+    },
+    "schemas": {
+      "ErrorBody": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean", "example": false },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" }
+            }
+          }
+        }
+      },
+      "Friend": {
+        "type": "object",
+        "description": "Frontend-friendly shape; display fields may be enriched later via profiles-service.",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "isOnline": { "type": "boolean" },
+          "username": { "type": "string", "nullable": true },
+          "email": { "type": "string", "nullable": true },
+          "bio": { "type": "string", "nullable": true },
+          "status": { "type": "string", "nullable": true, "example": "offline" }
+        },
+        "required": ["id", "name", "isOnline"]
+      },
+      "FriendRequest": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "fromUserId": { "type": "string" },
+          "toUserId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "fromUserId", "toUserId", "createdAt", "updatedAt"]
+      },
+      "SendFriendRequestBody": {
+        "type": "object",
+        "required": ["toUserId"],
+        "properties": {
+          "toUserId": {
+            "type": "string",
+            "description": "Target user id (JWT `sub` / auth user id)"
+          }
+        }
+      },
+      "SendFriendRequestResult": {
+        "type": "object",
+        "properties": {
+          "autoAccepted": { "type": "boolean" },
+          "request": { "$ref": "#/components/schemas/FriendRequest" },
+          "friendship": {
+            "type": "object",
+            "properties": {
+              "userLowId": { "type": "string" },
+              "userHighId": { "type": "string" }
+            }
+          }
+        }
+      },
+      "OkEnvelope": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean", "example": true },
+          "data": {}
+        },
+        "required": ["ok", "data"]
+      }
+    }
+  },
+  "paths": {
+    "/friends": {
+      "get": {
+        "tags": ["Friends"],
+        "summary": "List friends",
+        "description": "Returns friends of the authenticated user.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Array of friends",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/OkEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/Friend" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/{userId}": {
+      "get": {
+        "tags": ["Friends"],
+        "summary": "Get one friend",
+        "description": "Only succeeds if `userId` is an actual friend.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Friend profile stub",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/OkEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Friend" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not friends",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Friends"],
+        "summary": "Remove friend",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Friendship removed" },
+          "404": {
+            "description": "No friendship with this user",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/requests/incoming": {
+      "get": {
+        "tags": ["Friends"],
+        "summary": "List incoming friend requests",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Pending requests where you are the recipient",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/OkEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/FriendRequest" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/requests/outgoing": {
+      "get": {
+        "tags": ["Friends"],
+        "summary": "List outgoing friend requests",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Pending requests you sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/OkEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/FriendRequest" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/requests": {
+      "post": {
+        "tags": ["Friends"],
+        "summary": "Send friend request",
+        "description": "If the other user already sent you a request, the friendship is created immediately (auto-accept).",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SendFriendRequestBody" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request created or friendship auto-created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/OkEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SendFriendRequestResult"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "409": {
+            "description": "Already friends or duplicate pending request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/requests/{requestId}/accept": {
+      "post": {
+        "tags": ["Friends"],
+        "summary": "Accept friend request",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Accepted; friendship created" },
+          "403": {
+            "description": "Not the recipient of this request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "404": {
+            "description": "Request not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/requests/{requestId}": {
+      "delete": {
+        "tags": ["Friends"],
+        "summary": "Cancel or decline friend request",
+        "description": "Sender can cancel; recipient can decline.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Request removed" },
+          "403": {
+            "description": "Not involved in this request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "404": {
+            "description": "Request not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
