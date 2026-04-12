@@ -11,6 +11,8 @@ interface ChatSidebarProps {
   activeConversationId?: string | undefined;
   onSelectConversation: (id: string) => void;
   connectionState?: ConnectionState | undefined;
+  listLoading?: boolean | undefined;
+  listError?: string | null | undefined;
   className?: string | undefined;
 }
 
@@ -30,6 +32,8 @@ function ChatSidebar({
   activeConversationId,
   onSelectConversation,
   connectionState,
+  listLoading,
+  listError,
   className,
 }: ChatSidebarProps) {
   const badge = connectionState ? CONNECTION_BADGE[connectionState] : null;
@@ -57,9 +61,25 @@ function ChatSidebar({
         </div>
       )}
 
+      {listError && (
+        <p className="mx-4 mt-1 text-[11px] text-red-600 dark:text-red-400">
+          {listError}
+        </p>
+      )}
+
       <div
         className="min-h-0 flex-1 overflow-y-auto px-2 pb-4 pt-2 scrollbar-thin"
       >
+        {listLoading && (
+          <p className="text-center text-xs text-muted-foreground py-4">
+            Loading chats…
+          </p>
+        )}
+        {!listLoading && conversations.length === 0 && !listError && (
+          <p className="text-center text-xs text-muted-foreground py-4">
+            No conversations yet. Open a chat from your friends list.
+          </p>
+        )}
         {conversations.map((conv) => (
           <div key={conv.id} style={{ marginBottom: "1rem" }}>
             <ConversationItem

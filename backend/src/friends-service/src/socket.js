@@ -32,17 +32,25 @@ function sendJson(ws, obj) {
   ws.send(JSON.stringify(obj));
 }
 
-function messagePayload(message) {
-  return {
-    id: message.id,
-    conversationId: message.conversationId,
-    senderId: message.senderId,
-    content: message.content,
-    createdAt:
-      message.createdAt instanceof Date
-        ? message.createdAt.toISOString()
-        : message.createdAt,
-  };
+/** Wire format aligned with frontend `WsServerEnvelope` (type `message`). */
+function chatMessageEnvelope(message) {
+  const createdAt =
+    message.createdAt instanceof Date
+      ? message.createdAt.toISOString()
+      : message.createdAt;
+  const now = new Date().toISOString();
+  return JSON.stringify({
+    type: 'message',
+    payload: {
+      id: message.id,
+      conversationId: message.conversationId,
+      senderId: message.senderId,
+      content: message.content,
+      status: 'sent',
+      timestamp: createdAt,
+    },
+    timestamp: now,
+  });
 }
 
 /**
@@ -51,10 +59,7 @@ function messagePayload(message) {
  */
 async function notifyNewChatMessage(message) {
   const userIds = await getParticipantUserIds(message.conversationId);
-  const body = JSON.stringify({
-    type: 'message',
-    message: messagePayload(message),
-  });
+  const body = chatMessageEnvelope(message);
   for (const uid of userIds) {
     const set = socketsByUserId.get(uid);
     if (!set) continue;
@@ -174,6 +179,21 @@ wss.on('connection', (ws, req) => {
             message: result.error.message,
           });
           return;
+        }
+        const tempId =
+          typeof msg.tempId === 'string' && msg.tempId.trim()
+            ? msg.tempId.trim()
+            : undefined;
+        if (tempId) {
+          sendJson(ws, {
+            type: 'message_ack',
+            payload: {
+              tempId,
+              id: result.message.id,
+              status: 'sent',
+            },
+            timestamp: new Date().toISOString(),
+          });
         }
         await notifyNewChatMessage(result.message);
         return;

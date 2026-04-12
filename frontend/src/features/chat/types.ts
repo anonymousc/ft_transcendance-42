@@ -34,11 +34,9 @@ export type ConnectionState = "connecting" | "connected" | "disconnected" | "err
 // The websocket-service MUST send messages that conform to WsServerEnvelope.
 // The frontend sends messages that conform to WsClientSend.
 //
-// Env var: VITE_WS_URL=ws://localhost:8000
-//   • Set this to enable real WebSocket mode.
-//   • Leave it unset to run in mock mode (no backend needed).
+// Env: VITE_WS_URL=ws://localhost:8181 (friends-service WebSocket port).
 //
-// Connection handshake: ws://<host>?userId=<JWT-sub>
+// Connection: GET /chat/ws-token → ws://<host>?token=<JWT> (see friends-service)
 
 // ── Server → Client ───────────────────────────────────────────────────────────
 
@@ -76,11 +74,10 @@ export type WsServerEnvelope =
 
 // ── Client → Server ───────────────────────────────────────────────────────────
 
+/** Client → server (friends-service WebSocket); optional tempId → `message_ack`. */
 export interface WsClientSend {
-  type: "send_message";
-  payload: {
-    conversationId: string;
-    content: string;
-    tempId: string;        // links back to the optimistic message; echoed in message_ack
-  };
+  type: "message";
+  conversationId: string;
+  content: string;
+  tempId?: string;
 }
