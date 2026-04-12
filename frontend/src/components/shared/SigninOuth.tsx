@@ -1,13 +1,25 @@
 import "./SigninOuth.css";
+import { useTheme } from "../../context/ThemeContext";
+import BlackLogo42 from "../../assets/icons/42_Logo.svg.png";
+import WhiteLogo42 from "../../assets/icons/white-42-logo.png";
 
 interface SigninOuthProps {
     onGoogleLogin?: () => void;
+    onFortyTwoLogin?: () => void;
 }
 
-function SigninOuth({ onGoogleLogin }: SigninOuthProps) {
+function SigninOuth({ onGoogleLogin, onFortyTwoLogin }: SigninOuthProps) {
+    const { theme } = useTheme();
+    const logo42 = theme === "dark" ? WhiteLogo42 : BlackLogo42;
+
     return (
         <div className="oauth-buttons">
-            <button type="button" className="oauth-button google-button" onClick={onGoogleLogin}>
+            <button
+                type="button"
+                className="oauth-button google-button"
+                onClick={onGoogleLogin}
+                aria-label="Sign in with Google"
+            >
                 <div className="oauth-button-content">
                     <div className="oauth-button-icon">
                         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" style={{ display: "block", width: "20px", height: "20px" }}>
@@ -17,7 +29,20 @@ function SigninOuth({ onGoogleLogin }: SigninOuthProps) {
                             <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
                         </svg>
                     </div>
-                    <span className="oauth-button-text">Sign in</span>
+                    <span className="oauth-button-text">Google</span>
+                </div>
+            </button>
+            <button
+                type="button"
+                className="oauth-button fortytwo-button"
+                onClick={onFortyTwoLogin}
+                aria-label="Sign in with 42"
+            >
+                <div className="oauth-button-content">
+                                       <div className="oauth-button-icon">
+                        <img src={logo42} alt="" width={20} height={14} className="fortytwo-logo" />
+                    </div>
+                    <span className="oauth-button-text">42</span>
                 </div>
             </button>
         </div>

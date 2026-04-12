@@ -20,6 +20,17 @@ interface GoogleUser {
   expiresIn?: number;
 }
 
+interface FortyTwoUser {
+  provider: string;
+  providerAccountId: string;
+  email: string;
+  displayName: string;
+  avatar: string;
+  accessToken: string;
+  refreshToken?: string;
+  expiresIn?: number;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -107,6 +118,95 @@ export class AuthService {
 
     if (!user) {
       throw new BadRequestException('Failed to resolve user after Google sign-in');
+    }
+
+    return user;
+  }
+
+  async validateFortyTwoUser(fortyTwoUser: FortyTwoUser) {
+    const {
+      provider,
+      providerAccountId,
+      email,
+      displayName,
+      avatar,
+      accessToken,
+      refreshToken,
+      expiresIn,
+    } = fortyTwoUser;
+
+    if (!email?.trim()) {
+      throw new BadRequestException('42 account has no email; cannot complete sign-in');
+    }
+
+    const expiresAt = Math.floor(Date.now() / 1000) + (expiresIn ?? 7200);
+
+    const existingAccount = await this.prisma.account.findUnique({
+      where: { provider_providerAccountId: { provider, providerAccountId } },
+      include: { user: { include: { profile: true } } },
+    });
+
+    let userId: string;
+
+    if (existingAccount) {
+      userId = existingAccount.userId;
+    } else {
+      let user = await this.prisma.user.findUnique({
+        where: { email },
+        include: { profile: true },
+      });
+
+      if (!user) {
+        user = await this.prisma.user.create({
+          data: {
+            email,
+            isEmailVerified: true,
+            profile: {
+              create: {
+                username: email.split('@')[0] + '_' + Date.now().toString(36),
+                displayName: displayName || email.split('@')[0],
+                avatar: avatar || null,
+              },
+            },
+          },
+          include: { profile: true },
+        });
+      }
+
+      userId = user.id;
+    }
+
+    await this.prisma.account.upsert({
+      where: { provider_providerAccountId: { provider, providerAccountId } },
+      update: {
+        accessToken,
+        refreshToken: refreshToken ?? undefined,
+        expiresAt,
+      },
+      create: {
+        userId,
+        provider,
+        providerAccountId,
+        accessToken,
+        refreshToken: refreshToken ?? null,
+        expiresAt,
+      },
+    });
+
+    if (existingAccount && avatar && existingAccount.user.profile?.avatar !== avatar) {
+      await this.prisma.profile.update({
+        where: { userId: existingAccount.user.id },
+        data: { avatar },
+      });
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { profile: true },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Failed to resolve user after 42 sign-in');
     }
 
     return user;

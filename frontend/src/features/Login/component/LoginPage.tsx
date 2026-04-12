@@ -42,6 +42,10 @@ function LoginPage() {
     window.location.href = `${API_BASE_URL}/auth/google`;
   };
 
+  const handleFortyTwoLogin = (): void => {
+    window.location.href = `${API_BASE_URL}/auth/42`;
+  };
+
   return (
     <main className="login-page">
       <Link to="/" className="back-arrow">
@@ -61,7 +65,7 @@ function LoginPage() {
             <p className="text-sm font-normal text-gray-600 dark:text-gray-400">
               Sign in with :
             </p>
-            <SigninOuth onGoogleLogin={handleGoogleLogin} />
+            <SigninOuth onGoogleLogin={handleGoogleLogin} onFortyTwoLogin={handleFortyTwoLogin} />
           </div>
           <p className="auth-footer-switch text-center text-sm text-gray-600 dark:text-gray-400">
             You don&apos;t have an account?{" "}

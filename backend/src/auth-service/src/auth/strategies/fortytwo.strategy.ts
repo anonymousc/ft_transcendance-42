@@ -13,7 +13,7 @@ interface FortyTwoProfile {
 }
 
 @Injectable()
-export class FortyTwoStrategy extends PassportStrategy(OAuth2Strategy, '42') {
+export class FortyTwoStrategy extends PassportStrategy(OAuth2Strategy, '42', true) {
   private readonly logger = new Logger(FortyTwoStrategy.name);
   private readonly isConfigured: boolean;
 
@@ -60,7 +60,12 @@ export class FortyTwoStrategy extends PassportStrategy(OAuth2Strategy, '42') {
     });
   }
 
-  validate(accessToken: string, refreshToken: string, profile: FortyTwoProfile) {
+  validate(
+    accessToken: string,
+    refreshToken: string,
+    oauthParams: { expires_in?: number },
+    profile: FortyTwoProfile,
+  ) {
     if (!this.isConfigured) {
       throw new UnauthorizedException('42 OAuth is not configured on the server');
     }
@@ -73,6 +78,7 @@ export class FortyTwoStrategy extends PassportStrategy(OAuth2Strategy, '42') {
       avatar: profile.image?.link,
       accessToken,
       refreshToken,
+      expiresIn: oauthParams?.expires_in,
     };
   }
 }
