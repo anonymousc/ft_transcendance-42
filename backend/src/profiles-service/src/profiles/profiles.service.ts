@@ -1,5 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { PatchProfileDto } from './dto/patch-profile.dto';
 import { PrismaService } from '../prisma.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
@@ -35,5 +36,39 @@ export class ProfilesService {
       }
       throw error;
     }
+  }
+
+  async patchProfileForUser(userId: string, dto: PatchProfileDto) {
+    await this.getOrCreateProfileForUser(userId);
+    if (dto.interests === undefined) {
+      return this.prisma.profile.findUniqueOrThrow({ where: { userId } });
+    }
+    return this.prisma.profile.update({
+      where: { userId },
+      data: { interests: dto.interests as object },
+    });
+  }
+
+  async searchProfilesForUser(currentUserId: string, q: string, limit: number) {
+    const take = Math.min(Math.max(limit, 1), 25);
+    return this.prisma.profile.findMany({
+      where: {
+        NOT: { userId: currentUserId },
+        OR: [
+          { username: { contains: q, mode: 'insensitive' } },
+          { displayName: { contains: q, mode: 'insensitive' } },
+          { bio: { contains: q, mode: 'insensitive' } },
+        ],
+      },
+      take,
+      orderBy: { username: 'asc' },
+      select: {
+        userId: true,
+        username: true,
+        displayName: true,
+        avatar: true,
+        interests: true,
+      },
+    });
   }
 }

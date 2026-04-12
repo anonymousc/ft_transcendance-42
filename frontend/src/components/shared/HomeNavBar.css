@@ -7,6 +7,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 1rem 2rem;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 1rem);
     z-index: 100;
     background: transparent;
 }
@@ -16,10 +17,44 @@
     align-items: center;
 }
 
+/* /home only: white wordmark on video in both themes (messages/notifications keep route-specific colors) */
+.home-nav--home-video .home-nav-brand--on-video {
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .home-nav {
         padding: 0.75rem 1rem;
+        padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+    }
+
+    /* Seamless strip with chat/friends/notifications (not over full-bleed /home video) */
+    .home-nav:not(.home-nav--home-video) {
+        background: #ffffff;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+    }
+
+    :is(.dark) .home-nav:not(.home-nav--home-video) {
+        background: #18181b;
+        border-bottom-color: rgba(255, 255, 255, 0.07);
+    }
+}
+
+/*
+ * Fixed bar does not take flow height — apply to the first in-flow main under <HomeNavBar />
+ * so content (e.g. webchat) does not draw under the header.
+ * Mirrors safe-area + vertical padding + row (40px avatar / wordmark).
+ */
+.home-nav-main-offset {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem + max(2.5rem, 40px) + 0.75rem);
+    box-sizing: border-box;
+}
+
+@media (min-width: 769px) {
+    .home-nav-main-offset {
+        padding-top: calc(env(safe-area-inset-top, 0px) + 1rem + max(2.5rem, 40px) + 1rem);
     }
 }
 
@@ -29,6 +64,16 @@
  */
 @media (max-width: 768px) {
     .home-nav ~ * {
-        padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+        /* Clears compact bottom GlassNavBar + thumb margin */
+        padding-bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Active chat thread: no bottom pill — drop extra padding */
+    .home-nav--hide-mobile-glass ~ * {
+        padding-bottom: 0;
+    }
+
+    .home-nav--hide-mobile-glass .glass-nav-bar {
+        display: none;
     }
 }

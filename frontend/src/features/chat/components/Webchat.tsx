@@ -26,9 +26,6 @@ function Webchat() {
     return { id: "me", name: "Me", isOnline: false };
   }, [user]);
 
-  // All real-time state lives in the hook.
-  // • In mock mode (VITE_WS_URL unset) it uses mock data and fakes ACKs.
-  // • In real mode it connects to VITE_WS_URL and processes WsServerEnvelope messages.
   const { connectionState, messages, conversations, sendMessage } = useWebSocket({
     userId: currentUser.id,
     initialMessages: MOCK_MESSAGES,
@@ -67,9 +64,9 @@ function Webchat() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <HomeNavBar />
-      <div className="flex flex-1 overflow-hidden">
+    <div className="flex min-h-0 flex-col h-dvh overflow-hidden bg-background">
+      <HomeNavBar hideMobileGlassNav={Boolean(activeConversation)} />
+      <div className="home-nav-main-offset flex min-h-0 flex-1 overflow-hidden">
         <ChatSidebar
           currentUser={currentUser}
           conversations={conversations}
@@ -77,14 +74,14 @@ function Webchat() {
           onSelectConversation={handleSelectConversation}
           connectionState={connectionState}
           className={cn(
-            "w-full md:w-80 lg:w-72 xl:w-80 shrink-0 gap-20",
+            "w-full md:w-80 lg:w-72 xl:w-80 shrink-0",
             showSidebar ? "flex" : "hidden md:flex",
           )}
         />
 
         <div
           className={cn(
-            "flex-1 min-w-0",
+            "flex min-h-0 min-w-0 flex-1 flex-col",
             !showSidebar ? "flex" : "hidden md:flex",
           )}
         >
@@ -96,7 +93,6 @@ function Webchat() {
               onSendMessage={handleSendMessage}
               isDisabled={connectionState !== "connected"}
               onBack={handleBack}
-              className="h-full w-full"
             />
           ) : (
             <ChatWelcome />

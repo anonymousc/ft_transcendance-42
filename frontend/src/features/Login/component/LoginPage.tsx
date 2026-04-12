@@ -8,6 +8,7 @@ import passportOverlay from "../../../assets/PassportOverlay.png";
 import GlassCard from "../../../components/glassCard";
 import { useAuth } from "../../../context/AuthContext";
 import { API_BASE_URL } from "../../../lib/api";
+import { needsInterestsOnboarding } from "../../../lib/interestsOnboarding";
 
 function LoginPage() {
   const { signin } = useAuth();
@@ -24,8 +25,12 @@ function LoginPage() {
     if (!email || !password) return;
     setSubmitting(true);
     try {
-      await signin({ email, password });
-      navigate("/home", { replace: true });
+      const me = await signin({ email, password });
+      if (me && needsInterestsOnboarding(me.interests)) {
+        navigate("/interests", { replace: true });
+      } else {
+        navigate("/home", { replace: true });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invalid email or password");
     } finally {
@@ -58,17 +63,15 @@ function LoginPage() {
             </p>
             <SigninOuth onGoogleLogin={handleGoogleLogin} />
           </div>
-          <div className="flex items-center justify-center gap-1">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              You don't have an account?
-            </span>
+          <p className="auth-footer-switch text-center text-sm text-gray-600 dark:text-gray-400">
+            You don&apos;t have an account?{" "}
             <Link
               to="/register"
-              className="text-sm font-semibold text-[#FF8C42] hover:underline"
+              className="auth-footer-link font-semibold text-[#FF8C42] hover:underline"
             >
               Sign up
             </Link>
-          </div>
+          </p>
         </div>
       </div>
     </main>

@@ -131,7 +131,8 @@ function GlassSearchBar({
           autoComplete="off"
         />
         <button type="submit" className="glass-search-button" aria-label="Search">
-          <Search size={24} />
+          <Search size={16} />
+          <span>Search</span>
         </button>
       </form>
 

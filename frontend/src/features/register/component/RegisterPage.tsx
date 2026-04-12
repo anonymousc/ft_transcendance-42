@@ -8,6 +8,7 @@ import GlassCard from '../../../components/glassCard';
 import BackArrow from '../../../components/shared/BackArrow';
 import { useAuth } from '../../../context/AuthContext';
 import { API_BASE_URL } from '../../../lib/api';
+import { needsInterestsOnboarding } from '../../../lib/interestsOnboarding';
 
 function RegisterPage() {
     const { signup } = useAuth();
@@ -26,8 +27,12 @@ function RegisterPage() {
         if (!firstName || !lastName || !email || !password) return;
         setSubmitting(true);
         try {
-            await signup({ firstName, lastName, email, password });
-            navigate('/home', { replace: true });
+            const me = await signup({ firstName, lastName, email, password });
+            if (me && needsInterestsOnboarding(me.interests)) {
+              navigate('/interests', { replace: true });
+            } else {
+              navigate('/home', { replace: true });
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Registration failed');
         } finally {

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import GlassSearchBar from "../components/shared/GlassSearchBar";
 import TripPlannerBar from "../components/shared/TripPlannerBar";
 import HomeNavBar from "../components/shared/HomeNavBar";
@@ -6,6 +7,7 @@ import CityResults from "../components/shared/CityResults";
 import "./HomePage.css";
 import bgvideo from "../assets/home-background.mp4";
 import { useAuth } from "@/context/AuthContext";
+import { needsInterestsOnboarding } from "@/lib/interestsOnboarding";
 
 type SearchState =
   | { mode: "query"; q: string }
@@ -13,7 +15,9 @@ type SearchState =
   | null;
 
 function HomePage() {
-  const [activeTab, setActiveTab] = useState<'explore' | 'plan'>('explore');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState<"explore" | "plan">("explore");
   const [searchState, setSearchState] = useState<SearchState>(null);
 
   const handleSearch = (query: string) => {
@@ -23,9 +27,24 @@ function HomePage() {
     if (city.trim()) setSearchState({ mode: "city", city: city.trim() });
   };
 
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const userName = user ? user.displayName : "";
   const firstName = userName ? userName.split(" ")[0] : "";
+
+  useEffect(() => {
+    if (loading || !user) return;
+    if (needsInterestsOnboarding(user.interests)) {
+      navigate("/interests", { replace: true });
+    }
+  }, [loading, user, navigate]);
+
+  useEffect(() => {
+    const st = location.state as { openPlanTab?: boolean } | null | undefined;
+    if (st?.openPlanTab) {
+      setActiveTab("plan");
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.pathname, location.state, navigate]);
 
   const hasResults = searchState !== null;
 
@@ -40,24 +59,26 @@ function HomePage() {
         <div className="search-container">
           <div className="tab-switcher">
             <button
-              className={`tab-btn${activeTab === 'explore' ? ' tab-btn--active' : ''}`}
-              onClick={() => setActiveTab('explore')}
+              type="button"
+              className={`tab-btn${activeTab === "explore" ? " tab-btn--active" : ""}`}
+              onClick={() => setActiveTab("explore")}
             >
               Explore
             </button>
             <button
-              className={`tab-btn${activeTab === 'plan' ? ' tab-btn--active' : ''}`}
-              onClick={() => setActiveTab('plan')}
+              type="button"
+              className={`tab-btn${activeTab === "plan" ? " tab-btn--active" : ""}`}
+              onClick={() => setActiveTab("plan")}
             >
               Plan a Trip
             </button>
           </div>
           <div className="tab-bar-surface">
-            <div className={`tab-panel${activeTab === 'explore' ? ' tab-panel--active' : ''}`}>
+            <div className={`tab-panel${activeTab === "explore" ? " tab-panel--active" : ""}`}>
               <GlassSearchBar onSearch={handleSearch} onSelect={handleSelect} />
             </div>
-            <div className={`tab-panel${activeTab === 'plan' ? ' tab-panel--active' : ''}`}>
-              <TripPlannerBar />
+            <div className={`tab-panel${activeTab === "plan" ? " tab-panel--active" : ""}`}>
+              <TripPlannerBar onPlanGenerated={p => navigate(`/planner?id=${p.id}`)} />
             </div>
           </div>
         </div>

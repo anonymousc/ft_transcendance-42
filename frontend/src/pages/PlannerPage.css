@@ -1,0 +1,728 @@
+/* ── Planner page tokens (Apple-style; SF Pro stack falls back to system-ui) ── */
+/* Match HomeNavBar fixed bar height so sticky toolbar sits below the header */
+.planner-root {
+  --pp-sticky-under-nav: calc(
+    env(safe-area-inset-top, 0px) + 0.75rem + max(2.5rem, 40px) + 0.75rem
+  );
+  --pp-accent: #007aff;
+  --pp-bg: #f5f5f7;
+  --pp-surface: rgba(255, 255, 255, 0.72);
+  --pp-card: rgba(255, 255, 255, 0.92);
+  --pp-text: #1c1c1e;
+  --pp-muted: rgba(60, 60, 67, 0.6);
+  --pp-border: rgba(60, 60, 67, 0.18);
+  --pp-danger: #ff3b30;
+  --pp-saved: #34c759;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui,
+    sans-serif;
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--pp-bg);
+  color: var(--pp-text);
+}
+
+@media (min-width: 769px) {
+  .planner-root {
+    --pp-sticky-under-nav: calc(
+      env(safe-area-inset-top, 0px) + 1rem + max(2.5rem, 40px) + 1rem
+    );
+  }
+}
+
+.planner-page-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.planner-root[data-theme="dark"] {
+  --pp-accent: #0a84ff;
+  --pp-bg: #1c1c1e;
+  --pp-surface: rgba(44, 44, 46, 0.72);
+  --pp-card: rgba(28, 28, 30, 0.94);
+  --pp-text: #f5f5f7;
+  --pp-muted: rgba(235, 235, 245, 0.55);
+  --pp-border: rgba(255, 255, 255, 0.12);
+  --pp-danger: #ff453a;
+  --pp-saved: #30d158;
+}
+
+.planner-page-shell {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.planner-page-shell .videoTag {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.planner-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+.planner-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--pp-border);
+  background: var(--pp-surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.planner-sidebar-header {
+  padding: 1rem 1rem 0.75rem;
+  border-bottom: 1px solid var(--pp-border);
+}
+
+.planner-sidebar-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--pp-muted);
+  margin-bottom: 0.75rem;
+}
+
+.pp-btn-new-trip {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--pp-border);
+  background: var(--pp-card);
+  color: var(--pp-text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: unset;
+  min-width: unset;
+}
+
+.pp-btn-new-trip:hover {
+  border-color: var(--pp-accent);
+  color: var(--pp-accent);
+}
+
+.planner-sidebar-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.pp-plan-item {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 0.5rem;
+  border: none;
+  border-radius: 12px;
+  background: var(--pp-card);
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  min-height: unset;
+  min-width: unset;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.pp-plan-item:hover {
+  transform: scale(1.01);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.pp-plan-item--active {
+  outline: 2px solid var(--pp-accent);
+  outline-offset: 0;
+}
+
+.pp-plan-item-thumb {
+  width: 4px;
+  flex-shrink: 0;
+  background: var(--pp-thumb, var(--pp-accent));
+}
+
+.pp-plan-item-body {
+  flex: 1;
+  padding: 0.75rem 0.85rem;
+  min-width: 0;
+}
+
+.pp-plan-item-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--pp-text);
+  margin: 0 0 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pp-plan-item-meta {
+  font-size: 0.75rem;
+  color: var(--pp-muted);
+  margin: 0 0 0.35rem;
+}
+
+.pp-plan-item-saved {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--pp-saved);
+  letter-spacing: 0.02em;
+}
+
+/* ── Main ────────────────────────────────────────────────────────────────── */
+.planner-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--pp-bg);
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+.planner-toolbar {
+  position: sticky;
+  top: var(--pp-sticky-under-nav);
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  padding: 0.85rem 1.25rem;
+  background: var(--pp-surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--pp-border);
+}
+
+.planner-toolbar-title-wrap {
+  flex: 1;
+  min-width: 160px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.planner-toolbar-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--pp-card);
+  color: var(--pp-text);
+  transition: all 0.2s ease;
+}
+
+.planner-toolbar-title:focus {
+  outline: none;
+  border-color: var(--pp-accent);
+}
+
+.planner-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pp-badge-saved {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pp-saved);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--pp-saved) 12%, transparent);
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.pp-btn-save {
+  padding: 0.45rem 1rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--pp-accent);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: unset;
+  min-width: unset;
+}
+
+.pp-btn-save:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pp-btn-save:not(:disabled):hover {
+  filter: brightness(1.06);
+  transform: scale(1.02);
+}
+
+.pp-btn-ghost {
+  padding: 0.45rem 0.95rem;
+  border-radius: 10px;
+  border: 1px solid var(--pp-border);
+  background: transparent;
+  color: var(--pp-text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: unset;
+  min-width: unset;
+}
+
+.pp-btn-ghost:hover {
+  background: color-mix(in srgb, var(--pp-text) 6%, transparent);
+}
+
+.pp-btn-delete {
+  color: var(--pp-danger);
+  border-color: color-mix(in srgb, var(--pp-danger) 35%, var(--pp-border));
+}
+
+.pp-btn-delete:hover {
+  background: color-mix(in srgb, var(--pp-danger) 12%, transparent);
+}
+
+/* ── Generate form ─────────────────────────────────────────────────────────── */
+.planner-generate {
+  max-width: 520px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: var(--pp-card);
+  border-radius: 16px;
+  border: 1px solid var(--pp-border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+}
+
+.planner-generate h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+}
+
+.planner-generate-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.planner-generate input[type="text"] {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--pp-border);
+  background: var(--pp-bg);
+  color: var(--pp-text);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.planner-generate input:focus {
+  outline: none;
+  border-color: var(--pp-accent);
+}
+
+.planner-days {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.planner-days button {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--pp-border);
+  background: var(--pp-bg);
+  color: var(--pp-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  min-height: unset;
+  min-width: unset;
+}
+
+.planner-days button:hover {
+  border-color: var(--pp-accent);
+}
+
+.planner-days span {
+  min-width: 4.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.pp-btn-generate {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--pp-accent);
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  min-height: unset;
+}
+
+.pp-btn-generate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.planner-generate-error {
+  color: var(--pp-danger);
+  font-size: 0.875rem;
+  margin: 0.5rem 0 0;
+}
+
+/* ── Empty state (no plan selected) ───────────────────────────────────────── */
+.planner-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.planner-empty-text {
+  max-width: 22rem;
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.45;
+  color: var(--pp-muted);
+}
+
+/* ── Day / stops ───────────────────────────────────────────────────────────── */
+.planner-days-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.planner-day-block {
+  margin-bottom: 2rem;
+}
+
+.planner-day-heading {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pp-muted);
+  margin: 0 0 0.5rem;
+}
+
+.planner-day-theme {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+  color: var(--pp-text);
+}
+
+.pp-stop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pp-stop-card {
+  position: relative;
+  border: 1px solid var(--pp-border);
+  border-radius: 14px;
+  background: var(--pp-card);
+  padding: 1rem 1rem 1rem 1.15rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.pp-stop-card:hover {
+  transform: scale(1.005);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+}
+
+.pp-stop-card--editing {
+  border-color: var(--pp-accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--pp-accent) 35%, transparent);
+}
+
+.pp-stop-card-inner {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.pp-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 0.35rem;
+}
+
+.pp-dot--food {
+  background: #30b0c7;
+}
+.pp-dot--sightseeing {
+  background: #0a84ff;
+}
+.pp-dot--stay {
+  background: #bf5af2;
+}
+.pp-dot--transport {
+  background: #ff9f0a;
+}
+
+.pp-stop-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.pp-stop-time {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pp-muted);
+  margin-bottom: 0.25rem;
+}
+
+.pp-stop-name {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+  color: var(--pp-text);
+}
+
+.pp-stop-desc {
+  font-size: 0.875rem;
+  color: var(--pp-muted);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.pp-stop-actions {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  display: flex;
+  gap: 0.35rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.pp-stop-card:hover .pp-stop-actions {
+  opacity: 1;
+}
+
+.pp-stop-actions button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--pp-border);
+  background: var(--pp-surface);
+  color: var(--pp-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: unset;
+  min-width: unset;
+}
+
+.pp-stop-actions .pp-stop-remove {
+  color: var(--pp-danger);
+  border-color: color-mix(in srgb, var(--pp-danger) 30%, var(--pp-border));
+}
+
+.pp-stop-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.pp-stop-edit-form label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pp-muted);
+}
+
+.pp-stop-edit-form input,
+.pp-stop-edit-form textarea,
+.pp-stop-edit-form select {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--pp-border);
+  background: var(--pp-bg);
+  color: var(--pp-text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.pp-stop-edit-form textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.pp-stop-edit-form input:focus,
+.pp-stop-edit-form textarea:focus,
+.pp-stop-edit-form select:focus {
+  outline: none;
+  border-color: var(--pp-accent);
+}
+
+.pp-btn-done {
+  align-self: flex-start;
+  padding: 0.4rem 0.85rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--pp-accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: unset;
+}
+
+.pp-add-stop {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed var(--pp-border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--pp-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s ease;
+  min-height: unset;
+}
+
+.pp-add-stop:hover {
+  border-color: var(--pp-accent);
+  color: var(--pp-accent);
+}
+
+.planner-tips {
+  margin-top: 2rem;
+  padding: 1rem 1.15rem;
+  border-radius: 14px;
+  background: var(--pp-card);
+  border: 1px solid var(--pp-border);
+}
+
+.planner-tips h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.planner-tips ul {
+  margin: 0;
+  padding-left: 1.15rem;
+  color: var(--pp-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* ── Toast ───────────────────────────────────────────────────────────────── */
+.pp-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 0.75rem 1.25rem;
+  border-radius: 20px;
+  background: var(--pp-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--pp-border);
+  color: var(--pp-text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  animation: ppToastIn 0.2s ease;
+  max-width: min(90vw, 360px);
+  text-align: center;
+}
+
+@keyframes ppToastIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.planner-loading-inline {
+  padding: 2rem;
+  text-align: center;
+  color: var(--pp-muted);
+}
+
+@media (max-width: 768px) {
+  .planner-layout {
+    flex-direction: column;
+  }
+
+  .planner-sidebar {
+    width: 100%;
+    max-height: 200px;
+    border-right: none;
+    border-bottom: 1px solid var(--pp-border);
+  }
+}

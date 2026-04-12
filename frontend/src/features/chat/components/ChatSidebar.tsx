@@ -37,11 +37,11 @@ function ChatSidebar({
   return (
     <aside
       className={cn(
-        "flex flex-col bg-white dark:bg-zinc-900 border-r border-border/40 h-full",
+        "flex min-h-0 flex-col border-r border-border/40 bg-white h-full dark:bg-zinc-900",
         className,
       )}
     >
-      <div style={{ paddingTop: "4rem" }} className="shrink-0">
+      <div className="shrink-0 pt-2">
         <UserChatAvatar currentUser={currentUser} />
       </div>
 
@@ -49,7 +49,7 @@ function ChatSidebar({
       {badge && (
         <div
           className={cn(
-            "mx-4 mt-2 mb-1 text-[11px] text-center px-2 py-0.5 rounded-full select-none",
+            "mx-4 mt-1 mb-0 shrink-0 text-[11px] text-center px-2 py-0.5 rounded-full select-none",
             badge.className,
           )}
         >
@@ -58,13 +58,7 @@ function ChatSidebar({
       )}
 
       <div
-        className="flex-1 overflow-y-auto scrollbar-thin min-h-0"
-        style={{
-          paddingLeft: "0.5rem",
-          paddingRight: "0.5rem",
-          paddingTop: "1rem",
-          paddingBottom: "1rem",
-        }}
+        className="min-h-0 flex-1 overflow-y-auto px-2 pb-4 pt-2 scrollbar-thin"
       >
         {conversations.map((conv) => (
           <div key={conv.id} style={{ marginBottom: "1rem" }}>
