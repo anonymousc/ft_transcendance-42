@@ -7,6 +7,8 @@
   justify-content: center;
   padding: 4rem 2rem;
   transition: background-color 0.3s ease;
+  /* Decorative img uses left: -27%; clip so it cannot widen the page */
+  overflow-x: clip;
 }
 
 :is(.dark) .features-section {
@@ -118,4 +120,37 @@
 
 :is(.dark) .feature-text {
   color: #cccccc;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .features-section {
+    padding: 3rem 1.5rem;
+    min-height: auto;
+  }
+
+  .features-container > img {
+    display: none;
+  }
+
+  .feature-item.feature-right,
+  .feature-item.feature-left {
+    justify-content: flex-start;
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  .feature-content {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .features-section {
+    padding: 2.5rem 1rem;
+  }
+
+  .feature-title {
+    font-size: 1rem;
+  }
 }

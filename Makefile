@@ -8,19 +8,25 @@ VOLUMES= $(shell ${DOCKER} volume ls -q)
 
 NETWORKS= $(shell ${DOCKER} network ls -q)
 
-COMPOSE=backend/devops/docker-compose.yml
+COMPOSE=./docker-compose.yml
 
 all : 
-	$(DOCKER) compose -f ${COMPOSE} build --no-cache 
+	$(DOCKER) compose -f ${COMPOSE} build --no-cache --parallel --force-rm --pull
 	$(DOCKER) compose -f ${COMPOSE} up -d --remove-orphans
 front:
 	$(DOCKER) compose -f ${COMPOSE} build frontend
 	$(DOCKER) compose -f ${COMPOSE} up frontend -d
 logs :
-	$(DOCKER) compose -f ${COMPOSE} logs -f
-# backend:
-# 	$(DOCKER) compose -f ${COMPOSE} build backend --no-cache
-# 	$(DOCKER) compose -f ${COMPOSE} up backend -d
+	@if [[ $$1 ]]; then \
+		$(DOCKER) compose -f ${COMPOSE} logs -f $$1; \
+	else \
+		$(DOCKER) compose -f ${COMPOSE} logs -f; \
+	fi
+backend:
+	$(DOCKER) compose -f ${COMPOSE} build backend --no-cache
+	$(DOCKER) compose -f ${COMPOSE} up backend -d
+start:
+	$(DOCKER) compose -f ${COMPOSE} start
 stop :
 	$(DOCKER) compose -f ${COMPOSE} stop
 clean :
@@ -33,4 +39,4 @@ clean :
 	@$(DOCKER) network rm -f $(NETWORKS) 2> /dev/null || echo "no network to clean"
 	@echo "cleaned"
 
-.PHONY: front
+.PHONY: front backend logs clean stop

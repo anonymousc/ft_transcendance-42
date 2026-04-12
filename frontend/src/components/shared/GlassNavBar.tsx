@@ -9,7 +9,16 @@ interface NavItem {
     label: string;
 }
 
-function GlassNavBar({ activeId = "home", handleNavigation }: { activeId?: string; handleNavigation?: (id: string) => void }) {
+function GlassNavBar({
+    activeId = "home",
+    handleNavigation,
+    surface = "default",
+}: {
+    activeId?: string;
+    handleNavigation?: (id: string) => void;
+    /** Dark frost + white icons on busy backdrops (e.g. /home video). Light & dark theme. */
+    surface?: "default" | "home-video";
+}) {
     const labelRefs = useRef<(HTMLSpanElement | null)[]>([]);
     const [activeIndex, setActiveIndex] = useState<number>(0);
 
@@ -76,7 +85,7 @@ function GlassNavBar({ activeId = "home", handleNavigation }: { activeId?: strin
     };
 
     return (
-        <nav className="glass-nav-bar">
+        <nav className={`glass-nav-bar${surface === "home-video" ? " glass-nav-bar--home-video" : ""}`}>
             {navItems.map((item, index) => (
                 <button
                     key={item.id}

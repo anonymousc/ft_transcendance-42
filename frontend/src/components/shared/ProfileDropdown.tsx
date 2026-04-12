@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import pdp from "../../assets/pdp1.png";
 import "./ProfileDropdown.css";
 import { useAuth } from "../../context/AuthContext";
 
@@ -7,14 +6,16 @@ import { useAuth } from "../../context/AuthContext";
 interface ProfileDropdownProps {
   profileImage?: string;
   onProfile?: () => void;
+  onSaved?: () => void;
   onSettings?: () => void;
   onLanguage?: () => void;
   onLogout?: () => void;
 }
 
 function ProfileDropdown({
-  profileImage = pdp,
+  profileImage = "/profile.png",
   onProfile,
+  onSaved,
   onSettings,
   onLanguage,
   onLogout,
@@ -66,6 +67,15 @@ function ProfileDropdown({
               <circle cx="12" cy="7" r="4" />
             </svg>
             Profile
+          </button>
+          <button
+            className="profile-dropdown-item"
+            onClick={() => handleMenuItemClick(onSaved)}
+          >
+            <svg className="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+            Saved
           </button>
           <button
             className="profile-dropdown-item"

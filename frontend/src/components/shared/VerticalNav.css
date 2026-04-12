@@ -127,3 +127,75 @@
     color: #FF8C00;
     background: rgba(255, 140, 0, 0.1);
 }
+
+/* ── Responsive: bottom nav on mobile ───────────────────────────────────── */
+
+/* Add bottom padding to pages that use VerticalNav so content isn't hidden */
+@media (max-width: 768px) {
+    .vertical-nav ~ * {
+        padding-bottom: 80px;
+    }
+}
+
+@media (max-width: 768px) {
+    .vertical-nav {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: auto;
+        width: 100%;
+        flex-direction: row;
+        padding: 0.5rem 0.5rem;
+        padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: visible;
+    }
+
+    .vertical-nav.expanded {
+        width: 100%;
+    }
+
+    .nav-header {
+        display: none;
+    }
+
+    .nav-items {
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+        gap: 0;
+        flex: 1;
+    }
+
+    .nav-item {
+        flex-direction: column;
+        height: auto;
+        padding: 0.4rem 0.5rem !important;
+        gap: 0.25rem;
+        border-radius: 8px;
+        min-width: 44px;
+        justify-content: center;
+    }
+
+    .vertical-nav.expanded .nav-item {
+        justify-content: center;
+        padding: 0.4rem 0.5rem !important;
+    }
+
+    .nav-label {
+        font-size: 0.65rem;
+        font-weight: 500;
+    }
+
+    .nav-bottom {
+        flex-direction: row;
+        gap: 0;
+        margin-top: 0;
+        align-items: center;
+    }
+
+    .nav-toggle {
+        display: none;
+    }
+}

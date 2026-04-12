@@ -1,20 +1,30 @@
 import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "@/lib/api";
+import { needsInterestsOnboarding } from "@/lib/interestsOnboarding";
 
 function OAuthSuccess(): null {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token: string | null = searchParams.get("token");
-
-    if (token) {
-      localStorage.setItem("token", token);
-      navigate("/home", { replace: true });
-    } else {
-      navigate("/login", { replace: true });
-    }
-  }, [searchParams, navigate]);
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, { credentials: "include" });
+        if (!res.ok) {
+          navigate("/login", { replace: true });
+          return;
+        }
+        const me = (await res.json()) as { interests?: unknown };
+        if (needsInterestsOnboarding(me.interests)) {
+          navigate("/interests", { replace: true });
+        } else {
+          navigate("/home", { replace: true });
+        }
+      } catch {
+        navigate("/login", { replace: true });
+      }
+    })();
+  }, [navigate]);
 
   return null;
 }
