@@ -452,7 +452,7 @@ function SavedPlacesPage() {
             <p className="text-stone-400 dark:text-stone-600 text-sm">
               No saved places yet.{" "}
               <button
-                onClick={() => navigate("/city")}
+                onClick={() => navigate("/home")}
                 className="text-orange-500 hover:text-orange-600 font-medium transition-colors"
               >
                 Explore cities

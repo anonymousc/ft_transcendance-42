@@ -19,6 +19,8 @@ services:
         condition: service_healthy
       profiles:
         condition: service_healthy
+      friends:
+        condition: service_healthy
       redis:
         condition: service_healthy
       vault:

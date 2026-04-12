@@ -48,4 +48,27 @@ export class ProfilesService {
       data: { interests: dto.interests as object },
     });
   }
+
+  async searchProfilesForUser(currentUserId: string, q: string, limit: number) {
+    const take = Math.min(Math.max(limit, 1), 25);
+    return this.prisma.profile.findMany({
+      where: {
+        NOT: { userId: currentUserId },
+        OR: [
+          { username: { contains: q, mode: 'insensitive' } },
+          { displayName: { contains: q, mode: 'insensitive' } },
+          { bio: { contains: q, mode: 'insensitive' } },
+        ],
+      },
+      take,
+      orderBy: { username: 'asc' },
+      select: {
+        userId: true,
+        username: true,
+        displayName: true,
+        avatar: true,
+        interests: true,
+      },
+    });
+  }
 }
