@@ -182,7 +182,7 @@ export class AuthService {
     // Check if user has a password (could be OAuth-only account)
     if (!user.hashPassword) {
       throw new BadRequestException(
-        'This account was created via OAuth. Please sign in with Google.',
+        'This account was created via OAuth. Please sign in with your OAuth provider.',
       );
     }
 

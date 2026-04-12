@@ -5,8 +5,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { FortyTwoStrategy } from './strategies/fortytwo.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { PrismaService } from '../prisma.service';
+import { FortyTwoAuthService } from './services/fortytwo-auth.service';
 
 @Module({
   imports: [
@@ -23,7 +25,7 @@ import { PrismaService } from '../prisma.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, JwtStrategy, PrismaService],
+  providers: [AuthService, FortyTwoAuthService, GoogleStrategy, FortyTwoStrategy, JwtStrategy, PrismaService],
   exports: [AuthService],
 })
 export class AuthModule {}

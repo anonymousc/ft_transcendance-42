@@ -1,15 +1,18 @@
 import { Controller, Get, Post, Body, Req, Res, UseGuards, UnauthorizedException, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleOAuthGuard } from './guards/google-oauth.guard';
+import { FortyTwoOAuthGuard } from './guards/fortytwo-oauth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { SignupDto, SigninDto } from './dto';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
+import { FortyTwoAuthService } from './services/fortytwo-auth.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
+    private fortyTwoAuthService: FortyTwoAuthService,
     private configService: ConfigService,
   ) {}
 
@@ -27,13 +30,8 @@ export class AuthController {
   @Get('google')
   @UseGuards(GoogleOAuthGuard)
   async googleAuth() {
-    // Guard redirects to Google — this method body is never executed
   }
 
-  /**
-   * Google redirects back here after user consent.
-   * Validates the user, issues a JWT, and redirects to the frontend.
-   */
   @Get('google/callback')
   @UseGuards(GoogleOAuthGuard)
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
@@ -44,10 +42,20 @@ export class AuthController {
     return res.redirect(`${frontendUrl}/oauth-success?token=${token}`);
   }
 
-  /**
-   * Returns the currently authenticated user's data.
-   * Requires a valid JWT in the Authorization header.
-   */
+  @Get('42')
+  @UseGuards(FortyTwoOAuthGuard)
+  async fortyTwoAuth() {
+  }
+  @Get('42/callback')
+  @UseGuards(FortyTwoOAuthGuard)
+  async fortyTwoAuthCallback(@Req() req: Request, @Res() res: Response) {
+    const user = await this.fortyTwoAuthService.validateFortyTwoUser(req.user as any);
+    const token = this.authService.generateJwt(user);
+
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+    return res.redirect(`${frontendUrl}/oauth-success?token=${token}`);
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async getMe(@Req() req: Request) {
