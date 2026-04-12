@@ -22,7 +22,7 @@ async function generateTripPlan({
   interests = null,
 }) {
   const client = getClient();
-  const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = client.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' });
 
   const prompt = buildPlannerPrompt(
     { city, days, preferences, places, favorites, reviewSummaries },
