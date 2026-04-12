@@ -24,6 +24,11 @@ path "secret/data/fav_places"
     capabilities = ["read"]
 }
 
+path "secret/data/friends"
+{
+    capabilities = ["read"]
+}
+
 path "secret/data/planner"
 {
     capabilities = ["read"]

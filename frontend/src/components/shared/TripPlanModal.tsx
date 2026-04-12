@@ -30,6 +30,8 @@ interface TripPlanData {
 interface TripPlanModalProps {
   plan: TripPlanData;
   onClose: () => void;
+  /** When true, render the plan panel in the page flow (no overlay/backdrop). */
+  inline?: boolean;
 }
 
 function StarRating({ rating }: { rating: number | null }) {
@@ -117,7 +119,7 @@ function ActivityCard({ activity }: { activity: Activity }) {
   );
 }
 
-function TripPlanModal({ plan, onClose }: TripPlanModalProps) {
+function TripPlanModal({ plan, onClose, inline = false }: TripPlanModalProps) {
   const [activeDay, setActiveDay] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -126,18 +128,20 @@ function TripPlanModal({ plan, onClose }: TripPlanModalProps) {
 
   // Close on Escape key
   useEffect(() => {
+    if (inline) return;
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
-  }, [onClose]);
+  }, [onClose, inline]);
 
   // Lock body scroll while modal is open
   useEffect(() => {
+    if (inline) return;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
-  }, []);
+  }, [inline]);
 
   // Scroll content to top when switching days
   useEffect(() => {
@@ -147,9 +151,8 @@ function TripPlanModal({ plan, onClose }: TripPlanModalProps) {
   const handlePrevDay = () => setActiveDay(d => Math.max(0, d - 1));
   const handleNextDay = () => setActiveDay(d => Math.min(dayPlans.length - 1, d + 1));
 
-  return (
-    <div className="tpm-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="tpm-panel">
+  const panel = (
+    <div className={`tpm-panel${inline ? " tpm-panel--inline" : ""}`}>
         {/* Header */}
         <div className="tpm-header">
           <div className="tpm-header-text">
@@ -244,7 +247,16 @@ function TripPlanModal({ plan, onClose }: TripPlanModalProps) {
             </div>
           )}
         </div>
-      </div>
+    </div>
+  );
+
+  if (inline) {
+    return <div className="tpm-inline-root">{panel}</div>;
+  }
+
+  return (
+    <div className="tpm-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      {panel}
     </div>
   );
 }

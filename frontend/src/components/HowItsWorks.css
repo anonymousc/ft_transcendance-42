@@ -120,3 +120,70 @@
 :is(.dark) .how-it-works-text {
   color: #cccccc;
 }
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .how-it-works-section {
+    padding: 3rem 1.5rem;
+    min-height: auto;
+  }
+
+  .how-it-works-container::before {
+    left: 20px;
+    transform: none;
+  }
+
+  .how-it-works-item {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 1.5rem 0 1.5rem 3.5rem;
+  }
+
+  /* Override all nth-child ordering for mobile — stack vertically */
+  .how-it-works-item:nth-child(1) .how-it-works-icon,
+  .how-it-works-item:nth-child(2) .how-it-works-icon,
+  .how-it-works-item:nth-child(3) .how-it-works-icon {
+    justify-self: start;
+    order: 0;
+  }
+
+  .how-it-works-item:nth-child(1) .how-it-works-content,
+  .how-it-works-item:nth-child(2) .how-it-works-content,
+  .how-it-works-item:nth-child(3) .how-it-works-content {
+    justify-self: start;
+    text-align: left;
+    order: 1;
+  }
+
+  .how-it-works-divider {
+    display: none;
+  }
+
+  .how-it-works-icon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .how-it-works-icon img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .how-it-works-title {
+    font-size: 1.25rem;
+  }
+
+  .how-it-works-content {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .how-it-works-section {
+    padding: 2.5rem 1rem;
+  }
+
+  .how-it-works-item {
+    padding-left: 3rem;
+  }
+}

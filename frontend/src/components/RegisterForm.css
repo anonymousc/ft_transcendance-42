@@ -129,3 +129,10 @@
 :is(.dark) .oauth-or {
     color: #999999;
 }
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 360px) {
+    .name-row {
+        flex-direction: column;
+    }
+}

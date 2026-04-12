@@ -1,6 +1,8 @@
 const { Router } = require('express');
 const fs = require('fs');
 const path = require('path');
+const authMiddleware = require('../middleware/auth');
+const redis = require('../lib/redis');
 
 const router = Router();
 
@@ -18,19 +20,33 @@ try {
   console.warn('[autocomplete] City CSV unavailable:', err.message);
 }
 
-// ── In-memory recent searches (replace with Redis in production) ──────────────
+// ── Redis-backed recent searches ──────────────────────────────────────────────
 const MAX_RECENT_PER_USER = 10;
-const MAX_USERS_CACHED = 5000;
-const recentSearches = new Map();
+const RECENT_TTL_S = 30 * 24 * 60 * 60; // 30 days
 
-function setRecent(userId, city) {
-  // Evict oldest entry when the map grows too large
-  if (!recentSearches.has(userId) && recentSearches.size >= MAX_USERS_CACHED) {
-    recentSearches.delete(recentSearches.keys().next().value);
+function recentKey(userId) {
+  return `ai-places:recent:${userId}`;
+}
+
+async function setRecent(userId, city) {
+  const key = recentKey(userId);
+  try {
+    // Remove duplicate if present, then prepend, then trim to max length
+    await redis.lrem(key, 0, city);
+    await redis.lpush(key, city);
+    await redis.ltrim(key, 0, MAX_RECENT_PER_USER - 1);
+    await redis.expire(key, RECENT_TTL_S);
+  } catch (err) {
+    console.warn('[autocomplete] setRecent failed:', err.message);
   }
-  const existing = recentSearches.get(userId) ?? [];
-  const updated = [city, ...existing.filter(c => c !== city)].slice(0, MAX_RECENT_PER_USER);
-  recentSearches.set(userId, updated);
+}
+
+async function getRecent(userId) {
+  try {
+    return await redis.lrange(recentKey(userId), 0, MAX_RECENT_PER_USER - 1);
+  } catch {
+    return [];
+  }
 }
 
 // ── Google Places helper ──────────────────────────────────────────────────────
@@ -69,12 +85,10 @@ async function googleCityAutocomplete(input) {
 }
 
 // ── GET /autocomplete ─────────────────────────────────────────────────────────
-// Primary autocomplete: static CSV + recent searches.
+// Primary autocomplete: static CSV + recent searches (from token identity).
 // Falls back to Google only if both sources return nothing and q >= 3 chars.
-// The frontend should NOT call /autocomplete/places separately — the fallback
-// is handled here on the server.
 router.get('/autocomplete', async (req, res) => {
-  const { q = '', userId } = req.query;
+  const { q = '' } = req.query;
   const query = q.trim().toLowerCase();
 
   if (query.length < 1) return res.json({ suggestions: [] });
@@ -82,10 +96,11 @@ router.get('/autocomplete', async (req, res) => {
   const matched = CITIES
     .filter(c => c.startsWith(query))
     .slice(0, 6)
-    // Return in Title Case for display
     .map(c => c.replace(/\b\w/g, l => l.toUpperCase()));
 
-  const recent = userId ? (recentSearches.get(String(userId)) ?? []) : [];
+  // userId always comes from the verified JWT — never from the query string
+  const userId = req.user?.id;
+  const recent = userId ? await getRecent(userId) : [];
   const matchedRecent = recent
     .filter(r => r.toLowerCase().startsWith(query) && !matched.includes(r))
     .slice(0, 3);
@@ -105,18 +120,16 @@ router.get('/autocomplete', async (req, res) => {
 });
 
 // ── POST /autocomplete/recent ─────────────────────────────────────────────────
-// Records a confirmed city selection for a user's recent searches.
-router.post('/autocomplete/recent', (req, res) => {
-  const { userId, city } = req.body;
+// Records a confirmed city selection; identity taken from the verified JWT.
+router.post('/autocomplete/recent', authMiddleware, async (req, res) => {
+  const userId = req.user.id;
+  const { city } = req.body;
 
-  if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
-    return res.status(400).json({ error: 'userId must be a non-empty string' });
-  }
   if (!city || typeof city !== 'string' || city.trim().length === 0 || city.length > 100) {
     return res.status(400).json({ error: 'city must be a non-empty string under 100 chars' });
   }
 
-  setRecent(userId.trim(), city.trim());
+  await setRecent(userId, city.trim());
   res.json({ ok: true });
 });
 

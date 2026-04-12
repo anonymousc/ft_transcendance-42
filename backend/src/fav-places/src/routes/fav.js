@@ -1,21 +1,20 @@
 const { Router } = require('express');
 const prisma = require('../lib/prisma');
+const authMiddleware = require('../middleware/auth');
 
 const router = Router();
+
+const VALID_STATUSES = new Set(['favorited', 'visited']);
 
 function ok(res, data, extra = {}) {
   return res.json({ ok: true, data, ...extra });
 }
 
-function fail(res, status, code, message, details) {
-  const body = { ok: false, error: { code, message } };
-  if (details !== undefined) body.error.details = details;
-  return res.status(status).json(body);
+function fail(res, status, code, message) {
+  return res.status(status).json({ ok: false, error: { code, message } });
 }
 
-function validateSaveBody({ userId, placeName, city, category, address }) {
-  if (!userId || typeof userId !== 'string' || !userId.trim())
-    return 'userId is required';
+function validateSaveBody({ placeName, city, category, address, status }) {
   if (!placeName || typeof placeName !== 'string' || !placeName.trim())
     return 'placeName is required';
   if (!city || typeof city !== 'string' || !city.trim())
@@ -24,92 +23,91 @@ function validateSaveBody({ userId, placeName, city, category, address }) {
     return 'category is required';
   if (!address || typeof address !== 'string' || !address.trim())
     return 'address is required';
+  if (status !== undefined && !VALID_STATUSES.has(status))
+    return 'status must be "favorited" or "visited"';
   return null;
 }
 
-// Save a place for a user
-router.post('/fav-places', async (req, res) => {
+// Save (or update) a place for the authenticated user
+router.post('/fav-places', authMiddleware, async (req, res) => {
   const validationError = validateSaveBody(req.body);
-  if (validationError) {
-    return fail(res, 400, 'INVALID_INPUT', validationError);
-  }
+  if (validationError) return fail(res, 400, 'INVALID_INPUT', validationError);
 
-  const { userId, placeName, city, category, address, image, rating } = req.body;
+  const userId = req.user.id;
+  const { placeName, city, category, address, image, rating, status = 'favorited' } = req.body;
 
   try {
     const saved = await prisma.savedPlace.upsert({
-      where: { userId_placeName_city: { userId: userId.trim(), placeName: placeName.trim(), city: city.trim() } },
-      update: { category: category.trim(), address: address.trim(), image: image ?? null, rating: rating ?? null },
+      where: { userId_placeName_city: { userId, placeName: placeName.trim(), city: city.trim() } },
+      update: {
+        category: category.trim(),
+        address:  address.trim(),
+        image:    image ?? null,
+        rating:   rating ?? null,
+        status,
+      },
       create: {
-        userId:    userId.trim(),
+        userId,
         placeName: placeName.trim(),
         city:      city.trim(),
         category:  category.trim(),
         address:   address.trim(),
         image:     image ?? null,
         rating:    rating ?? null,
+        status,
       },
     });
     return res.status(201).json({ ok: true, data: saved });
   } catch (err) {
     console.error('[fav-places/save]', err.message);
-    return fail(res, 500, 'INTERNAL_ERROR', 'Failed to save place', err.message);
+    return fail(res, 500, 'INTERNAL_ERROR', 'Failed to save place');
   }
 });
 
-// Unsave a place. userId must match the owner.
-router.delete('/fav-places/:id', async (req, res) => {
+// Unsave a place — only the owner may delete
+router.delete('/fav-places/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
-  const { userId } = req.query;
-
-  if (!userId) {
-    return fail(res, 400, 'INVALID_INPUT', 'userId query parameter is required');
-  }
+  const userId = req.user.id;
 
   try {
     const saved = await prisma.savedPlace.findUnique({ where: { id } });
-    if (!saved) {
-      return fail(res, 404, 'NOT_FOUND', 'Saved place not found');
-    }
-    if (saved.userId !== userId) {
-      return fail(res, 403, 'FORBIDDEN', 'You can only remove your own saved places');
-    }
+    if (!saved) return fail(res, 404, 'NOT_FOUND', 'Saved place not found');
+    if (saved.userId !== userId) return fail(res, 403, 'FORBIDDEN', 'You can only remove your own saved places');
 
     await prisma.savedPlace.delete({ where: { id } });
     return ok(res, { id });
   } catch (err) {
     console.error('[fav-places/delete]', err.message);
-    return fail(res, 500, 'INTERNAL_ERROR', 'Failed to remove saved place', err.message);
+    return fail(res, 500, 'INTERNAL_ERROR', 'Failed to remove saved place');
   }
 });
 
-// ── GET /fav-places?userId= ────────────────────────────────────────────────
-// Private: get the calling user's own saved places, newest first
-router.get('/fav-places', async (req, res) => {
-  const { userId } = req.query;
-  if (!userId) {
-    return fail(res, 400, 'INVALID_INPUT', 'userId query parameter is required');
+// GET /fav-places — the authenticated user's places, optionally filtered by status
+router.get('/fav-places', authMiddleware, async (req, res) => {
+  const userId = req.user.id;
+  const { status } = req.query;
+
+  if (status !== undefined && !VALID_STATUSES.has(status)) {
+    return fail(res, 400, 'INVALID_INPUT', 'status must be "favorited" or "visited"');
   }
 
   try {
+    const where = { userId, ...(status ? { status } : {}) };
     const places = await prisma.savedPlace.findMany({
-      where: { userId: userId.trim() },
+      where,
       orderBy: { savedAt: 'desc' },
     });
     return ok(res, places);
   } catch (err) {
     console.error('[fav-places/list]', err.message);
-    return fail(res, 500, 'INTERNAL_ERROR', 'Failed to fetch saved places', err.message);
+    return fail(res, 500, 'INTERNAL_ERROR', 'Failed to fetch saved places');
   }
 });
 
-// ── GET /fav-places/public/:userId ─────────────────────────────────────────
-// Public: anyone can view another user's saved places (for profiles)
+// GET /fav-places/public/:userId — public; anyone can view another user's favorites
 router.get('/fav-places/public/:userId', async (req, res) => {
   const { userId } = req.params;
-  if (!userId || !userId.trim()) {
-    return fail(res, 400, 'INVALID_INPUT', 'userId path parameter is required');
-  }
+  if (!userId || !userId.trim()) return fail(res, 400, 'INVALID_INPUT', 'userId is required');
 
   try {
     const places = await prisma.savedPlace.findMany({
@@ -119,32 +117,55 @@ router.get('/fav-places/public/:userId', async (req, res) => {
     return ok(res, places);
   } catch (err) {
     console.error('[fav-places/public]', err.message);
-    return fail(res, 500, 'INTERNAL_ERROR', 'Failed to fetch public saved places', err.message);
+    return fail(res, 500, 'INTERNAL_ERROR', 'Failed to fetch public saved places');
   }
 });
 
-// ── GET /fav-places/check
-// Check if a specific place is saved by a user
-router.get('/fav-places/check', async (req, res) => {
-  const { userId, placeName, city } = req.query;
-  if (!userId || !placeName || !city) {
-    return fail(res, 400, 'INVALID_INPUT', 'userId, placeName and city query parameters are required');
+// GET /fav-places/internal/:userId — no auth; for server-to-server calls (planner service)
+router.get('/fav-places/internal/:userId', async (req, res) => {
+  const { userId } = req.params;
+  const { city } = req.query;
+  if (!userId || !userId.trim()) return fail(res, 400, 'INVALID_INPUT', 'userId is required');
+
+  try {
+    const where = { userId: userId.trim() };
+    if (city && typeof city === 'string' && city.trim()) {
+      where.city = { equals: city.trim(), mode: 'insensitive' };
+    }
+    const places = await prisma.savedPlace.findMany({
+      where,
+      orderBy: { savedAt: 'desc' },
+    });
+    return ok(res, places);
+  } catch (err) {
+    console.error('[fav-places/internal]', err.message);
+    return fail(res, 500, 'INTERNAL_ERROR', 'Failed to fetch saved places');
+  }
+});
+
+// GET /fav-places/check — check if the authenticated user has saved a place
+router.get('/fav-places/check', authMiddleware, async (req, res) => {
+  const userId = req.user.id;
+  const { placeName, city } = req.query;
+
+  if (!placeName || !city) {
+    return fail(res, 400, 'INVALID_INPUT', 'placeName and city query parameters are required');
   }
 
   try {
     const saved = await prisma.savedPlace.findUnique({
       where: {
         userId_placeName_city: {
-          userId:    userId.trim(),
+          userId,
           placeName: placeName.trim(),
           city:      city.trim(),
         },
       },
     });
-    return ok(res, { saved: !!saved, id: saved?.id ?? null });
+    return ok(res, { saved: !!saved, id: saved?.id ?? null, status: saved?.status ?? null });
   } catch (err) {
     console.error('[fav-places/check]', err.message);
-    return fail(res, 500, 'INTERNAL_ERROR', 'Failed to check saved place', err.message);
+    return fail(res, 500, 'INTERNAL_ERROR', 'Failed to check saved place');
   }
 });
 

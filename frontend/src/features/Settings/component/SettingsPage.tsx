@@ -95,27 +95,6 @@ function SettingsPage() {
           </div>
         </div>
         <div className="settings-section">
-          <p className="settings-section-title">Notifications</p>
-          <div className="settings-row">
-            <div className="settings-row-left">
-              <span className="settings-row-icon icon-green">
-                <Bell />
-              </span>
-              <span className="settings-row-label">Push Notifications</span>
-            </div>
-            <label className="settings-toggle">
-              <input
-                type="checkbox"
-                checked={notifications.push}
-                onChange={() =>
-                  setNotifications((prev) => ({ ...prev, push: !prev.push }))
-                }
-              />
-              <span className="settings-toggle-track" />
-            </label>
-          </div>
-        </div>
-        <div className="settings-section">
           <div
             className="settings-row settings-row-clickable settings-row-danger"
             onClick={() => console.log("Delete account")}

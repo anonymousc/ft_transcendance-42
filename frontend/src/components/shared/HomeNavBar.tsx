@@ -18,11 +18,19 @@ const PATH_TO_NAV_ID: Record<string, string> = {
   "/notifications": "notifications",
 };
 
-function HomeNavBar() {
+type HomeNavBarProps = {
+  /** Hide bottom glass pill on small viewports (e.g. active chat thread). */
+  hideMobileGlassNav?: boolean;
+};
+
+function HomeNavBar({ hideMobileGlassNav = false }: HomeNavBarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
-  const activeId = PATH_TO_NAV_ID[location.pathname] ?? "home";
+  const pathname =
+    location.pathname.replace(/\/+$/, "") || "/";
+  const activeId = PATH_TO_NAV_ID[pathname] ?? "home";
+  const isHomeVideo = pathname === "/home" || pathname === "/planner";
 
   const handleNavigation = (id: string) => {
     const path = NAV_ID_TO_PATH[id];
@@ -31,12 +39,30 @@ function HomeNavBar() {
     }
   };
 
+  const navClass = [
+    "home-nav",
+    isHomeVideo ? "home-nav--home-video" : "",
+    hideMobileGlassNav ? "home-nav--hide-mobile-glass" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <nav className="home-nav">
-      <div className="text-[#1C1C1E] dark:text-white text-2xl font-bold transition-colors duration-300">
+    <nav className={navClass}>
+      <div
+        className={
+          isHomeVideo
+            ? "home-nav-brand home-nav-brand--on-video text-2xl font-bold transition-colors duration-300"
+            : "text-[#1C1C1E] dark:text-white text-2xl font-bold transition-colors duration-300"
+        }
+      >
         <h1>RIHLA</h1>
       </div>
-      <GlassNavBar activeId={activeId} handleNavigation={handleNavigation} />
+      <GlassNavBar
+        activeId={activeId}
+        handleNavigation={handleNavigation}
+        surface={isHomeVideo ? "home-video" : "default"}
+      />
       <div className="profile-dropdown-wrapper">
         <ProfileDropdown
           onProfile={() => navigate("/profile")}

@@ -85,15 +85,15 @@ function ChatAvatar({
         )}
       </div>
 
-      {isOnline !== undefined && (
+      {/* {isOnline !== undefined && (
         <span
           className={cn(
             "absolute bottom-0 right-0 rounded-full border-white dark:border-zinc-900",
             indicatorClasses[size],
-            isOnline ? "bg-green-500" : "bg-gray-400 dark:bg-zinc-500"
+            isOnline ? "bg-emerald-500" : "bg-gray-400 dark:bg-zinc-500"
           )}
         />
-      )}
+      )} */}
     </div>
   );
 }

@@ -27,32 +27,27 @@ import {
 import { useAuth } from "@/context/AuthContext";
 
 const AI_PLACES_URL =
-  (import.meta.env.VITE_AI_PLACES_URL as string) || "http://localhost:4000";
+  (import.meta.env.VITE_AI_PLACES_URL as string) || "http://localhost:4000"; // TODO: Store in .env after czar done with dev
 
 const REVIEW_PLACES_URL =
-  (import.meta.env.VITE_REVIEW_PLACES_URL as string) || "http://localhost:4001";
+  (import.meta.env.VITE_REVIEW_PLACES_URL as string) || "http://localhost:4001"; //same as above
 
 const FAV_PLACES_URL =
-  (import.meta.env.VITE_FAV_PLACES_URL as string) || "http://localhost:4002";
+  (import.meta.env.VITE_FAV_PLACES_URL as string) || "http://localhost:4002"; // TODO: Store in .env after czar done with dev
 
-// Stable anonymous userId stored in localStorage
-function getAnonymousUserId(): string {
-  const key = "review_user_id";
-  let id = localStorage.getItem(key);
-  if (!id) {
-    id = `anon_${Math.random().toString(36).slice(2, 10)}`;
-    localStorage.setItem(key, id);
-  }
-  return id;
+/** API returns paths like `/places/photos?...` — must hit ai-places origin, not the SPA host */
+function resolvePlaceImageUrl(src: string | null | undefined): string | null {
+  if (!src) return null;
+  if (src.startsWith("http://") || src.startsWith("https://")) return src;
+  if (src.startsWith("/")) return `${AI_PLACES_URL}${src}`;
+  return src;
 }
-
-// ── Types ──────────────────────────────────────────────────────────────────
 
 interface Place {
   place_id?: string;
   name: string;
   category: string;
-  rating: number;
+  rating: number | null;
   description: string;
   address: string;
   must_visit: boolean;
@@ -93,8 +88,6 @@ interface ReviewEnvelope {
   error?: { code: string; message: string; details?: string };
 }
 
-// ── Places hooks ───────────────────────────────────────────────────────────
-
 function usePlaces(city: string) {
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(false);
@@ -108,7 +101,7 @@ function usePlaces(city: string) {
     setError(null);
     setPlaces([]);
 
-    fetch(`${AI_PLACES_URL}/places?city=${encodeURIComponent(city.trim())}`)
+    fetch(`${AI_PLACES_URL}/places?city=${encodeURIComponent(city.trim())}`, { credentials: 'include' })
       .then((res) => res.json())
       .then((envelope: ApiEnvelope) => {
         if (!envelope.ok) throw new Error(envelope.error?.details ?? envelope.error?.message ?? "Unknown error");
@@ -140,7 +133,7 @@ function useSearch(q: string) {
     setResolvedCity("");
     setIntent("");
 
-    fetch(`${AI_PLACES_URL}/places/search?q=${encodeURIComponent(q.trim())}`)
+    fetch(`${AI_PLACES_URL}/places/search?q=${encodeURIComponent(q.trim())}`, { credentials: 'include' })
       .then((res) => res.json())
       .then((envelope: ApiEnvelope) => {
         if (!envelope.ok) throw new Error(envelope.error?.details ?? envelope.error?.message ?? "Unknown error");
@@ -159,8 +152,6 @@ function useSearch(q: string) {
   return { places, loading, error, resolvedCity, intent };
 }
 
-// ── Review hooks ───────────────────────────────────────────────────────────
-
 function useReviews(placeName: string, city: string) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
@@ -173,6 +164,7 @@ function useReviews(placeName: string, city: string) {
 
     fetch(
       `${REVIEW_PLACES_URL}/reviews?place=${encodeURIComponent(placeName)}&city=${encodeURIComponent(city)}`,
+      { credentials: "include" },
     )
       .then((r) => r.json())
       .then((env: ReviewEnvelope) => {
@@ -196,6 +188,7 @@ function useReviewSummary(placeName: string, city: string, refreshKey: number) {
 
     fetch(
       `${REVIEW_PLACES_URL}/reviews/summary?place=${encodeURIComponent(placeName)}&city=${encodeURIComponent(city)}`,
+      { credentials: "include" },
     )
       .then((r) => r.json())
       .then((env: ReviewEnvelope) => {
@@ -206,8 +199,6 @@ function useReviewSummary(placeName: string, city: string, refreshKey: number) {
 
   return summary;
 }
-
-// ── Fav places hook ────────────────────────────────────────────────────────
 
 interface FavCheckEnvelope {
   ok: boolean;
@@ -225,6 +216,7 @@ function useFavPlace(userId: string | null, placeName: string, city: string, pla
 
     fetch(
       `${FAV_PLACES_URL}/fav-places/check?userId=${encodeURIComponent(userId)}&placeName=${encodeURIComponent(placeName)}&city=${encodeURIComponent(city)}`,
+      { credentials: "include" },
     )
       .then((r) => r.json())
       .then((env: FavCheckEnvelope) => {
@@ -244,13 +236,14 @@ function useFavPlace(userId: string | null, placeName: string, city: string, pla
       if (saved && savedId) {
         const res = await fetch(
           `${FAV_PLACES_URL}/fav-places/${savedId}?userId=${encodeURIComponent(userId)}`,
-          { method: "DELETE" },
+          { method: "DELETE", credentials: "include" },
         );
         const env = await res.json();
         if (env.ok) { setSaved(false); setSavedId(null); }
       } else {
         const res = await fetch(`${FAV_PLACES_URL}/fav-places`, {
           method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId,
@@ -272,8 +265,6 @@ function useFavPlace(userId: string | null, placeName: string, city: string, pla
 
   return { saved, toggling, toggle };
 }
-
-// ── Category styles ────────────────────────────────────────────────────────
 
 interface CategoryStyle {
   icon: React.ReactNode;
@@ -338,8 +329,6 @@ function getCategoryStyle(category: string): CategoryStyle {
   );
 }
 
-// ── Shared components ──────────────────────────────────────────────────────
-
 function useInView(threshold = 0.1) {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
@@ -366,9 +355,10 @@ function useInView(threshold = 0.1) {
   return { ref, inView };
 }
 
-function StarRating({ rating }: { rating: number }) {
-  const full = Math.floor(rating);
-  const hasHalf = rating - full >= 0.3;
+function StarRating({ rating }: { rating: number | null }) {
+  const safeRating = rating ?? 0;
+  const full = Math.floor(safeRating);
+  const hasHalf = safeRating - full >= 0.3;
 
   return (
     <div className="flex items-center gap-1.5">
@@ -388,13 +378,11 @@ function StarRating({ rating }: { rating: number }) {
         ))}
       </div>
       <span className="text-xs font-bold text-orange-500 dark:text-orange-400 tabular-nums">
-        {rating.toFixed(1)}
+        {safeRating.toFixed(1)}
       </span>
     </div>
   );
 }
-
-// ── Interactive star picker for review form ────────────────────────────────
 
 function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hovered, setHovered] = useState(0);
@@ -430,20 +418,19 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
   );
 }
 
-// ── ReviewSection ──────────────────────────────────────────────────────────
-
 function ReviewSection({
   placeName,
   city,
+  userId,
   summary,
   onReviewPosted,
 }: {
   placeName: string;
   city: string;
+  userId: string | null;
   summary: ReviewSummary | null;
   onReviewPosted: () => void;
 }) {
-  const userId = getAnonymousUserId();
   const { reviews, loading, reload } = useReviews(placeName, city);
 
   const [rating, setRating] = useState(0);
@@ -453,6 +440,7 @@ function ReviewSection({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!userId) { setSubmitError("Please sign in to post a review."); return; }
     if (rating === 0) { setSubmitError("Please select a star rating."); return; }
     if (comment.trim().length < 3) { setSubmitError("Comment must be at least 3 characters."); return; }
 
@@ -463,7 +451,8 @@ function ReviewSection({
       const res = await fetch(`${REVIEW_PLACES_URL}/reviews`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ placeName, city, userId, rating, comment: comment.trim() }),
+        credentials: "include",
+        body: JSON.stringify({ placeName, city, rating, comment: comment.trim() }),
       });
       const env: ReviewEnvelope = await res.json();
       if (!env.ok) throw new Error(env.error?.message ?? "Failed to post review");
@@ -481,8 +470,8 @@ function ReviewSection({
   const handleDelete = async (reviewId: string) => {
     try {
       const res = await fetch(
-        `${REVIEW_PLACES_URL}/reviews/${reviewId}?userId=${encodeURIComponent(userId)}`,
-        { method: "DELETE" },
+        `${REVIEW_PLACES_URL}/reviews/${reviewId}`,
+        { method: "DELETE", credentials: "include" },
       );
       const env: ReviewEnvelope = await res.json();
       if (!env.ok) throw new Error(env.error?.message ?? "Failed to delete");
@@ -494,7 +483,7 @@ function ReviewSection({
   };
 
   return (
-    <div className="px-5 pb-5 pt-4 border-t border-stone-100 dark:border-white/[0.06]">
+    <div className="px-5 pb-5 pt-4 border-t border-stone-100 dark:border-white/6">
 
       {/* Community rating summary */}
       {summary && summary.totalReviews > 0 && (
@@ -645,6 +634,7 @@ function PlaceCard({
   const { saved, toggling, toggle } = useFavPlace(userId, place.name, city, place);
 
   const handleReviewPosted = () => setSummaryRefreshKey((k) => k + 1);
+  const imageSrc = resolvePlaceImageUrl(place.image);
 
   return (
     <div
@@ -659,7 +649,7 @@ function PlaceCard({
         ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
     >
       {/* Main card row */}
-      <div className="flex flex-row h-[200px]">
+      <div className="flex flex-col sm:flex-row sm:h-[200px]">
         {place.must_visit && (
           <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-orange-400 rounded-l-2xl" />
         )}
@@ -709,7 +699,7 @@ function PlaceCard({
             {place.description}
           </p>
 
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-stone-100 dark:border-white/[0.06]">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-3 pt-3 border-t border-stone-100 dark:border-white/[0.06]">
             <div className="flex items-center gap-1.5 min-w-0">
               <MapPin size={11} className="shrink-0 text-orange-400" />
               <span className="text-[11px] text-stone-400 dark:text-stone-500 truncate">
@@ -717,7 +707,7 @@ function PlaceCard({
               </span>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0 ml-3">
+            <div className="flex items-center gap-2 flex-wrap justify-start sm:justify-end shrink-0 sm:ml-3">
               {/* Save / unsave bookmark */}
               {userId && (
                 <button
@@ -777,17 +767,17 @@ function PlaceCard({
           </div>
         </div>
 
-        <div className="relative w-[38%] shrink-0">
-          {place.image ? (
+        <div className="relative w-full sm:w-[38%] shrink-0 h-44 sm:h-auto">
+          {imageSrc ? (
             <img
-              src={place.image}
+              src={imageSrc}
               alt={place.name}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
             <div className="w-full h-full bg-stone-100 dark:bg-stone-800/50" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-r from-white dark:from-[#0e0d0b] via-white/30 dark:via-[#0e0d0b]/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-white dark:from-[#0e0d0b] via-white/30 dark:via-[#0e0d0b]/30 to-transparent" />
         </div>
       </div>
 
@@ -796,6 +786,7 @@ function PlaceCard({
         <ReviewSection
           placeName={place.name}
           city={city}
+          userId={userId}
           summary={summary}
           onReviewPosted={handleReviewPosted}
         />
@@ -806,7 +797,7 @@ function PlaceCard({
 
 function SkeletonCard() {
   return (
-    <div className="flex flex-row overflow-hidden rounded-2xl h-[200px] bg-white dark:bg-white/[0.04] border border-stone-200/80 dark:border-white/[0.07] shadow-sm animate-pulse">
+    <div className="flex flex-col sm:flex-row overflow-hidden rounded-2xl sm:h-[200px] bg-white dark:bg-white/[0.04] border border-stone-200/80 dark:border-white/[0.07] shadow-sm animate-pulse">
       <div className="flex flex-col justify-between flex-1 min-w-0 px-5 py-4 pl-6 gap-3">
         <div className="h-6 w-28 rounded-full bg-stone-100 dark:bg-stone-800" />
         <div className="space-y-2">
@@ -819,7 +810,7 @@ function SkeletonCard() {
         </div>
         <div className="h-3 w-40 rounded bg-stone-100 dark:bg-stone-800 mt-1" />
       </div>
-      <div className="w-[38%] shrink-0 bg-stone-100 dark:bg-stone-800" />
+      <div className="w-full sm:w-[38%] h-44 sm:h-auto shrink-0 bg-stone-100 dark:bg-stone-800" />
     </div>
   );
 }
@@ -850,6 +841,7 @@ function useSuggest() {
     try {
       const res = await fetch(`${AI_PLACES_URL}/places/suggest`, {
         method: "POST",
+        credentials: 'include',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ city, preferences, visited, limit }),
       });
@@ -1004,9 +996,9 @@ function CityPage() {
 
       <section
         ref={sectionRef}
-        className="bg-[#faf9f7] dark:bg-[#0e0d0b] py-20 px-4 sm:px-8 lg:px-16"
+        className="bg-[#faf9f7] dark:bg-[#0e0d0b] py-12 sm:py-20 px-4 sm:px-8 lg:px-16"
       >
-        <div ref={headerRef} className="max-w-3xl mx-auto mb-12 text-center">
+        <div ref={headerRef} className="max-w-3xl mx-auto mb-8 sm:mb-12 text-center">
 
           {/* Mode badge */}
           <div

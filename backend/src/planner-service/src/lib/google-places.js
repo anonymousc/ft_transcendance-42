@@ -1,3 +1,5 @@
+const redis = require('./redis');
+
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 const PLACES_SEARCH_URL = 'https://places.googleapis.com/v1/places:searchText';
 const PLACES_DETAIL_URL = 'https://places.googleapis.com/v1/places';
@@ -34,26 +36,29 @@ const DETAIL_FIELD_MASK = [
   'websiteUri',
 ].join(',');
 
-const CACHE_TTL_MS = 60 * 60 * 1000;
-const cache = new Map();
+const CACHE_TTL_S = 60 * 60;
 
-function getCached(key) {
-  const entry = cache.get(key);
-  if (!entry) return null;
-  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
-    cache.delete(key);
+async function getCached(key) {
+  try {
+    const raw = await redis.get(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
     return null;
   }
-  return entry.data;
 }
 
-function setCache(key, data) {
-  cache.set(key, { data, timestamp: Date.now() });
+async function setCache(key, data) {
+  try {
+    await redis.set(key, JSON.stringify(data), 'EX', CACHE_TTL_S);
+  } catch (err) {
+    console.warn('[google-places] cache write failed:', err.message);
+  }
 }
 
-function buildPhotoUrl(photoName) {
-  if (!photoName) return null;
-  return `https://places.googleapis.com/v1/${photoName}/media?maxHeightPx=800&key=${GOOGLE_PLACES_API_KEY}`;
+function buildPhotoUrl(_photoName) {
+  // Photo URLs are not included in planner responses — the raw API key must
+  // never be embedded in data returned to clients or persisted in the DB.
+  return null;
 }
 
 function humanizeType(type) {
@@ -84,8 +89,8 @@ function mapGooglePlace(raw) {
 }
 
 async function callTextSearch(textQuery, maxResultCount = 15) {
-  const cacheKey = `search::${textQuery.toLowerCase()}::${maxResultCount}`;
-  const cached = getCached(cacheKey);
+  const cacheKey = `planner:search::${textQuery.toLowerCase()}::${maxResultCount}`;
+  const cached = await getCached(cacheKey);
   if (cached) return cached;
 
   const res = await fetch(PLACES_SEARCH_URL, {
@@ -108,15 +113,15 @@ async function callTextSearch(textQuery, maxResultCount = 15) {
 
   const json = await res.json();
   const places = (json.places ?? []).map(mapGooglePlace);
-  setCache(cacheKey, places);
+  await setCache(cacheKey, places);
   return places;
 }
 
 async function getPlaceDetails(placeId) {
   if (!placeId) return null;
 
-  const cacheKey = `detail::${placeId}`;
-  const cached = getCached(cacheKey);
+  const cacheKey = `planner:detail::${placeId}`;
+  const cached = await getCached(cacheKey);
   if (cached) return cached;
 
   const res = await fetch(`${PLACES_DETAIL_URL}/${placeId}`, {
@@ -133,7 +138,7 @@ async function getPlaceDetails(placeId) {
 
   const raw = await res.json();
   const place = mapGooglePlace(raw);
-  setCache(cacheKey, place);
+  await setCache(cacheKey, place);
   return place;
 }
 

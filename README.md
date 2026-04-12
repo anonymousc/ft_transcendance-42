@@ -43,7 +43,7 @@ Rihla is a community-driven travel platform built for students exploring Morocco
 | 🔐 Authentication | Register, Login, Logout (incl. OAuth Google) | ✅ Implemented |
 | 👤 Users & Profiles | User accounts, profiles (username, avatar, bio) | ✅ Implemented |
 | 📁 File Uploads | Image and file upload functionality | ✅ Implemented |
-| 📍 Location & Places | AI-powered place suggestions (Gemini + Unsplash) | ✅ Implemented |
+| 📍 Location & Places | Place discovery (Google Places) + personalized suggestions | ✅ Implemented |
 | 🎯 Activity-Based Discovery | Places categorized by activity type | 📋 Planned  |
 | ⭐ Rating System | Rate and review places | 📋 Planned |
 | ⚡ Real-Time Features | WebSockets for messaging & notifications | 📋 Planned |
@@ -53,14 +53,14 @@ Rihla is a community-driven travel platform built for students exploring Morocco
 
 ## Current Implementation Status
 
-### Backend (NestJS 10 + TypeScript)
-- ✅ **Auth Module:** JWT-based authentication, Google OAuth 2.0 integration (signup/signin/logout)
-- ✅ **Users Module:** User CRUD operations, account management
-- ✅ **Profiles Module:** User profile creation, updates, and retrieval
-- ✅ **Uploads Module:** File upload handler with Express middleware
-- ✅ **AI Places Service:** Express microservice with Gemini Flash API for place generation & Unsplash API for images
-- **Database:** PostgreSQL with Prisma ORM v6.19, migrations ready
-- **Services:** Swagger UI (port 8080), Vault (secrets management), ELK Stack (logging)
+### Backend (microservices)
+- ✅ **auth-service (NestJS + Prisma):** cookie-based JWT auth + CSRF double-submit, Google OAuth 2.0, token validation/introspection
+- ✅ **profiles-service (NestJS + Prisma):** authenticated profile read/update, avatar upload, static serving under `/uploads/*`
+- ✅ **ai-places-service (Express):** Google Places-backed discovery (`/autocomplete`, `/places`, `/places/search`, `/places/suggest`) with Redis caching + rate limits
+- ✅ **planner-service (Express + Prisma):** AI trip planning (`/plan/*`) using Gemini + Google Places; enriches with user favorites and community review summaries via internal service calls
+- ✅ **fav-places (Express + Prisma):** save/visit places per user (`/fav-places/*`)
+- ✅ **review-places (Express + Prisma):** community reviews + rating aggregation (`/reviews/*`)
+- 🧪 **websock-service:** contract documented for realtime chat; implementation pending (see `backend/src/websock-service/handOff.md`)
 
 ### Frontend (React 19 + Vite 7)
 - ✅ **Pages:** Landing (Hero), Home, Login, Register, Profile, Settings, OAuth callback, 404 error page
@@ -100,14 +100,14 @@ Rihla is a community-driven travel platform built for students exploring Morocco
 
 | Tool | Version | Purpose |
 |--------|---------|---------|
-| [NestJS](https://nestjs.com/) | 10 | Progressive Node.js framework |
-| [TypeScript](https://www.typescriptlang.org/) | 5.1 | Type-safe server code |
-| [Prisma](https://www.prisma.io/) | 6.19 | Type-safe ORM |
-| [PostgreSQL](https://www.postgresql.org/) | 15+ | Reliable relational database |
-| [Passport.js](http://www.passportjs.org/) | 0.7 | Authentication middleware |
-| [JWT](https://jwt.io/) | via @nestjs/jwt | Secure token authentication |
-| [Jest](https://jestjs.io/) | 29.5 | Testing framework |
-| [Prettier](https://prettier.io/) | 3 | Code formatter |
+| [NestJS](https://nestjs.com/) | 10 | Auth + Profiles microservices |
+| [Express](https://expressjs.com/) | 4/5 | AI Places / Planner / Favorites / Reviews microservices |
+| [TypeScript](https://www.typescriptlang.org/) | 5.x | NestJS services |
+| [Prisma](https://www.prisma.io/) | 6.x | ORM for Postgres-backed services |
+| [PostgreSQL](https://www.postgresql.org/) | 15+ | Primary database |
+| [Redis](https://redis.io/) | 7+ | Caching + rate limit store |
+| [Passport.js](http://www.passportjs.org/) | 0.7 | OAuth/JWT middleware (NestJS) |
+| [JWT](https://jwt.io/) | jsonwebtoken / @nestjs/jwt | Auth tokens for all services |
 
 ### DevOps & Infrastructure
 
@@ -120,7 +120,7 @@ Rihla is a community-driven travel platform built for students exploring Morocco
 | Swagger API Docs | API documentation | 8080 |
 | Vault | Secrets management | 8200 |
 | Netdata | System monitoring | 19999 |
-| **AI Places Microservice** | **Express + Gemini + Unsplash** | **4000** |
+| **AI Places Microservice** | **Express + Google Places + Redis** | **4000** |
 
 ---
 
@@ -160,68 +160,18 @@ ft_transcendance-42/
 │   ├── package.json
 │   └── index.html
 │
-├── backend/                     # NestJS 10 + Prisma 6.19
+├── backend/                     # Backend microservices (NestJS + Express)
 │   ├── src/
-│   │   ├── app.module.ts        # Root module
-│   │   ├── app.service.ts       # App service
-│   │   ├── main.ts              # Entry point
-│   │   ├── prisma.service.ts    # Prisma client wrapper
-│   │   │
-│   │   ├── auth/                # Authentication module
-│   │   │   ├── auth.module.ts
-│   │   │   ├── auth.controller.ts
-│   │   │   ├── auth.service.ts
-│   │   │   ├── dto/             # Data transfer objects
-│   │   │   ├── guards/          # JWT, OAuth guards
-│   │   │   └── strategies/      # Passport strategies
-│   │   │
-│   │   ├── users/               # User management
-│   │   │   ├── users.module.ts
-│   │   │   ├── users.controller.ts
-│   │   │   ├── users.service.ts
-│   │   │   ├── dto/
-│   │   │   └── *.spec.ts        # Unit tests
-│   │   │
-│   │   ├── profiles/            # User profiles
-│   │   │   ├── profiles.module.ts
-│   │   │   ├── profiles.controller.ts
-│   │   │   ├── profiles.service.ts
-│   │   │   └── dto/
-│   │   │
-│   │   ├── uploads/             # File upload handling
-│   │   │   ├── uploads.module.ts
-│   │   │   ├── uploads.controller.ts
-│   │   │   ├── uploads.service.ts
-│   │   │   └── dto/
-│   │   │
-│   │   ├── ai-places-service/   # AI-powered place recommendations
-│   │   │   ├── src/
-│   │   │   │   ├── server.js    # Microservice entry
-│   │   │   │   └── ...
-│   │   │   ├── package.json
-│   │   │   ├── Dockerfile      # Containerized service
-│   │   │   └── README.md
-│   │   │
-│   │   └── prisma/              # ORM module
-│   │       ├── prisma.module.ts
-│   │       └── prisma.service.ts
+│   │   ├── auth-service/         # NestJS auth microservice (JWT + Google OAuth)
+│   │   ├── profiles-service/     # NestJS profiles + uploads microservice
+│   │   ├── ai-places-service/    # Express microservice (Google Places + Redis cache)
+│   │   ├── planner-service/      # Express microservice (Gemini trip planner + Prisma)
+│   │   ├── fav-places/           # Express microservice (saved/visited places + Prisma)
+│   │   ├── review-places/        # Express microservice (reviews + aggregates + Prisma)
+│   │   ├── websock-service/      # WebSocket service docs/contract (implementation pending)
+│   │   └── friends/              # Work-in-progress module (not currently wired)
 │   │
-│   ├── prisma/
-│   │   ├── schema.prisma        # Database schema (User, Profile, Account, etc.)
-│   │   ├── migrations/          # DB migration history
-│   │   └── seed.ts              # Database seeding (optional)
-│   │
-│   ├── test/                    # E2E tests
-│   │   ├── app.e2e-spec.ts
-│   │   └── jest-e2e.json
-│   │
-│   ├── docker-compose.yml       # Dev database only (PostgreSQL)
-│   ├── Dockerfile              # Backend production build
-│   ├── nest-cli.json           # NestJS CLI config
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── tsconfig.build.json
-│   └── devops/                 # Full-stack DevOps setup
+│   └── devops/                   # Docker infra (Vault, DB, Redis, Swagger, etc.)
 │       ├── docker-compose.yml  # Complete stack (all services)
 │       ├── .env                # Service configuration
 │       ├── backend-services/   # Service containers
@@ -277,68 +227,70 @@ cd frontend
 npm install
 cd ..
 
-# 3. Backend setup
-cd backend
-npm install
-cd ..
-
-# 4. Generate Prisma client
-cd backend && npm run prisma:generate && cd ..
+# 3. Backend setup (per service)
+# Each backend service has its own package.json under backend/src/<service>
+cd backend/src/auth-service && npm install && cd ../../..
+cd backend/src/profiles-service && npm install && cd ../../..
+cd backend/src/ai-places-service && npm install && cd ../../..
+cd backend/src/review-places && npm install && cd ../../..
+cd backend/src/fav-places && npm install && cd ../../..
+cd backend/src/planner-service && npm install && cd ../../..
 ```
 
 ### Local Development (No Docker)
 
-**Start the development database:**
+Local development is supported, but the simplest way to run the backend is Docker (see below).  
+If you still want to run services locally, you’ll need **PostgreSQL** + **Redis** running and a `.env` for each service.
+
+**Start auth-service (NestJS)**
 
 ```bash
-cd backend
-docker compose up -d  # Spins up PostgreSQL on localhost:5432
-npm run prisma:dev:deploy  # Run migrations
-cd ..
-```
-
-**Start backend (from backend/ directory):**
-
-```bash
+cd backend/src/auth-service
+npm run prisma:generate
+npm run prisma:migrate
 npm run start:dev
-# Server runs on http://localhost:3000
+# http://localhost:3001
 ```
 
-**Start frontend (from frontend/ directory):**
+```bash
+cd backend/src/profiles-service
+npm run prisma:generate
+npm run prisma:migrate
+npm run start:dev
+# http://localhost:3002
+```
+
+**Start Express services**
 
 ```bash
-npm run dev
-# Dev server on http://localhost:5173
+cd backend/src/ai-places-service && npm run startDev
+cd backend/src/review-places && npm run dev
+cd backend/src/fav-places && npm run dev
+cd backend/src/planner-service && npm run dev
 ```
 
 ### Backend Scripts
 
 ```bash
-# From backend/ directory
+# Each backend service has its own scripts.
+# Examples:
 
-# Development
-npm run start:dev          # Watch mode with hot reload
-npm run start:debug        # Debug mode with inspector
+# NestJS services (auth-service / profiles-service)
+cd backend/src/auth-service && npm run start:dev
+cd backend/src/profiles-service && npm run start:dev
 
-# Production
-npm run build              # Compile to dist/
-npm run start:prod         # Run compiled version
+# Express services
+cd backend/src/ai-places-service && npm run startDev
+cd backend/src/review-places && npm run dev
+cd backend/src/fav-places && npm run dev
+cd backend/src/planner-service && npm run dev
 
-# Database
-npm run prisma:generate    # Generate Prisma client
-npm run prisma:dev:deploy  # Run pending migrations
-# npx prisma studio        # Open database GUI (optional)
-
-# Code quality
-npm run lint              # Fix ESLint issues
-npm run format            # Format with Prettier
-
-# Testing
-npm run test              # Run unit tests
-npm run test:watch        # Watch mode
-npm run test:cov          # Coverage report
-npm run test:debug        # Debug mode
-npm run test:e2e          # End-to-end tests
+# Prisma (per-service)
+cd backend/src/auth-service && npm run prisma:generate && npm run prisma:migrate
+cd backend/src/profiles-service && npm run prisma:generate && npm run prisma:migrate
+cd backend/src/planner-service && npm run prisma:generate && npm run prisma:migrate
+cd backend/src/review-places && npm run prisma:generate && npm run prisma:migrate
+cd backend/src/fav-places && npm run prisma:generate && npm run prisma:migrate
 ```
 
 ### Frontend Scripts
@@ -360,85 +312,57 @@ npm run lint             # ESLint checks
 
 ```env
 # API Configuration
-VITE_API_URL=http://localhost:3000        # Backend API URL
-VITE_WS_URL=ws://localhost:3000          # WebSocket URL (for real-time features)
+VITE_API_URL=http://localhost:3001        # Auth service base URL (cookies + CSRF)
+VITE_PROFILES_URL=http://localhost:3002   # Profiles service base URL
+VITE_AI_PLACES_URL=http://localhost:4000  # AI Places service base URL
+VITE_PLANNER_URL=http://localhost:7000    # Planner service base URL
+VITE_WS_URL=ws://localhost:8000           # WebSocket URL (for real-time features; optional)
 ```
 
-### Backend (.env in backend/)
+### Backend (Docker compose `.env` at repo root)
+
+The root `docker-compose.yml` loads environment from a **repo-root** `.env`.  
+Create `.env` (not committed) with at least:
 
 ```env
-# Server
-NODE_ENV=development
-PORT=3000
+# Ports
+PORT_FRONT=5173
+PORT_POSTGRES=5432
+PORT_VAULT=8200
 
-# Database
-DATABASE_URL=postgresql://postgres:password@localhost:5432/rihla
-
-# JWT
-JWT_SECRET=your_jwt_secret_here
-JWT_EXPIRATION=7d
-
-# OAuth (Google)
-GOOGLE_CLIENT_ID=your_google_client_id_here
-GOOGLE_CLIENT_SECRET=your_google_client_secret_here
-GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
-
-# Frontend URL (for redirects)
+# CORS / redirects
 FRONTEND_URL=http://localhost:5173
 
-# Optional: File Upload
-UPLOAD_DEST=./uploads
-MAX_FILE_SIZE=5242880  # 5MB in bytes
-```
+# JWT (shared by all backend services)
+JWT_ACCESS_SECRET=change_me
+JWT_ACCESS_EXPIRES_IN=15m
 
-### DevOps Stack (.env in backend/devops/)
+# Postgres (Prisma uses DATABASE_URL)
+DATABASE_URL=postgresql://postgres:password@localhost:5432/rihla
 
-```env
-# Frontend
-PORT_FRONT=3000
-FRONTEND_DOMAIN=localhost
-
-# Backend
-PORT_BACK=3001
-BACKEND_DOMAIN=localhost
-
-# Database
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=your_secure_password
-POSTGRES_DB=rihla
-POSTGRES_PORT=5432
+# External APIs
+GEMINI_API_KEY=your_gemini_api_key
+GOOGLE_PLACES_API_KEY=your_google_places_api_key
 
 # Redis
-REDIS_PORT=6379
-
-# Swagger UI
-SWAGGER_PORT=8080
-
-# Vault (Secrets Management)
-VAULT_ADDR=http://localhost:8200
-VAULT_TOKEN=your_vault_token
-
-# Netdata Monitoring
-NETDATA_PORT=19999
-
-# Service URLs
-AUTH_SERVICE_URL=http://localhost:3001/auth
-API_PLACES_SERVICE_URL=http://localhost:3002
+REDIS_URL=redis://redis:6379
 ```
 
 ### Secrets Management
 
-Sensitive credentials are stored in `backend/devops/secrets~/` (gitignored):
+When using the full Docker stack, Vault consumes secret files under `backend/devops/secrets/` (see `docker-compose.yml` `secrets:` block).
+
+Create the following files (gitignored) before `make all`:
 
 ```
-backend/devops/secrets~/
+backend/devops/secrets/
   ├── google_client_id
   ├── google_client_secret
   ├── callback_url
-  └── frontend_url
+  ├── frontend_url
+  ├── gemini_api_key
+  └── google_places
 ```
-
-Create these files and populate with your credentials before running the full stack.
 
 ---
 
@@ -460,91 +384,33 @@ docker compose -f docker-compose.yml logs -f frontend
 
 **URL:** http://localhost:5173
 
-### Option 2: Backend + Database (Local Dev)
+### Option 2: Full Stack (recommended)
 
 ```bash
-cd backend
-
-# Start PostgreSQL only
-docker compose up -d
-
-# Generate Prisma client and run migrations
-npm run prisma:generate
-npm run prisma:dev:deploy
-
-# Start backend server (from backend/)
-npm run start:dev
+make all
 ```
 
-**Database:** localhost:5432  
-**API:** http://localhost:3000
-
-### Option 3: Backend Only (Container)
-
-```bash
-make backend
-
-# Or manually:
-docker compose -f docker-compose.yml build backend --no-cache
-docker compose -f docker-compose.yml up backend -d
-```
-
-### Option 4: Complete Stack (All Services)
-
-This runs the full production-like stack with all microservices, databases, and infrastructure:
-
-```bash
-# From project root (uses backend/devops/docker-compose.yml)
-make all           # Build and start everything
-make start         # Start stopped services
-make stop          # Stop all services
-make clean         # Delete all containers, images, volumes, networks
-make logs          # View logs from all services
-make logs service-name  # View logs for specific service
-```
-
-**Available services after `make all`:**
-
-| Service | URL | Port |
-|---------|-----|------|
-| Frontend | http://localhost:3000 | 3000 |
-| Backend API | http://localhost:3001 | 3001 |
-| PostgreSQL | postgres://... | 5432 |
-| Redis | redis://localhost | 6379 |
-| Swagger API Docs | http://localhost:8080 | 8080 |
-| Kibana (Logs) | http://localhost:5601 | 5601 |
-| Netdata (Monitoring) | http://localhost:19999 | 19999 |
-| Vault (Secrets) | http://localhost:8200 | 8200 |
-
-### Database Migrations
-
-```bash
-cd backend
-
-# Create a new migration
-npx prisma migrate dev --name <migration_name>
-
-# Reset database (⚠️ deletes all data)
-npx prisma migrate reset
-
-# View database in Prisma Studio
-npx prisma studio
-
-# Rollback specific migration
-npx prisma migrate resolve --rolling-back <migration_name>
-```
+**Services:**
+- Frontend: `http://localhost:${PORT_FRONT}` (default `http://localhost:5173`)
+- Auth: `http://localhost:3001` (`/auth/*`, `/health`)
+- Profiles: `http://localhost:3002` (`/profiles/*`, `/uploads/*`, `/health`)
+- AI Places: `http://localhost:4000` (`/places*`, `/autocomplete*`, `/health`)
+- Review Places: `http://localhost:4001` (`/reviews*`, `/health`)
+- Fav Places: `http://localhost:4002` (`/fav-places*`, `/health`)
+- Planner: `http://localhost:7000` (`/plan*`, `/plans`, `/health`)
+- Swagger UI: `http://localhost:8080`
+- Vault: `http://localhost:${PORT_VAULT}` (default `http://localhost:8200`)
 
 ### Makefile Commands Summary
 
 ```bash
-make all          # Build all images and start all services
-make front        # Build and start frontend only
-make backend      # Build and start backend only
-make start        # Start all stopped services
-make stop         # Stop all services
-make clean        # Remove everything (containers, images, volumes, networks)
-make logs         # Stream logs from all services
-make logs backend # Stream logs from specific service
+make all                # Build and start everything in docker-compose.yml
+make front              # Build and start frontend only
+make start              # Start stopped services
+make stop               # Stop all services
+make clean              # Remove containers/images/volumes/networks
+make logs               # Stream logs from all services
+make logs auth          # Stream logs for a single service (example)
 ```
 
 ### Troubleshooting Docker
@@ -578,59 +444,29 @@ docker compose -f docker-compose.yml build <service_name> --no-cache
 
 ### Implemented Endpoints
 
-| Module | Base Route | Methods | Description | Status |
-|--------|------------|---------|-------------|--------|
-| **Auth** | `/auth` | POST | signup, signin, logout with JWT & Google OAuth | ✅ |
-| **Users** | `/users` | GET, POST, PATCH, DELETE | User CRUD operations | ✅ |
-| **Profiles** | `/profiles` | GET, POST, PATCH, DELETE | Profile management (linked to User) | ✅ |
-| **Uploads** | `/uploads` | POST | File & image uploads | ✅ |
-| **AI Places** | `/ai-places` | GET | AI-generated places with images by city | ✅ |
+| Service | Base URL | Key routes | Description | Status |
+|--------|----------|------------|-------------|--------|
+| **auth-service** | `http://localhost:3001` | `GET /health`, `GET /auth/csrf`, `POST /auth/signup`, `POST /auth/signin`, `POST /auth/logout`, `GET /auth/me`, `GET /auth/validate`, `GET /auth/google/*` | Cookie-based JWT auth + CSRF + Google OAuth | ✅ |
+| **profiles-service** | `http://localhost:3002` | `GET /health`, `GET /profiles/me`, `PUT /profiles/me`, `POST /uploads/avatar`, `GET /uploads/*` | Profiles + uploads (auth required) | ✅ |
+| **ai-places-service** | `http://localhost:4000` | `GET /health`, `GET /autocomplete`, `POST /autocomplete/recent`, `GET /places`, `GET /places/search`, `POST /places/suggest`, `GET /places/photos` | Discovery (Google Places) + Redis caching + rate limits | ✅ |
+| **review-places** | `http://localhost:4001` | `GET /health`, `GET /reviews`, `GET /reviews/summary`, `POST /reviews/batch`, `POST/PATCH/DELETE /reviews/*` | Reviews + rating aggregates | ✅ |
+| **fav-places** | `http://localhost:4002` | `GET /health`, `GET/POST /fav-places`, `GET /fav-places/check`, `GET /fav-places/public/:userId`, `GET /fav-places/internal/:userId` | Favorites + visited places | ✅ |
+| **planner-service** | `http://localhost:7000` | `GET /health`, `POST /plan/generate`, `GET /plan/:id`, `GET /plans`, `DELETE /plan/:id` | AI trip planning (Gemini) + persistence | ✅ |
 
 ### Planned Modules
 
-- **Posts:** Create, read, update, delete travel posts
-- **Groups:** Create traveller groups, manage membership
-- **Messages:** Direct messaging with real-time updates (WebSocket)
-- **Notifications:** Push & in-app notifications
-- **Ratings:** Rate places and get community feedback
-- **Bookmarks:** Save favorite places
+- **Realtime chat (websock-service):** see `backend/src/websock-service/handOff.md`
+- **Social graph:** friends module exists as a WIP draft under `backend/src/friends/` (not currently wired)
 
 ### AI Places Service Details
 
-The **AI Places Service** is an Express.js microservice that generates intelligent travel recommendations:
-
-**How it works:**
-1. **Request:** Client calls `GET /ai-places?city=Marrakesh`
-2. **Cache Check:** Service checks in-memory cache (1-hour TTL)
-   - **Hit** → Return cached places JSON
-   - **Miss** → Continue to step 3
-3. **AI Generation:** Calls Google Gemini 2.5 Flash API to generate 10 places with:
-   - Name, category (Museum, Park, Restaurant, etc.)
-   - Rating (1.0-5.0), detailed description
-   - Address and "must visit" status
-4. **Image Enrichment:** For each place, fetches cover image from Unsplash API (parallel requests)
-5. **Cache & Return:** Stores result in cache and returns enriched JSON to client
-
-**Tech Stack:**
-- Express.js 5.2 (HTTP server)
-- Google Gemini 2.5 Flash API (place generation)
-- Unsplash API (place images)
-- In-memory caching with TTL
-- CORS enabled for frontend communication
-
-**Required Environment Variables:**
-- `GEMINI_API_KEY` – Get from [Google AI Studio](https://aistudio.google.com/app/apikey)
-- `UNSPLASH_ACCESS_KEY` – Get from [Unsplash Developers](https://unsplash.com/developers)
-- `PORT` – Service port (default: 4000)
-
-See [backend/src/ai-places-service/README.md](backend/src/ai-places-service/README.md) for full implementation details.
+See `backend/src/ai-places-service/README.md`. Note that the current implementation is **Google Places + Redis** (not Unsplash), with a public photo proxy at `GET /places/photos`.
 
 ---
 
 ### Documentation
 
 - **Swagger UI:** Available at `http://localhost:8080` (when running full stack)
-- **API Handoff:** See [backend/BACKEND_HANDOFF.md](backend/BACKEND_HANDOFF.md) for detailed endpoint specifications and data models
 - **OAuth Setup:** See [Oauth2.md](Oauth2.md) for Google OAuth configuration
 
 ---
@@ -643,96 +479,83 @@ See [backend/src/ai-places-service/README.md](backend/src/ai-places-service/READ
 ┌─────────────────┐
 │   Frontend      │
 └────────┬────────┘
-         │ 1. User submits credentials/OAuth
+         │ 1. User signs in / OAuth
          ▼
 ┌─────────────────────────────┐
-│   Auth Module (/auth)       │ ← Validates credentials
-│   - signup (register)       │ ← Hashes password with Argon2
-│   - signin (login)          │ ← Issues JWT token
-│   - oauth/google            │ ← Google OAuth 2.0
+│ auth-service (NestJS)       │
+│ - POST /auth/signup         │ ← Argon2 hash, create user/profile
+│ - POST /auth/signin         │ ← Issues JWT
+│ - GET /auth/google/*        │ ← Google OAuth 2.0
 └────────┬────────────────────┘
-         │ 2. JWT Token
+         │ 2. Sets cookies
          ▼
 ┌─────────────────────────────┐
-│   Frontend Stores Token     │
-│   (localStorage/session)    │
+│ Browser cookies             │
+│ - access_token (httpOnly)   │
+│ - csrf_token (readable)     │
 └────────┬────────────────────┘
-         │ 3. Include JWT in headers
+         │ 3. For mutating requests:
+         │    send X-CSRF-Token header matching csrf_token cookie
          ▼
 ┌─────────────────────────────┐
-│   JWT Guard validates token │
-│   on protected routes       │
+│ Other services validate JWT │
+│ via shared JWT_ACCESS_SECRET│
 └─────────────────────────────┘
 ```
 
 ### Database Schema (Key Models)
 
 ```typescript
-// User - Core account
+// Core user account (auth-service / profiles-service)
 model User {
-  id: String @id @default(cuid())
-  email: String @unique
-  username: String @unique
-  passwordHash: String
-  profile: Profile?
-  accounts: Account[]  // OAuth
-  createdAt: DateTime
-  updatedAt: DateTime
+  id              String    @id @default(cuid())
+  email           String    @unique
+  hashPassword    String?
+  isEmailVerified Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  accounts        Account[]
+  profile         Profile?
 }
 
-// Profile - User details
-model Profile {
-  id: String @id
-  userId: String @unique
-  avatar: String?          // URL to image
-  bio: String?
-  coverImage: String?      // Header image
-  user: User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-// Account - OAuth integration
+// OAuth accounts (e.g. google)
 model Account {
-  id: String @id @default(cuid())
-  userId: String
-  provider: String        // "google"
-  providerAccountId: String
-  user: User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String   @id @default(cuid())
+  userId            String
+  provider          String
+  providerAccountId String
+  accessToken       String?
+  refreshToken      String?
+  expiresAt         Int?
+  createdAt         DateTime @default(now())
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+// Profile info (displayName, username, avatar, etc.)
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  username    String   @unique
+  displayName String?
+  avatar      String?
+  bio         String?
+  status      String   @default("offline")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 ```
 
-(See `backend/prisma/schema.prisma` for complete schema)
+(See `backend/src/auth-service/prisma/schema.prisma` and `backend/src/profiles-service/prisma/schema.prisma` for the source of truth.)
 
 ## Testing
 
-### Unit Tests
-
-```bash
-cd backend
-
-# Run all tests
-npm run test
-
-# Watch mode (re-run on file change)
-npm run test:watch
-
-# Coverage report
-npm run test:cov
-
-# Debug tests
-npm run test:debug
-```
-
-### E2E Tests
-
-```bash
-cd backend
-
-# Run end-to-end tests
-npm run test:e2e
-
-# With coverage
-npm run test:e2e -- --coverage
-```
+Backend services currently ship with **lint/format** scripts, but do not have a unified test runner at the repo root.
 
 ### Frontend
 
@@ -778,18 +601,24 @@ PORT=3001 npm run start:dev
 # Verify PostgreSQL is running
 docker ps | grep postgres
 
-# Check DATABASE_URL in .env
+# Check DATABASE_URL in your repo-root .env (Docker) or per-service .env (local)
 echo $DATABASE_URL
 
 # Reset database (⚠️ deletes all data)
-cd backend && npx prisma migrate reset
+# Prisma schemas live per service under backend/src/<service>/prisma/schema.prisma
+# Example (planner-service):
+cd backend/src/planner-service && npx prisma migrate reset
 ```
 
 ### Prisma Client Missing
 
 ```bash
-cd backend
-npm run prisma:generate
+# Run per service that uses Prisma
+cd backend/src/auth-service && npm run prisma:generate
+cd backend/src/profiles-service && npm run prisma:generate
+cd backend/src/planner-service && npm run prisma:generate
+cd backend/src/review-places && npm run prisma:generate
+cd backend/src/fav-places && npm run prisma:generate
 ```
 
 ### Docker Permission Denied
@@ -805,11 +634,14 @@ sudo docker compose up
 ### Frontend Can't Connect to Backend
 
 ```bash
-# Verify backend is running
-curl http://localhost:3000/health
+# Verify services are running
+curl http://localhost:3001/health  # auth-service
+curl http://localhost:3002/health  # profiles-service
+curl http://localhost:4000/health  # ai-places-service
+curl http://localhost:7000/health  # planner-service
 
 # Check VITE_API_URL in frontend/.env
-# Should match backend PORT and FRONTEND_URL in backend/.env
+# Should match the service URLs and FRONTEND_URL
 ```
 
 ## Roadmap
@@ -818,7 +650,10 @@ curl http://localhost:3000/health
 - ✅ User authentication (email/Google)
 - ✅ User profiles
 - ✅ File uploads
-- ✅ AI-powered place recommendations (Gemini + Unsplash)
+- ✅ Place discovery (Google Places + Redis cache)
+- ✅ Favorites & visited places
+- ✅ Reviews & ratings
+- ✅ AI trip planner (Gemini)
 - 📋 Real-time messaging infrastructure
 
 ### Medium Term (v1.5)

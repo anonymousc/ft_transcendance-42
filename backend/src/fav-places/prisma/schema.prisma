@@ -16,8 +16,10 @@ model SavedPlace {
   address   String
   image     String?
   rating    Float?
+  status    String   @default("favorited")
   savedAt   DateTime @default(now())
 
   @@unique([userId, placeName, city])
   @@index([userId])
+  @@index([userId, status])
 }

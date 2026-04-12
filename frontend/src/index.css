@@ -15,14 +15,21 @@
 
 html {
   width: 100%;
+  max-width: 100%;
   min-height: 100%;
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Prevent font size inflation on mobile */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* With body alone, some browsers still allow horizontal scroll from wide descendants */
+  overflow-x: hidden;
 }
 
 body {
   width: 100%;
+  max-width: 100%;
   min-height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
@@ -31,9 +38,36 @@ body {
   transition: background-color 0.3s ease;
 }
 
+/* Ensure touch targets are large enough */
+button, a, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+}
+
+/* Override for small inline elements that shouldn't be 44px */
+.tab-btn, .planner-pref-chip, .tpm-tab,
+.glass-suggestion-item, .profile-dropdown-item,
+.mobile-nav-link, .settings-row-clickable,
+[data-slot="checkbox"] {
+  min-height: unset;
+  min-width: unset;
+}
+
+/* Auth pages: inline “Sign up” / “Sign in” next to sentence (global <a> is 44×44 for touch) */
+.auth-footer-link {
+  min-height: unset;
+  min-width: unset;
+  display: inline;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
 #root {
   width: 100%;
+  max-width: 100%;
   min-height: 100%;
+  overflow-x: hidden;
 }
 
 @theme inline {
