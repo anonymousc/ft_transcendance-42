@@ -19,6 +19,8 @@ services:
         condition: service_healthy
       profiles:
         condition: service_healthy
+      friends:
+        condition: service_healthy
       redis:
         condition: service_healthy
       vault:
@@ -110,7 +112,7 @@ services:
       vault:
         condition: service_healthy
       database:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3001/health || exit 1"]
       interval: 30s
@@ -140,7 +142,7 @@ services:
       - shared_resources:/data:ro
     depends_on:
       database:
-        condition: service_started
+        condition: service_healthy
       vault:
         condition: service_healthy
     healthcheck:
@@ -175,9 +177,10 @@ services:
     restart: on-failure
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -h localhost -p $PORT_POSTGRES || exit 1"]
-      interval: 30s
+      interval: 10s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 60s
     logging:
       driver: json-file
       options:
@@ -205,7 +208,7 @@ services:
       vault:
         condition: service_healthy
       database:
-        condition: service_started
+        condition: service_healthy
     networks:
       - saas
     logging:
@@ -248,6 +251,9 @@ services:
       - frontend_url
       - gemini_api_key
       - google_places_api_key
+      - fortytwo_callback
+      - fortytwo_client_id
+      - fortytwo_client_secret
     env_file:
       - .env
     volumes:
@@ -285,6 +291,8 @@ services:
         condition : service_healthy
       database: 
         condition : service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - shared_resources:/data/
     healthcheck:
@@ -315,7 +323,7 @@ services:
       - shared_resources:/data:ro
     depends_on:
       database:
-        condition: service_started
+        condition: service_healthy
       vault:
         condition: service_healthy
     healthcheck:
@@ -348,7 +356,7 @@ services:
       - shared_resources:/data:ro
     depends_on:
       database:
-        condition: service_started
+        condition: service_healthy
       vault:
         condition: service_healthy
     healthcheck:
@@ -367,6 +375,39 @@ services:
     labels:
       - "service=fav-places"
 
+  friends:
+    build: ./backend/src/friends-service
+    container_name: friends
+    ports:
+      - "4003:4003"
+    environment:
+      - PORT=4003
+      - PORT_VAULT=${PORT_VAULT}
+    networks:
+      - saas
+    volumes:
+      - shared_resources:/data:ro
+    depends_on:
+      database:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4003/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+    restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=friends"
+
   planner:
     build: ./backend/src/planner-service
     container_name: planner
@@ -375,6 +416,7 @@ services:
     environment:
       - FAV_PLACES_URL=http://fav-places:4002
       - REVIEW_PLACES_URL=http://review-places:4001
+      - PROFILES_URL=http://profiles:3002
     env_file:
       - .env
     networks:
@@ -383,12 +425,16 @@ services:
       - shared_resources:/data:ro
     depends_on:
       database:
-        condition: service_started
+        condition: service_healthy
       vault:
+        condition: service_healthy
+      profiles:
         condition: service_healthy
       fav-places:
         condition: service_healthy
       review-places:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:7000/health || exit 1"]
@@ -412,6 +458,41 @@ services:
   #   ports:
   #    - "8080:80" #shoud be changed to 443
   #   retries: on-failure
+
+  # nginx:
+  #   build: ./backend/devops/nginx
+  #   container_name: nginx-gateway
+  #   ports:
+  #     - "80:80"
+  #   networks:
+  #     - saas
+  #   depends_on:
+  #     auth:
+  #       condition: service_healthy
+  #     profiles:
+  #       condition: service_healthy
+  #     ai-places:
+  #       condition: service_healthy
+  #     review-places:
+  #       condition: service_healthy
+  #     fav-places:
+  #       condition: service_healthy
+  #     planner:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   restart: on-failure
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #       labels: "service"
+  #   labels:
+  #     - "service=nginx-gateway"
 
   # Monitoring service - Netdata
   # netdata:
@@ -470,10 +551,7 @@ volumes:
   netdata_lib: {}
   netdata_cache: {}
   redis_data: {}
-  shared_resources:
-    driver_opts:
-      type : tmpfs
-      device : tmpfs
+  shared_resources: {}
 secrets:
   google_client_id:
     file: ./backend/devops/secrets/google_client_id
@@ -481,6 +559,12 @@ secrets:
     file: ./backend/devops/secrets/google_client_secret
   callback_url:
     file: ./backend/devops/secrets/callback_url
+  fortytwo_client_id:
+    file: ./backend/devops/secrets/fortytwo_client_id
+  fortytwo_client_secret:
+    file: ./backend/devops/secrets/fortytwo_client_secret
+  fortytwo_callback:
+    file: ./backend/devops/secrets/fortytwo_callback
   frontend_url:
     file: ./backend/devops/secrets/frontend_url
   gemini_api_key:
