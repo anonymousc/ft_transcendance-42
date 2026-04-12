@@ -253,7 +253,7 @@ export class AuthService {
 
     if (!user.hashPassword) {
       throw new BadRequestException(
-        'This account was created via OAuth. Please sign in with Google.',
+        'This account was created via OAuth. Please sign in with your OAuth provider.',
       );
     }
 
