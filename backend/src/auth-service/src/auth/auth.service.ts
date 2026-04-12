@@ -17,6 +17,7 @@ interface GoogleUser {
   avatar: string;
   accessToken: string;
   refreshToken: string;
+  expiresIn?: number;
 }
 
 @Injectable()
@@ -27,59 +28,154 @@ export class AuthService {
   ) {}
 
   async validateGoogleUser(googleUser: GoogleUser) {
-    const { provider, providerAccountId, email, displayName, avatar, accessToken, refreshToken } =
-      googleUser;
+    const {
+      provider,
+      providerAccountId,
+      email,
+      displayName,
+      avatar,
+      accessToken,
+      refreshToken,
+      expiresIn,
+    } = googleUser;
 
-    let account = await this.prisma.account.findUnique({
+    const expiresAt = Math.floor(Date.now() / 1000) + (expiresIn ?? 3600);
+
+    const existingAccount = await this.prisma.account.findUnique({
       where: { provider_providerAccountId: { provider, providerAccountId } },
       include: { user: { include: { profile: true } } },
     });
 
-    if (account) {
-      await this.prisma.account.update({
-        where: { id: account.id },
-        data: { accessToken, refreshToken },
+    let userId: string;
+
+    if (existingAccount) {
+      userId = existingAccount.userId;
+    } else {
+      let user = await this.prisma.user.findUnique({
+        where: { email },
+        include: { profile: true },
       });
-      if (avatar && account.user.profile && account.user.profile.avatar !== avatar) {
-        await this.prisma.profile.update({
-          where: { userId: account.user.id },
-          data: { avatar },
+
+      if (!user) {
+        user = await this.prisma.user.create({
+          data: {
+            email,
+            isEmailVerified: true,
+            profile: {
+              create: {
+                username: email.split('@')[0] + '_' + Date.now().toString(36),
+                displayName: displayName || email.split('@')[0],
+                avatar: avatar || null,
+              },
+            },
+          },
+          include: { profile: true },
         });
       }
-      return account.user;
+
+      userId = user.id;
     }
 
-    let user = await this.prisma.user.findUnique({
-      where: { email },
-      include: { profile: true },
-    });
-
-    if (user) {
-      await this.prisma.account.create({
-        data: { userId: user.id, provider, providerAccountId, accessToken, refreshToken },
-      });
-      return user;
-    }
-
-    user = await this.prisma.user.create({
-      data: {
-        email,
-        isEmailVerified: true,
-        accounts: {
-          create: { provider, providerAccountId, accessToken, refreshToken },
-        },
-        profile: {
-          create: {
-            username: email.split('@')[0] + '_' + Date.now().toString(36),
-            displayName: displayName || email.split('@')[0],
-            avatar: avatar || null,
-          },
-        },
+    await this.prisma.account.upsert({
+      where: { provider_providerAccountId: { provider, providerAccountId } },
+      update: {
+        accessToken,
+        refreshToken: refreshToken ?? undefined,
+        expiresAt,
       },
+      create: {
+        userId,
+        provider,
+        providerAccountId,
+        accessToken,
+        refreshToken,
+        expiresAt,
+      },
+    });
+
+    if (existingAccount && avatar && existingAccount.user.profile?.avatar !== avatar) {
+      await this.prisma.profile.update({
+        where: { userId: existingAccount.user.id },
+        data: { avatar },
+      });
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
       include: { profile: true },
     });
+
+    if (!user) {
+      throw new BadRequestException('Failed to resolve user after Google sign-in');
+    }
 
     return user;
+  }
+
+  async getValidGoogleAccessToken(userId: string): Promise<string> {
+    const account = await this.prisma.account.findFirst({
+      where: { userId, provider: 'google' },
+    });
+
+    if (!account?.accessToken) {
+      throw new Error(
+        'No Google account linked. Please sign in with Google to use calendar export.',
+      );
+    }
+
+    if (
+      account.expiresAt != null &&
+      account.expiresAt * 1000 > Date.now() + 60_000
+    ) {
+      return account.accessToken;
+    }
+
+    if (!account.refreshToken) {
+      throw new Error(
+        'No Google account linked. Please sign in with Google to use calendar export.',
+      );
+    }
+
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+      throw new Error('Google token refresh failed. Please reconnect your Google account.');
+    }
+
+    const body = new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: account.refreshToken,
+      grant_type: 'refresh_token',
+    });
+
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+
+    const json = (await res.json()) as {
+      access_token?: string;
+      expires_in?: number;
+      error?: string;
+    };
+
+    if (!res.ok || !json.access_token) {
+      throw new Error('Google token refresh failed. Please reconnect your Google account.');
+    }
+
+    const newExpiresAt = Math.floor(Date.now() / 1000) + (json.expires_in ?? 3600);
+
+    await this.prisma.account.update({
+      where: { id: account.id },
+      data: {
+        accessToken: json.access_token,
+        expiresAt: newExpiresAt,
+      },
+    });
+
+    return json.access_token;
   }
 
   generateJwt(user: { id: string; email: string }) {

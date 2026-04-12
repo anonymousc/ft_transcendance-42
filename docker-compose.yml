@@ -414,6 +414,7 @@ services:
       - FAV_PLACES_URL=http://fav-places:4002
       - REVIEW_PLACES_URL=http://review-places:4001
       - PROFILES_URL=http://profiles:3002
+      - AUTH_SERVICE_URL=http://auth:3001
     env_file:
       - .env
     networks:

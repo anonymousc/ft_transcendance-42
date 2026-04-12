@@ -9,6 +9,7 @@ import {
   UnauthorizedException,
   HttpCode,
   HttpStatus,
+  HttpException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleOAuthGuard } from './guards/google-oauth.guard';
@@ -115,5 +116,26 @@ export class AuthController {
   validate(@Req() req: Request) {
     const { id, email } = req.user as { id: string; email: string };
     return { valid: true, user: { id, email } };
+  }
+
+  /**
+   * Returns a valid Google OAuth access token for the authenticated user (Calendar API).
+   * Planner and other services forward the user's session cookie.
+   */
+  @Get('internal/google-token')
+  @UseGuards(JwtAuthGuard)
+  async internalGoogleToken(@Req() req: Request) {
+    const { id } = req.user as { id: string };
+    try {
+      const accessToken = await this.authService.getValidGoogleAccessToken(id);
+      return { ok: true, data: { accessToken } };
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to get Google token';
+      throw new HttpException(
+        { ok: false, error: { message } },
+        HttpStatus.FORBIDDEN,
+      );
+    }
   }
 }

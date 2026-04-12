@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CalendarDays } from "lucide-react";
+import { ArrowLeft, CalendarDays } from "lucide-react";
 import HomeNavBar from "../components/shared/HomeNavBar";
 import type { Activity, DayPlan } from "../components/shared/TripPlannerBar";
 import "./HomePage.css";
@@ -9,6 +9,8 @@ import bgvideo from "../assets/home-background.mp4";
 import { useAuth } from "@/context/AuthContext";
 import { needsInterestsOnboarding } from "@/lib/interestsOnboarding";
 import { useTheme } from "@/context/ThemeContext";
+import BackArrow from "@/components/shared/BackArrow";
+import GoogleCalendar from "@/components/shared/GoogleCalendar";
 
 const PLANNER_URL =
   (import.meta.env.VITE_PLANNER_URL as string) || "http://localhost:7000";
@@ -395,7 +397,16 @@ export default function PlannerPage() {
         const res = await fetch(`${PLANNER_URL}/plan/${id}`, { credentials: "include" });
         const data = await parseJson(res);
         if (!data.ok) throw new Error(data.error?.message ?? "Failed to load plan");
-        setActivePlan(cloneRow(data.data as TripPlanRow));
+        const raw = data.data as TripPlanRow;
+        const row = cloneRow(raw);
+        console.log("[planner] GET /plan/:id response shape", {
+          topLevelKeys: Object.keys(row),
+          planKeys: row.plan ? Object.keys(row.plan) : [],
+          dayCount: row.plan?.days?.length,
+          sampleDay: row.plan?.days?.[0],
+          sampleActivity: row.plan?.days?.[0]?.activities?.[0],
+        });
+        setActivePlan(row);
         setDirty(false);
         setEditingStopKey(null);
         setSearchParams({ id }, { replace: true });
@@ -529,16 +540,43 @@ export default function PlannerPage() {
     }
   };
 
+  const handleExportToGoogleCalendar = useCallback(async () => {
+    if (!activePlan?.id) return;
+    try {
+      showToast("Adding to Google Calendar…");
+      const res = await fetch(
+        `${PLANNER_URL}/plan/${activePlan.id}/export/google-calendar`,
+        { method: "POST", credentials: "include" }
+      );
+      const data = await parseJson(res);
+      if (!data.ok) throw new Error(data.error?.message ?? "Export failed");
+      const payload = data.data as { total: number; failed: number };
+      const { total, failed } = payload;
+      if (total === 0) {
+        showToast("No activities to add to the calendar.");
+        return;
+      }
+      if (failed === 0) {
+        showToast(`${total} event${total === 1 ? "" : "s"} added to Google Calendar!`);
+      } else {
+        showToast(`${total - failed}/${total} events added (${failed} failed)`);
+      }
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Could not export to calendar");
+    }
+  }, [activePlan, showToast]);
+
   const goToNewTripOnHome = () => {
     navigate("/home", { state: { openPlanTab: true } });
   };
 
   return (
     <div className="planner-page-shell home-page home-page--hero">
-      <video className="videoTag" autoPlay loop muted playsInline>
-        <source src={bgvideo} type="video/mp4" />
-      </video>
-      <HomeNavBar />
+      <header className="planner-header">
+      <button type="button" className="ml-4 mt-2 rounded-full p-2" onClick={() => navigate("/home")}>
+        <ArrowLeft size={28} className="text-stone-900 dark:text-white" />
+      </button>
+      </header>
       <div className="home-nav-main-offset planner-page-body">
         <div className="planner-root" data-theme={theme}>
         {toast ? <Toast message={toast} onDismiss={dismissToast} /> : null}
@@ -583,6 +621,7 @@ export default function PlannerPage() {
                         {saveLoading ? "Saving…" : "Save changes"}
                       </button>
                     ) : null}
+                    <GoogleCalendar handleExport={() => { void handleExportToGoogleCalendar(); }} />
                     <button type="button" className="pp-btn-ghost" onClick={() => void handleShare()}>
                       Share
                     </button>

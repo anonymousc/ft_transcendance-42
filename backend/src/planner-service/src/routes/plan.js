@@ -5,6 +5,8 @@ const { fetchUserFavorites, fetchReviewSummariesForPlaces } = require('../lib/se
 const { fetchUserInterests } = require('../lib/fetchUserInterests');
 const { generateTripPlan } = require('../lib/gemini');
 const authMiddleware = require('../middleware/auth');
+const { getValidGoogleAccessToken } = require('../helpers/googleToken');
+const { buildCalendarEvents } = require('../helpers/buildCalendarEvents');
 
 const router = Router();
 
@@ -186,6 +188,59 @@ router.put('/plan/:id', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('[plan/put]', err.message);
     return fail(res, 500, 'INTERNAL_ERROR', 'Failed to update trip plan', err.message);
+  }
+});
+
+const GCAL_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+
+// POST /plan/:id/export/google-calendar
+router.post('/plan/:id/export/google-calendar', authMiddleware, async (req, res) => {
+  const planId = req.params.id;
+  const userId = req.user.id;
+
+  try {
+    const plan = await prisma.tripPlan.findFirst({
+      where: { id: planId, userId },
+    });
+
+    if (!plan) {
+      return res.status(404).json({ ok: false, error: { message: 'Plan not found' } });
+    }
+
+    let accessToken;
+    try {
+      accessToken = await getValidGoogleAccessToken(req);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Google token error';
+      return res.status(403).json({ ok: false, error: { message } });
+    }
+
+    const events = buildCalendarEvents(plan);
+    if (events.length === 0) {
+      return res.json({ ok: true, data: { total: 0, failed: 0 } });
+    }
+
+    const results = await Promise.allSettled(
+      events.map(event =>
+        fetch(GCAL_URL, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(event),
+        }).then(r => {
+          if (!r.ok) throw new Error(`Google API error: ${r.status}`);
+          return r.json();
+        })
+      )
+    );
+
+    const failed = results.filter(r => r.status === 'rejected').length;
+    return res.json({ ok: true, data: { total: events.length, failed } });
+  } catch (err) {
+    console.error('[plan/export/google-calendar]', err.message);
+    return res.status(500).json({ ok: false, error: { message: 'Export failed' } });
   }
 });
 
