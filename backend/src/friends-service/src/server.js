@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const friendsRouter = require('./routes/friends');
+const chatRouter = require('./routes/chat');
+require('./socket');
 
 const app = express();
 const PORT = process.env.PORT || 4003;
@@ -21,7 +23,7 @@ app.get('/health', (_req, res) =>
 );
 
 app.use('/friends', friendsRouter);
-
+app.use('/chat', chatRouter);
 app.listen(PORT, () => {
   console.log(`Friends service running on port ${PORT}`);
 });

@@ -1,0 +1,217 @@
+asyncapi: '2.6.0'
+info:
+  title: Friends service — chat WebSocket
+  version: '1.0.0'
+  description: |
+    Real-time chat over raw WebSocket (`ws` library). Same JWT access token as REST (`JWT_ACCESS_SECRET`, payload `sub` = user id).
+
+    **Connect:** `ws://<host>:<WS_PORT>/?token=<access_jwt>`  
+    Default **WS_PORT** is `8181` (see `friends-service` env / Docker Compose).
+
+    Every frame is a single **JSON object** with a `type` string. Invalid JSON yields an `error` message when parsing is attempted on a text frame.
+
+    Messages created via **HTTP** `POST /chat/conversations/:id/messages` are also pushed to all participant sockets with `type: message`.
+
+  license:
+    name: MIT
+
+servers:
+  local:
+    url: ws://localhost:8181/
+    protocol: ws
+    protocolVersion: '13'
+    description: Host (Compose publishes 8181→8181)
+  docker-internal:
+    url: ws://friends:8181/
+    protocol: ws
+    protocolVersion: '13'
+    description: From other containers on network `saas`
+
+defaultContentType: application/json
+
+channels:
+  '/':
+    description: |
+      Single endpoint; bidirectional JSON messages after the HTTP upgrade.
+      Query parameter `token` is required on the handshake URL.
+    bindings:
+      ws:
+        bindingVersion: '0.1.0'
+        method: GET
+        query:
+          type: object
+          description: Handshake query string
+          properties:
+            token:
+              type: string
+              description: Bearer access JWT (same as `Authorization` for REST)
+          required:
+            - token
+    publish:
+      description: Client → server
+      operationId: clientSend
+      message:
+        oneOf:
+          - $ref: '#/components/messages/ClientJoin'
+          - $ref: '#/components/messages/ClientMessage'
+          - $ref: '#/components/messages/ClientTyping'
+    subscribe:
+      description: Server → client
+      operationId: serverPush
+      message:
+        oneOf:
+          - $ref: '#/components/messages/ServerReady'
+          - $ref: '#/components/messages/ServerJoined'
+          - $ref: '#/components/messages/ServerChatMessage'
+          - $ref: '#/components/messages/ServerTyping'
+          - $ref: '#/components/messages/ServerError'
+
+components:
+  messages:
+    ClientJoin:
+      name: ClientJoin
+      title: Join conversation
+      summary: Optional; confirms you are a participant before relying on other events.
+      payload:
+        $ref: '#/components/schemas/ClientJoinPayload'
+    ClientMessage:
+      name: ClientMessage
+      title: Send chat message
+      summary: Persists via same rules as REST; all participants receive ServerChatMessage (including other tabs).
+      payload:
+        $ref: '#/components/schemas/ClientMessagePayload'
+    ClientTyping:
+      name: ClientTyping
+      title: Typing indicator
+      summary: Broadcast to other participants only.
+      payload:
+        $ref: '#/components/schemas/ClientTypingPayload'
+    ServerReady:
+      name: ServerReady
+      title: Authenticated
+      payload:
+        $ref: '#/components/schemas/ServerReadyPayload'
+    ServerJoined:
+      name: ServerJoined
+      title: Join ok
+      payload:
+        $ref: '#/components/schemas/ServerJoinedPayload'
+    ServerChatMessage:
+      name: ServerChatMessage
+      title: New persisted message
+      payload:
+        $ref: '#/components/schemas/ServerChatMessagePayload'
+    ServerTyping:
+      name: ServerTyping
+      title: Peer typing
+      payload:
+        $ref: '#/components/schemas/ServerTypingPayload'
+    ServerError:
+      name: ServerError
+      title: Error
+      payload:
+        $ref: '#/components/schemas/ServerErrorPayload'
+
+  schemas:
+    ClientJoinPayload:
+      type: object
+      required: [type, conversationId]
+      properties:
+        type:
+          type: string
+          enum: [join]
+        conversationId:
+          type: string
+          description: Conversation UUID
+    ClientMessagePayload:
+      type: object
+      required: [type, conversationId, content]
+      properties:
+        type:
+          type: string
+          enum: [message]
+        conversationId:
+          type: string
+        content:
+          type: string
+          description: Trimmed server-side; max length enforced (see chatService)
+    ClientTypingPayload:
+      type: object
+      required: [type, conversationId, typing]
+      properties:
+        type:
+          type: string
+          enum: [typing]
+        conversationId:
+          type: string
+        typing:
+          type: boolean
+    ServerReadyPayload:
+      type: object
+      required: [type, userId]
+      properties:
+        type:
+          type: string
+          enum: [ready]
+        userId:
+          type: string
+          description: JWT subject
+    ServerJoinedPayload:
+      type: object
+      required: [type, conversationId]
+      properties:
+        type:
+          type: string
+          enum: [joined]
+        conversationId:
+          type: string
+    ServerChatMessagePayload:
+      type: object
+      required: [type, message]
+      properties:
+        type:
+          type: string
+          enum: [message]
+        message:
+          $ref: '#/components/schemas/ChatMessageDto'
+    ChatMessageDto:
+      type: object
+      required: [id, conversationId, senderId, content, createdAt]
+      properties:
+        id:
+          type: string
+        conversationId:
+          type: string
+        senderId:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    ServerTypingPayload:
+      type: object
+      required: [type, conversationId, userId, typing]
+      properties:
+        type:
+          type: string
+          enum: [typing]
+        conversationId:
+          type: string
+        userId:
+          type: string
+          description: User who is typing
+        typing:
+          type: boolean
+    ServerErrorPayload:
+      type: object
+      required: [type, code, message]
+      properties:
+        type:
+          type: string
+          enum: [error]
+        code:
+          type: string
+          description: e.g. UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED, NOT_FOUND, INVALID_INPUT, INVALID_JSON, UNKNOWN_TYPE, INTERNAL_ERROR
+        message:
+          type: string

@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Rihla backend APIs",
-    "description": "OpenAPI documentation. Friends service runs on port 4003 (host) or `friends:4003` inside Docker Compose.",
+    "description": "OpenAPI documentation. Friends service runs on port 4003 (host) or `friends:4003` inside Docker Compose.\n\n**WebSocket chat** (port 8181 by default) is documented with AsyncAPI: open `friends-chat.asyncapi.yaml` from this folder in [AsyncAPI Studio](https://studio.asyncapi.com/) (File → Load file), or mount the same directory in any AsyncAPI viewer.",
     "version": "1.0.0"
   },
   "servers": [
@@ -19,6 +19,10 @@
     {
       "name": "Friends",
       "description": "Friend requests and friendships (friends-service)"
+    },
+    {
+      "name": "Chat",
+      "description": "Direct messages between friends (friends-service, `/chat`)"
     }
   ],
   "components": {
@@ -100,6 +104,83 @@
           "data": {}
         },
         "required": ["ok", "data"]
+      },
+      "ChatLastMessage": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "senderId": { "type": "string" },
+          "content": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "senderId", "content", "createdAt"]
+      },
+      "ChatConversationSummary": {
+        "type": "object",
+        "description": "One row per conversation; for 1:1 DMs `peerUserId` is the other user.",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "peerUserId": { "type": "string", "nullable": true },
+          "participantCount": { "type": "integer" },
+          "lastMessage": {
+            "nullable": true,
+            "allOf": [{ "$ref": "#/components/schemas/ChatLastMessage" }]
+          }
+        },
+        "required": ["id", "createdAt", "participantCount"]
+      },
+      "OpenDmBody": {
+        "type": "object",
+        "required": ["withUserId"],
+        "properties": {
+          "withUserId": {
+            "type": "string",
+            "description": "Friend's user id (must be an existing friendship)"
+          }
+        }
+      },
+      "OpenDmResult": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "peerUserId": { "type": "string" },
+          "participantCount": { "type": "integer" }
+        },
+        "required": ["id", "createdAt", "peerUserId", "participantCount"]
+      },
+      "ChatMessage": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "conversationId": { "type": "string", "format": "uuid" },
+          "senderId": { "type": "string" },
+          "content": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "conversationId", "senderId", "content", "createdAt"]
+      },
+      "MessagesPage": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ChatMessage" }
+          },
+          "hasMore": { "type": "boolean" }
+        },
+        "required": ["messages", "hasMore"]
+      },
+      "SendMessageBody": {
+        "type": "object",
+        "required": ["content"],
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Message body (trimmed; max length enforced server-side)"
+          }
+        }
       }
     }
   },
@@ -433,6 +514,242 @@
           },
           "404": {
             "description": "Request not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/conversations": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "List my conversations",
+        "description": "Conversations the authenticated user participates in, sorted by recent activity.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Conversation summaries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/OkEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/ChatConversationSummary" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Chat"],
+        "summary": "Open or create DM with a friend",
+        "description": "Returns existing 1:1 conversation if one already exists; otherwise creates it. Fails with 403 if `withUserId` is not a friend.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OpenDmBody" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Conversation id and metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/OkEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/OpenDmResult" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body or self-DM",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "403": {
+            "description": "Not friends (`NOT_FRIEND`)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/conversations/{conversationId}/messages": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "List messages in a conversation",
+        "description": "Default page is the most recent messages (chronological in `data.messages`). Use query `before` with a message id to load older pages.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Message id cursor; return older messages than this one"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/OkEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/MessagesPage" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid `before` cursor",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not a participant (`NOT_FOUND`)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Chat"],
+        "summary": "Send a message",
+        "description": "Persists the message; WebSocket broadcast can be added later.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SendMessageBody" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created message (returned as `data`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/OkEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/ChatMessage" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty or too long content",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not a participant",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ErrorBody" }

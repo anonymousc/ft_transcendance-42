@@ -377,8 +377,10 @@ services:
     container_name: friends
     ports:
       - "4003:4003"
+      - "8181:8181"
     environment:
       - PORT=4003
+      - WS_PORT=8181
       - PORT_VAULT=${PORT_VAULT}
     networks:
       - saas
