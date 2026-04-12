@@ -251,6 +251,9 @@ services:
       - frontend_url
       - gemini_api_key
       - google_places_api_key
+      - fortytwo_callback
+      - fortytwo_client_id
+      - fortytwo_client_secret
     env_file:
       - .env
     volumes:
@@ -557,6 +560,12 @@ secrets:
     file: ./backend/devops/secrets/google_client_secret
   callback_url:
     file: ./backend/devops/secrets/callback_url
+  fortytwo_client_id:
+    file: ./backend/devops/secrets/fortytwo_client_id
+  fortytwo_client_secret:
+    file: ./backend/devops/secrets/fortytwo_client_secret
+  fortytwo_callback:
+    file: ./backend/devops/secrets/fortytwo_callback
   frontend_url:
     file: ./backend/devops/secrets/frontend_url
   gemini_api_key:

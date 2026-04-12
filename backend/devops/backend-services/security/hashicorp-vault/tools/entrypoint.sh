@@ -48,6 +48,9 @@ JWT_REFRESH_EXPIRES_IN=7d
 GOOGLE_CLIENT_ID=$(cat /run/secrets/google_client_id 2>/dev/null || echo "")
 GOOGLE_CLIENT_SECRET=$(cat /run/secrets/google_client_secret 2>/dev/null || echo "")
 GOOGLE_CALLBACK_URL=$(cat /run/secrets/callback_url 2>/dev/null || echo "")
+FORTYTWO_CLIENT_ID=$(cat /run/secrets/fortytow_client_id 2>/dev/null || echo "")
+FORTYTWO_CLIENT_SECRET=$(cat /run/secrets/fortytow_client_secret 2>/dev/null || echo "")
+FORTYTWO_CALLBACK_URL=$(cat /run/secrets/fortytwo_callback 2>/dev/null || echo "")
 FRONTEND_URL=$(cat /run/secrets/frontend_url 2>/dev/null || echo "")
 
 GEMINI_API_KEY=$(cat /run/secrets/gemini_api_key)
@@ -61,6 +64,9 @@ vault kv put -mount=secret auth \
     google_client_id="$GOOGLE_CLIENT_ID" \
     google_client_secret="$GOOGLE_CLIENT_SECRET" \
     google_callback_url="$GOOGLE_CALLBACK_URL" \
+    fortytwo_client_id="$FORTYTWO_CLIENT_ID" \
+    fortytwo_client_secret="$FORTYTWO_CLIENT_SECRET" \
+    fortytwo_callback_url="$FORTYTWO_CALLBACK_URL" \
     frontend_url="$FRONTEND_URL" \
     database_url="$DATABASE_URL" > /dev/null
 
