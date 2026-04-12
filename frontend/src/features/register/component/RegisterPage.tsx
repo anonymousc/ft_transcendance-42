@@ -44,6 +44,10 @@ function RegisterPage() {
         window.location.href = `${API_BASE_URL}/auth/google`;
     };
 
+    const handleFortyTwoLogin = (): void => {
+        window.location.href = `${API_BASE_URL}/auth/42`;
+    };
+
     return (
         <main className="register-page">
             <BackArrow />
@@ -59,7 +63,7 @@ function RegisterPage() {
                         <p className="text-sm font-normal text-gray-600 dark:text-gray-400">
                             Or sign up with :
                         </p>
-                        <SigninOuth onGoogleLogin={handleGoogleLogin} />
+                        <SigninOuth onGoogleLogin={handleGoogleLogin} onFortyTwoLogin={handleFortyTwoLogin} />
                     </div>
                 </div>
                 <GlassCard imageOverlay={passportOverlay} />

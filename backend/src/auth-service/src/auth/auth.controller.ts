@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleOAuthGuard } from './guards/google-oauth.guard';
+import { FortyTwoOAuthGuard } from './guards/fortytwo-oauth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { SignupDto, SigninDto } from './dto';
 import { ConfigService } from '@nestjs/config';
@@ -86,6 +87,24 @@ export class AuthController {
   @UseGuards(GoogleOAuthGuard)
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
     const user = await this.authService.validateGoogleUser(req.user as any);
+    const token = this.authService.generateJwt(user);
+    this.setAuthCookie(res, token);
+
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+    return res.redirect(`${frontendUrl}/oauth-success`);
+  }
+
+  @Get('42')
+  @UseGuards(FortyTwoOAuthGuard)
+  async fortyTwoAuth() {
+    // Guard redirects to 42 Intra
+  }
+
+  @Get('42/callback')
+  @UseGuards(FortyTwoOAuthGuard)
+  async fortyTwoAuthCallback(@Req() req: Request, @Res() res: Response) {
+    const user = await this.authService.validateFortyTwoUser(req.user as any);
     const token = this.authService.generateJwt(user);
     this.setAuthCookie(res, token);
 

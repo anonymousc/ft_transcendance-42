@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { Mail, Lock } from "lucide-react";
 import "./RegisterForm.css";
-import SigninOuth from "./shared/SigninOuth";
 import AcceptTerms from "./shared/AcceptTerms";
 
 interface RegisterFormProps {

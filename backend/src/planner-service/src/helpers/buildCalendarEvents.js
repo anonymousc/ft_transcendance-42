@@ -30,20 +30,38 @@ function parseActivityTime(time) {
 }
 
 /**
- * @param {string} createdAt
- * @param {number} dayNumber
+ * Midnight UTC for trip day N (1-based), anchored on createdAt's calendar date in UTC.
+ * Avoids NaN when dayNumber is missing and avoids server-local TZ shifting the trip anchor.
+ *
+ * @param {string|Date} createdAt
+ * @param {number} dayNumber1Based
  */
-function tripDayBaseDate(createdAt, dayNumber) {
-  const start = new Date(createdAt);
-  if (Number.isNaN(start.getTime())) {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() + Math.max(0, dayNumber - 1));
-    return d;
+function tripDayBaseDate(createdAt, dayNumber1Based) {
+  const n = Number(dayNumber1Based);
+  const offsetDays = Number.isFinite(n) && n >= 1 ? Math.floor(n - 1) : 0;
+
+  const created = new Date(createdAt);
+  if (Number.isNaN(created.getTime())) {
+    const now = new Date();
+    const y = now.getUTCFullYear();
+    const mo = now.getUTCMonth();
+    const d = now.getUTCDate();
+    return new Date(Date.UTC(y, mo, d + offsetDays, 0, 0, 0, 0));
   }
-  start.setHours(0, 0, 0, 0);
-  start.setDate(start.getDate() + Math.max(0, dayNumber - 1));
-  return start;
+
+  const y = created.getUTCFullYear();
+  const mo = created.getUTCMonth();
+  const d = created.getUTCDate();
+  return new Date(Date.UTC(y, mo, d + offsetDays, 0, 0, 0, 0));
+}
+
+/** Google Calendar summary max length (chars). */
+const SUMMARY_MAX = 1024;
+const DESCRIPTION_MAX = 8000;
+
+function truncate(str, max) {
+  if (str.length <= max) return str;
+  return str.slice(0, max - 1) + '…';
 }
 
 /**
@@ -54,12 +72,25 @@ function buildCalendarEvents(planRow) {
   /** @type {GoogleCalendarEvent[]} */
   const events = [];
   const city = (planRow.city && String(planRow.city).trim()) || '';
-  const days = planRow.plan?.days;
+
+  let planPayload = planRow.plan;
+  if (typeof planPayload === 'string') {
+    try {
+      planPayload = JSON.parse(planPayload);
+    } catch {
+      planPayload = null;
+    }
+  }
+  const days = planPayload?.days;
   if (!Array.isArray(days)) return events;
 
-  for (const day of days) {
+  for (let dayIndex = 0; dayIndex < days.length; dayIndex++) {
+    const day = days[dayIndex];
     if (!day) continue;
-    const base = tripDayBaseDate(planRow.createdAt, day.day);
+    const dn = Number(day.day);
+    const effectiveDay1Based =
+      Number.isFinite(dn) && dn >= 1 ? dn : dayIndex + 1;
+    const base = tripDayBaseDate(planRow.createdAt, effectiveDay1Based);
     const activities = day.activities;
     if (!Array.isArray(activities)) continue;
 
@@ -70,13 +101,20 @@ function buildCalendarEvents(planRow) {
       if (!nameStr && !descStr) continue;
 
       const { hour, minute } = parseActivityTime(act.time);
-      const startDate = new Date(base);
-      startDate.setHours(hour, minute, 0, 0);
-      const durationMin =
-        act.duration_minutes && act.duration_minutes > 0 ? act.duration_minutes : 60;
-      const endDate = new Date(startDate.getTime() + durationMin * 60 * 1000);
+      const y = base.getUTCFullYear();
+      const mo = base.getUTCMonth();
+      const d = base.getUTCDate();
+      const startDate = new Date(Date.UTC(y, mo, d, hour, minute, 0, 0));
+      if (Number.isNaN(startDate.getTime())) continue;
 
-      const summary = nameStr || 'Stop';
+      let durationMin = Number(act.duration_minutes);
+      if (!Number.isFinite(durationMin) || durationMin <= 0) durationMin = 60;
+      durationMin = Math.min(durationMin, 24 * 60);
+
+      const endDate = new Date(startDate.getTime() + durationMin * 60 * 1000);
+      if (Number.isNaN(endDate.getTime()) || endDate.getTime() <= startDate.getTime()) continue;
+
+      const summary = truncate(nameStr || 'Stop', SUMMARY_MAX);
       const addr = act.address && String(act.address).trim();
       /** @type {GoogleCalendarEvent} */
       const ev = {
@@ -84,9 +122,9 @@ function buildCalendarEvents(planRow) {
         start: { dateTime: startDate.toISOString() },
         end: { dateTime: endDate.toISOString() },
       };
-      if (descStr) ev.description = descStr;
+      if (descStr) ev.description = truncate(descStr, DESCRIPTION_MAX);
       const location = addr || city;
-      if (location) ev.location = location;
+      if (location) ev.location = truncate(location, 1024);
       events.push(ev);
     }
   }

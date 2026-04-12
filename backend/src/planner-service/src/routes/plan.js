@@ -193,6 +193,56 @@ router.put('/plan/:id', authMiddleware, async (req, res) => {
 
 const GCAL_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
 
+async function insertGoogleCalendarEvent(accessToken, event) {
+  const res = await fetch(GCAL_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(event),
+  });
+
+  if (res.ok) return res.json();
+
+  let text = '';
+  try {
+    text = await res.text();
+  } catch {
+    text = '';
+  }
+  let parsed = null;
+  try {
+    parsed = text ? JSON.parse(text) : null;
+  } catch {
+    parsed = null;
+  }
+  const ge = parsed?.error;
+  let msg = ge?.message || (text ? text.slice(0, 240) : '') || `Google Calendar API error (${res.status})`;
+  const reason = ge?.errors?.[0]?.reason;
+  const lower = String(msg).toLowerCase();
+
+  if (
+    res.status === 403 &&
+    (reason === 'insufficientPermissions' ||
+      lower.includes('insufficient permission') ||
+      lower.includes('access not configured'))
+  ) {
+    msg =
+      'Google Calendar permission missing. Sign out and sign in again with Google so the app can add events, and confirm Calendar API is enabled in Google Cloud.';
+  } else if (res.status === 403 && reason === 'forbidden') {
+    msg =
+      'Google blocked Calendar access (403). Reconnect Google on this app or check API/quotas in Google Cloud Console.';
+  } else if (res.status === 401) {
+    msg =
+      'Google rejected the access token. Sign out and sign in with Google again, then retry export.';
+  }
+
+  const err = new Error(msg);
+  err.status = res.status;
+  throw err;
+}
+
 // POST /plan/:id/export/google-calendar
 router.post('/plan/:id/export/google-calendar', authMiddleware, async (req, res) => {
   const planId = req.params.id;
@@ -220,24 +270,31 @@ router.post('/plan/:id/export/google-calendar', authMiddleware, async (req, res)
       return res.json({ ok: true, data: { total: 0, failed: 0 } });
     }
 
-    const results = await Promise.allSettled(
-      events.map(event =>
-        fetch(GCAL_URL, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(event),
-        }).then(r => {
-          if (!r.ok) throw new Error(`Google API error: ${r.status}`);
-          return r.json();
-        })
-      )
-    );
+    /** Sequential inserts avoid user rate limits from parallel bursts. */
+    const rejected = [];
+    for (let i = 0; i < events.length; i++) {
+      try {
+        await insertGoogleCalendarEvent(accessToken, events[i]);
+      } catch (err) {
+        if (rejected.length === 0) {
+          console.error(
+            '[plan/export/google-calendar] first event failure',
+            events[i]?.summary,
+            err instanceof Error ? err.message : err
+          );
+        }
+        rejected.push(err);
+      }
+    }
 
-    const failed = results.filter(r => r.status === 'rejected').length;
-    return res.json({ ok: true, data: { total: events.length, failed } });
+    const failed = rejected.length;
+    const firstError =
+      failed > 0 && rejected[0] instanceof Error ? rejected[0].message : undefined;
+
+    return res.json({
+      ok: true,
+      data: { total: events.length, failed, ...(firstError ? { firstError } : {}) },
+    });
   } catch (err) {
     console.error('[plan/export/google-calendar]', err.message);
     return res.status(500).json({ ok: false, error: { message: 'Export failed' } });
