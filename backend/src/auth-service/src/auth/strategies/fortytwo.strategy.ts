@@ -18,9 +18,18 @@ export class FortyTwoStrategy extends PassportStrategy(OAuth2Strategy, '42', tru
   private readonly isConfigured: boolean;
 
   constructor(private configService: ConfigService) {
-    const clientID = configService.get<string>('FORTYTWO_CLIENT_ID');
-    const clientSecret = configService.get<string>('FORTYTWO_CLIENT_SECRET');
-    const callbackURL = configService.get<string>('FORTYTWO_CALLBACK_URL');
+    const readConfig = (key: string): string | undefined => {
+      const raw = configService.get<string>(key);
+      const value = raw?.trim();
+      if (!value || value === 'null' || value === 'undefined') {
+        return undefined;
+      }
+      return value;
+    };
+
+    const clientID = readConfig('FORTYTWO_CLIENT_ID');
+    const clientSecret = readConfig('FORTYTWO_CLIENT_SECRET');
+    const callbackURL = readConfig('FORTYTWO_CALLBACK_URL');
 
     const isConfigured = Boolean(clientID && clientSecret && callbackURL);
 
@@ -29,7 +38,7 @@ export class FortyTwoStrategy extends PassportStrategy(OAuth2Strategy, '42', tru
       tokenURL: 'https://api.intra.42.fr/oauth/token',
       clientID: clientID || 'disabled-42-client-id',
       clientSecret: clientSecret || 'disabled-42-client-secret',
-      callbackURL: callbackURL || 'http://localhost:3000/auth/42/callback-disabled',
+      callbackURL: callbackURL || 'http://localhost:3001/auth/42/callback-disabled',
       scope: ['public'],
     });
 

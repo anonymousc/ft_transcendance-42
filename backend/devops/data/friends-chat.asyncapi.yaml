@@ -11,7 +11,7 @@ info:
 
     Every frame is a single **JSON object** with a `type` string. Invalid JSON yields an `error` message when parsing is attempted on a text frame.
 
-    Messages created via **HTTP** `POST /chat/conversations/:id/messages` are also pushed to all participant sockets with `type: message`.
+    Messages created via **HTTP** `POST /chat/conversations/:id/messages` (or the WebSocket `message` command) are pushed to participant sockets with `type: message`, and the service creates **in-app notifications** for other participants (see REST `/notifications` and `friends-notifications.asyncapi.yaml`).
 
   license:
     name: MIT

@@ -4,7 +4,7 @@ const {
   createMessage,
   isParticipant,
   getParticipantUserIds,
-} = require('./services/chatService');
+} = require('../services/chatService');
 
 const WS_PORT = Number(process.env.WS_PORT) || 8181;
 
@@ -240,7 +240,7 @@ wss.on('connection', (ws, req) => {
         message: `Unknown type: ${msg.type}`,
       });
     } catch (err) {
-      console.error('[ws] message handler', err);
+      console.error('[chat-ws] message handler', err);
       sendJson(ws, { type: 'error', code: 'INTERNAL_ERROR', message: 'Server error' });
     }
   });
@@ -251,7 +251,7 @@ wss.on('connection', (ws, req) => {
 });
 
 wss.on('error', (err) => {
-  console.error('[ws] server error', err);
+  console.error('[chat-ws] server error', err);
 });
 
 console.log(`WebSocket server listening on port ${WS_PORT}`);

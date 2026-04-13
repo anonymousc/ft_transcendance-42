@@ -48,8 +48,8 @@ JWT_REFRESH_EXPIRES_IN=7d
 GOOGLE_CLIENT_ID=$(cat /run/secrets/google_client_id 2>/dev/null || echo "")
 GOOGLE_CLIENT_SECRET=$(cat /run/secrets/google_client_secret 2>/dev/null || echo "")
 GOOGLE_CALLBACK_URL=$(cat /run/secrets/callback_url 2>/dev/null || echo "")
-FORTYTWO_CLIENT_ID=$(cat /run/secrets/fortytow_client_id 2>/dev/null || echo "")
-FORTYTWO_CLIENT_SECRET=$(cat /run/secrets/fortytow_client_secret 2>/dev/null || echo "")
+FORTYTWO_CLIENT_ID=$(cat /run/secrets/fortytwo_client_id 2>/dev/null || echo "")
+FORTYTWO_CLIENT_SECRET=$(cat /run/secrets/fortytwo_client_secret 2>/dev/null || echo "")
 FORTYTWO_CALLBACK_URL=$(cat /run/secrets/fortytwo_callback 2>/dev/null || echo "")
 FRONTEND_URL=$(cat /run/secrets/frontend_url 2>/dev/null || echo "")
 
