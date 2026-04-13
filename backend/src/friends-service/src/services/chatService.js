@@ -1,5 +1,7 @@
 const prisma = require('../lib/prisma');
 const { getOtherUserIdInFriendship } = require('./friendshipService');
+const { notifyUser } = require('./notificationService');
+const { NOTIFY_TYPES } = require('../utils/notifications');
 
 const MAX_MESSAGE_LENGTH = 8000;
 const DEFAULT_MESSAGE_LIMIT = 50;
@@ -210,6 +212,23 @@ async function createMessage(conversationId, senderId, content) {
       content: text,
     },
   });
+
+  const recipients = await getParticipantUserIds(conversationId);
+  const preview = text.length > 120 ? `${text.slice(0, 120)}…` : text;
+  for (const uid of recipients) {
+    if (uid === senderId) continue;
+    notifyUser(
+      uid,
+      NOTIFY_TYPES.CHAT_MESSAGE,
+      'New message',
+      preview,
+      {
+        conversationId,
+        messageId: message.id,
+        senderId,
+      },
+    );
+  }
 
   return { message };
 }

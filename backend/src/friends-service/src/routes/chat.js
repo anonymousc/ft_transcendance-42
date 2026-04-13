@@ -6,7 +6,7 @@ const {
   listMessages,
   createMessage,
 } = require('../services/chatService');
-const { notifyNewChatMessage } = require('../socket');
+const { notifyNewChatMessage } = require('../sockets/chatSocket');
 
 const router = express.Router();
 
