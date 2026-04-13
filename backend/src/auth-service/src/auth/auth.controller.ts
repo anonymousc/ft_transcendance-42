@@ -12,6 +12,7 @@ import {
   HttpException,
   ConflictException,
   BadRequestException,
+  ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleOAuthGuard } from './guards/google-oauth.guard';
@@ -19,7 +20,7 @@ import { GoogleOAuthLinkGuard } from './guards/google-oauth-link.guard';
 import { FortyTwoOAuthGuard } from './guards/fortytwo-oauth.guard';
 import { FortyTwoOAuthLinkGuard } from './guards/fortytwo-oauth-link.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { SignupDto, SigninDto } from './dto';
+import { SignupDto, SigninDto, ChangePasswordDto } from './dto';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { randomBytes } from 'crypto';
@@ -198,6 +199,17 @@ export class AuthController {
       throw new UnauthorizedException('User not found');
     }
     return profile;
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  async changePassword(
+    @Req() req: Request,
+    @Body(ValidationPipe) dto: ChangePasswordDto,
+  ) {
+    const { id } = req.user as { id: string };
+    return this.authService.changePassword(id, dto);
   }
 
   @Get('linked-providers')

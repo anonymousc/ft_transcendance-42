@@ -3,6 +3,7 @@ import LoginPage from './features/Login/component/LoginPage';
 import RegisterPage from './features/register/component/RegisterPage';
 import ProfilePage from './features/profile/component/ProfilePage';
 import EditProfilePage from './features/profile/component/EditProfilePage';
+import ChangePasswordPage from './features/profile/component/ChangePasswordPage';
 import HomePage from './pages/HomePage';
 import PlannerPage from './pages/PlannerPage';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -32,6 +33,7 @@ function AppContent() {
         <Route path="/planner" element={<ProtectedRoute><PlannerPage /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/profile/edit" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
+        <Route path="/profile/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/oauth-success" element={<OAuthSuccess />} />
         <Route path="/webchat" element={<ProtectedRoute><Webchat /></ProtectedRoute>} />
