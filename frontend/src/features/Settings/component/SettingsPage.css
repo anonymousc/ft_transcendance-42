@@ -237,6 +237,16 @@
     opacity: 1;
 }
 
+.settings-oauth-banner.settings-banner-success {
+    background: rgba(52, 199, 89, 0.16);
+    color: #1b7a3c;
+}
+
+:is(.dark) .settings-oauth-banner.settings-banner-success {
+    background: rgba(52, 199, 89, 0.22);
+    color: #5bd37a;
+}
+
 /* ── Connected accounts ── */
 .settings-row-connected {
     cursor: default;

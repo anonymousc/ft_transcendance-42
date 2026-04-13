@@ -12,6 +12,8 @@ interface UserData {
   bio: string | null;
   status: string;
   interests?: InterestsProfile | null;
+  /** Present when returned by auth `/me`; false for OAuth-only accounts. */
+  hasPassword?: boolean;
 }
 
 export interface SignupInput {
