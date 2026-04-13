@@ -408,8 +408,7 @@ services:
     container_name: webserver
     build: backend/devops/backend-services/security/modsecurity/
     ports:
-      - "443:443"
-      - "3001:3001"
+      - "8080:443"
     networks:
       - saas
     depends_on:
