@@ -22,24 +22,76 @@ function fail(res, status, code, message, details) {
 
 const CITY_RE = /^[\p{L}\p{M}\s'\-,.]+$/u;
 
-function validateGenerateBody({ city, days, preferences }) {
-  if (!city || typeof city !== 'string' || city.trim().length < 2)
-    return 'city is required and must be at least 2 characters';
-  if (!CITY_RE.test(city.trim()))
-    return 'city contains invalid characters';
-  if (!Number.isInteger(days) || days < 1 || days > 14)
-    return 'days must be an integer between 1 and 14';
-  if (!Array.isArray(preferences))
-    return 'preferences must be an array of strings';
-  if (preferences.length > 10)
-    return 'preferences must contain 10 items or fewer';
+function parseISODateOnly(s) {
+  if (typeof s !== 'string') return null;
+  const t = s.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) return null;
+  const [y, mo, d] = t.split('-').map(v => parseInt(v, 10));
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d)
+    return null;
+  return dt;
+}
+
+function inclusiveDaySpanUTC(start, end) {
+  return Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
+}
+
+function formatDateUTC(d) {
+  const y = d.getUTCFullYear();
+  const mo = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  return `${y}-${mo}-${day}`;
+}
+
+/** @returns {{ error: string } | { tripStart: Date|null, tripEnd: Date|null, spanDays: number|null }} */
+function normalizeTripDates(tripStartDate, tripEndDate) {
+  const hasS = tripStartDate != null && String(tripStartDate).trim() !== '';
+  const hasE = tripEndDate != null && String(tripEndDate).trim() !== '';
+  if (!hasS && !hasE) return { tripStart: null, tripEnd: null, spanDays: null };
+  if (!hasS || !hasE)
+    return { error: 'tripStartDate and tripEndDate must both be provided (YYYY-MM-DD)' };
+  const s = parseISODateOnly(String(tripStartDate));
+  const e = parseISODateOnly(String(tripEndDate));
+  if (!s || !e) return { error: 'tripStartDate and tripEndDate must be valid YYYY-MM-DD' };
+  if (e.getTime() < s.getTime())
+    return { error: 'tripEndDate must be on or after tripStartDate' };
+  const span = inclusiveDaySpanUTC(s, e);
+  if (span < 1 || span > 14)
+    return { error: 'trip must be between 1 and 14 days inclusive' };
+  return { tripStart: s, tripEnd: e, spanDays: span };
+}
+
+function validatePreferences(preferences) {
+  if (!Array.isArray(preferences)) return 'preferences must be an array of strings';
+  if (preferences.length > 10) return 'preferences must contain 10 items or fewer';
   if (preferences.some(p => typeof p !== 'string' || !p.trim()))
     return 'each preference must be a non-empty string';
   return null;
 }
 
-function validateUpdateBody({ city, days, preferences, plan }) {
-  const err = validateGenerateBody({ city, days, preferences });
+function validateGenerateBody({ city, days, preferences, tripStartDate, tripEndDate }) {
+  if (!city || typeof city !== 'string' || city.trim().length < 2)
+    return 'city is required and must be at least 2 characters';
+  if (!CITY_RE.test(city.trim())) return 'city contains invalid characters';
+
+  const dates = normalizeTripDates(tripStartDate, tripEndDate);
+  if (dates.error) return dates.error;
+
+  if (dates.tripStart) {
+    if (!Number.isInteger(days) || days !== dates.spanDays)
+      return `days must equal the inclusive date range (${dates.spanDays} day(s))`;
+  } else {
+    if (!Number.isInteger(days) || days < 1 || days > 14)
+      return 'days must be an integer between 1 and 14';
+  }
+
+  return validatePreferences(preferences);
+}
+
+function validateUpdateBody({ city, days, preferences, plan, tripStartDate, tripEndDate }) {
+  const err = validateGenerateBody({ city, days, preferences, tripStartDate, tripEndDate });
   if (err) return err;
   if (!plan || typeof plan !== 'object' || Array.isArray(plan))
     return 'plan must be a JSON object';
@@ -51,10 +103,18 @@ router.post('/plan/generate', authMiddleware, (req, res, next) => req.app.get('p
   const validationError = validateGenerateBody(req.body);
   if (validationError) return fail(res, 400, 'INVALID_INPUT', validationError);
 
-  const { city, days, preferences } = req.body;
+  const { city, days, preferences, tripStartDate, tripEndDate } = req.body;
   const safeCity = city.trim();
   const safePrefs = preferences.map(p => p.trim()).filter(Boolean);
   const userId = req.user.id;
+  const dates = normalizeTripDates(tripStartDate, tripEndDate);
+  const effectiveDays = dates.tripStart ? dates.spanDays : days;
+  let tripStartLabel = null;
+  let tripEndLabel = null;
+  if (dates.tripStart && dates.tripEnd) {
+    tripStartLabel = formatDateUTC(dates.tripStart);
+    tripEndLabel = formatDateUTC(dates.tripEnd);
+  }
 
   try {
     const [places, favorites, interests] = await Promise.all([
@@ -71,21 +131,26 @@ router.post('/plan/generate', authMiddleware, (req, res, next) => req.app.get('p
 
     const generatedPlan = await generateTripPlan({
       city: safeCity,
-      days,
+      days: effectiveDays,
       preferences: safePrefs,
       places,
       favorites,
       reviewSummaries,
       interests,
+      tripStartLabel,
+      tripEndLabel,
     });
 
     const tripPlan = await prisma.tripPlan.create({
       data: {
         userId,
         city: safeCity,
-        days,
+        days: effectiveDays,
         preferences: safePrefs,
         plan: generatedPlan,
+        ...(dates.tripStart && dates.tripEnd
+          ? { tripStartDate: dates.tripStart, tripEndDate: dates.tripEnd }
+          : {}),
       },
     });
 
@@ -140,6 +205,8 @@ router.get('/plans', authMiddleware, async (req, res) => {
         city: true,
         days: true,
         preferences: true,
+        tripStartDate: true,
+        tripEndDate: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -160,9 +227,20 @@ router.put('/plan/:id', authMiddleware, async (req, res) => {
   const validationError = validateUpdateBody(req.body);
   if (validationError) return fail(res, 400, 'INVALID_INPUT', validationError);
 
-  const { city, days, preferences, plan } = req.body;
+  const { city, days, preferences, plan, tripStartDate, tripEndDate } = req.body;
   const safeCity = city.trim();
   const safePrefs = preferences.map(p => p.trim()).filter(Boolean);
+  const dateNorm = normalizeTripDates(tripStartDate, tripEndDate);
+  if (dateNorm.error) return fail(res, 400, 'INVALID_INPUT', dateNorm.error);
+  const effectiveDays = dateNorm.tripStart ? dateNorm.spanDays : days;
+  if (dateNorm.tripStart && days !== effectiveDays) {
+    return fail(
+      res,
+      400,
+      'INVALID_INPUT',
+      `days must equal the inclusive date range (${effectiveDays} day(s))`,
+    );
+  }
 
   try {
     const tripPlan = await prisma.tripPlan.findUnique({ where: { id } });
@@ -178,9 +256,12 @@ router.put('/plan/:id', authMiddleware, async (req, res) => {
       where: { id },
       data: {
         city: safeCity,
-        days,
+        days: effectiveDays,
         preferences: safePrefs,
         plan,
+        ...(dateNorm.tripStart && dateNorm.tripEnd
+          ? { tripStartDate: dateNorm.tripStart, tripEndDate: dateNorm.tripEnd }
+          : {}),
       },
     });
 

@@ -31,12 +31,186 @@ interface FortyTwoUser {
   expiresIn?: number;
 }
 
+type OAuthLinkPayload = { userId: string; provider: 'google' | '42' };
+
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
   ) {}
+
+  verifyAccessTokenOrThrow(token: string): { sub: string; email: string } {
+    try {
+      const payload = this.jwtService.verify<{
+        sub?: string;
+        email?: string;
+        purpose?: string;
+      }>(token);
+      if (payload.purpose === 'oauth_link' || !payload.sub) {
+        throw new UnauthorizedException('Invalid session token');
+      }
+      return { sub: payload.sub, email: payload.email ?? '' };
+    } catch {
+      throw new UnauthorizedException('Invalid or expired session');
+    }
+  }
+
+  signOAuthLinkState(userId: string, provider: 'google' | '42'): string {
+    return this.jwtService.sign(
+      { purpose: 'oauth_link', provider, sub: userId },
+      { expiresIn: '10m' },
+    );
+  }
+
+  tryParseOAuthLinkState(
+    state: string | undefined,
+  ): OAuthLinkPayload | null {
+    if (!state?.trim()) return null;
+    try {
+      const payload = this.jwtService.verify<{
+        purpose?: string;
+        provider?: string;
+        sub?: string;
+      }>(state);
+      if (payload.purpose !== 'oauth_link' || !payload.sub) return null;
+      if (payload.provider !== 'google' && payload.provider !== '42') {
+        return null;
+      }
+      return { userId: payload.sub, provider: payload.provider };
+    } catch {
+      return null;
+    }
+  }
+
+  async linkGoogleAccount(linkUserId: string, googleUser: GoogleUser) {
+    const {
+      provider,
+      providerAccountId,
+      email,
+      accessToken,
+      refreshToken,
+      expiresIn,
+    } = googleUser;
+
+    if (!email?.trim()) {
+      throw new BadRequestException('Google account has no email; cannot link');
+    }
+
+    const expiresAt = Math.floor(Date.now() / 1000) + (expiresIn ?? 3600);
+
+    const existingByProvider = await this.prisma.account.findUnique({
+      where: { provider_providerAccountId: { provider, providerAccountId } },
+    });
+
+    if (existingByProvider && existingByProvider.userId !== linkUserId) {
+      throw new ConflictException(
+        'This Google account is already linked to another user',
+      );
+    }
+
+    const otherGoogle = await this.prisma.account.findFirst({
+      where: { userId: linkUserId, provider: 'google' },
+    });
+    if (
+      otherGoogle &&
+      otherGoogle.providerAccountId !== providerAccountId
+    ) {
+      throw new ConflictException(
+        'Another Google account is already linked to this profile',
+      );
+    }
+
+    await this.prisma.account.upsert({
+      where: { provider_providerAccountId: { provider, providerAccountId } },
+      update: {
+        userId: linkUserId,
+        accessToken,
+        refreshToken: refreshToken ?? undefined,
+        expiresAt,
+      },
+      create: {
+        userId: linkUserId,
+        provider,
+        providerAccountId,
+        accessToken,
+        refreshToken,
+        expiresAt,
+      },
+    });
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: linkUserId },
+      include: { profile: true },
+    });
+    if (!user) {
+      throw new BadRequestException('User not found while linking Google');
+    }
+    return user;
+  }
+
+  async linkFortyTwoAccount(linkUserId: string, fortyTwoUser: FortyTwoUser) {
+    const {
+      provider,
+      providerAccountId,
+      email,
+      accessToken,
+      refreshToken,
+      expiresIn,
+    } = fortyTwoUser;
+
+    if (!email?.trim()) {
+      throw new BadRequestException('42 account has no email; cannot link');
+    }
+
+    const expiresAt = Math.floor(Date.now() / 1000) + (expiresIn ?? 7200);
+
+    const existingByProvider = await this.prisma.account.findUnique({
+      where: { provider_providerAccountId: { provider, providerAccountId } },
+    });
+
+    if (existingByProvider && existingByProvider.userId !== linkUserId) {
+      throw new ConflictException(
+        'This 42 account is already linked to another user',
+      );
+    }
+
+    const other42 = await this.prisma.account.findFirst({
+      where: { userId: linkUserId, provider: '42' },
+    });
+    if (other42 && other42.providerAccountId !== providerAccountId) {
+      throw new ConflictException(
+        'Another 42 account is already linked to this profile',
+      );
+    }
+
+    await this.prisma.account.upsert({
+      where: { provider_providerAccountId: { provider, providerAccountId } },
+      update: {
+        userId: linkUserId,
+        accessToken,
+        refreshToken: refreshToken ?? undefined,
+        expiresAt,
+      },
+      create: {
+        userId: linkUserId,
+        provider,
+        providerAccountId,
+        accessToken,
+        refreshToken: refreshToken ?? null,
+        expiresAt,
+      },
+    });
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: linkUserId },
+      include: { profile: true },
+    });
+    if (!user) {
+      throw new BadRequestException('User not found while linking 42');
+    }
+    return user;
+  }
 
   async validateGoogleUser(googleUser: GoogleUser) {
     const {
@@ -299,6 +473,19 @@ export class AuthService {
       status: user.profile?.status || 'offline',
       interests: user.profile?.interests ?? null,
     };
+  }
+
+  /** OAuth provider ids stored on `Account.provider` (see strategies). */
+  async getLinkedOAuthProviders(userId: string): Promise<string[]> {
+    const rows = await this.prisma.account.findMany({
+      where: {
+        userId,
+        provider: { in: ['google', '42'] },
+      },
+      select: { provider: true },
+      distinct: ['provider'],
+    });
+    return rows.map((r) => r.provider);
   }
 
   async signup(dto: SignupDto) {

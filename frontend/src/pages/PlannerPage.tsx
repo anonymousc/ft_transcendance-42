@@ -23,6 +23,8 @@ interface PlanSummary {
   city: string;
   days: number;
   preferences: string[];
+  tripStartDate?: string | null;
+  tripEndDate?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -40,6 +42,8 @@ interface TripPlanRow {
   city: string;
   days: number;
   preferences: string[];
+  tripStartDate?: string | null;
+  tripEndDate?: string | null;
   plan: PlanPayload;
   createdAt: string;
   updatedAt: string;
@@ -485,6 +489,12 @@ export default function PlannerPage() {
         days: body.days,
         preferences: body.preferences,
         plan: body.plan,
+        ...(body.tripStartDate && body.tripEndDate
+          ? {
+              tripStartDate: body.tripStartDate,
+              tripEndDate: body.tripEndDate,
+            }
+          : {}),
       }),
     });
     const putData = await parseJson(putRes);
@@ -581,11 +591,7 @@ export default function PlannerPage() {
 
   return (
     <div className="planner-page-shell home-page home-page--hero">
-      <header className="planner-header">
-      <button type="button" className="ml-4 mt-2 rounded-full p-2" onClick={() => navigate("/home")}>
-        <ArrowLeft size={28} className="text-stone-900 dark:text-white" />
-      </button>
-      </header>
+      <HomeNavBar />
       <div className="home-nav-main-offset planner-page-body">
         <div className="planner-root" data-theme={theme}>
         {toast ? <Toast message={toast} onDismiss={dismissToast} /> : null}

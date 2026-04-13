@@ -152,27 +152,98 @@ function mapGooglePlace(raw, index, preferences) {
   };
 }
 
-// GET /places/photos — server-side proxy; mounted publicly in server.js (img tags cannot send auth cookies cross-origin)
-async function photoProxyHandler(req, res) {
-  const { ref } = req.query;
+const PLACES_DETAIL_URL = 'https://places.googleapis.com/v1/places';
 
-  if (!ref || typeof ref !== 'string' || !PHOTO_REF_RE.test(ref)) {
-    return res.status(400).end();
+// Google Place IDs (v1 `places.id`) are typically alphanumeric; keep validation loose.
+function validatePlaceIdQuery(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  let id = raw.trim();
+  if (id.startsWith('places/')) id = id.slice('places/'.length);
+  if (id.length < 4 || id.length > 512 || /[\s#?]/.test(id)) return null;
+  return id;
+}
+
+/** Prefer the highest-resolution photo (typical “hero” / well-known shots); fallback to first valid ref. */
+function pickBestPhotoRef(photos) {
+  if (!Array.isArray(photos) || photos.length === 0) return null;
+  let bestName = null;
+  let bestArea = -1;
+  for (const p of photos) {
+    const name = p?.name;
+    if (!name || typeof name !== 'string' || !PHOTO_REF_RE.test(name)) continue;
+    const w = Number(p.widthPx) || 0;
+    const h = Number(p.heightPx) || 0;
+    const area = w * h;
+    if (area > bestArea) {
+      bestArea = area;
+      bestName = name;
+    }
+  }
+  if (bestName) return bestName;
+  for (const p of photos) {
+    const name = p?.name;
+    if (name && typeof name === 'string' && PHOTO_REF_RE.test(name)) return name;
+  }
+  return null;
+}
+
+async function resolvePhotoRefFromPlaceId(placeId) {
+  const cacheKey = `ai-places:place-hero-ref::${placeId}`;
+  const cached = await getCached(cacheKey);
+  if (cached && typeof cached.ref === 'string' && PHOTO_REF_RE.test(cached.ref)) {
+    return cached.ref;
   }
 
+  const res = await fetch(`${PLACES_DETAIL_URL}/${placeId}`, {
+    headers: {
+      'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+      'X-Goog-FieldMask': 'photos',
+    },
+  });
+
+  if (!res.ok) return null;
+
+  const json = await res.json();
+  const name = pickBestPhotoRef(json.photos);
+  if (!name) return null;
+
+  await setCache(cacheKey, { ref: name });
+  return name;
+}
+
+async function streamGooglePlacePhoto(photoRef, res) {
+  const googleUrl =
+    `https://places.googleapis.com/v1/${photoRef}/media?maxHeightPx=1200&key=${GOOGLE_PLACES_API_KEY}`;
+  const upstream = await fetch(googleUrl);
+
+  if (!upstream.ok) return res.status(404).end();
+
+  const contentType = upstream.headers.get('content-type') || 'image/jpeg';
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+
+  const buffer = await upstream.arrayBuffer();
+  return res.send(Buffer.from(buffer));
+}
+
+// GET /places/photos — server-side proxy; mounted publicly in server.js (img tags cannot send auth cookies cross-origin)
+// Query: ref=places/<place_id>/photos/<photo_id> OR placeId=<Google Place ID> (hero photo: largest width×height from details)
+async function photoProxyHandler(req, res) {
+  const { ref, placeId: placeIdRaw } = req.query;
+
   try {
-    const googleUrl =
-      `https://places.googleapis.com/v1/${ref}/media?maxHeightPx=800&key=${GOOGLE_PLACES_API_KEY}`;
-    const upstream = await fetch(googleUrl);
+    let photoRef = null;
 
-    if (!upstream.ok) return res.status(404).end();
+    if (ref && typeof ref === 'string' && PHOTO_REF_RE.test(ref)) {
+      photoRef = ref;
+    } else {
+      const placeId = validatePlaceIdQuery(placeIdRaw);
+      if (!placeId) return res.status(400).end();
+      photoRef = await resolvePhotoRefFromPlaceId(placeId);
+      if (!photoRef) return res.status(404).end();
+    }
 
-    const contentType = upstream.headers.get('content-type') || 'image/jpeg';
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', 'public, max-age=86400');
-
-    const buffer = await upstream.arrayBuffer();
-    return res.send(Buffer.from(buffer));
+    return await streamGooglePlacePhoto(photoRef, res);
   } catch (err) {
     console.error('[places/photos]', err.message);
     return res.status(502).end();

@@ -168,7 +168,7 @@ function FriendCard({
         )}
       >
         <Link
-          to="/webchat"
+          to={`/webchat?with=${encodeURIComponent(friend.id)}`}
           className={cn(
             "inline-flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-[13px] font-semibold",
             "bg-orange-500 text-white shadow-sm transition-all hover:bg-orange-600",

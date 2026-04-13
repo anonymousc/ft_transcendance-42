@@ -10,8 +10,6 @@ const { notifyNewChatMessage } = require('../sockets/chatSocket');
 
 const router = express.Router();
 
-router.use(authMiddleware);
-
 function ok(res, data) {
   return res.json({ ok: true, data });
 }
@@ -19,6 +17,23 @@ function ok(res, data) {
 function fail(res, status, code, message) {
   return res.status(status).json({ ok: false, error: { code, message } });
 }
+
+router.use(authMiddleware);
+
+/** JWT string for WebSocket `?token=` (browser cannot read httpOnly cookie). */
+router.get('/ws-token', (req, res) => {
+  const authHeader = req.headers.authorization;
+  let token = null;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.slice(7);
+  } else if (req.cookies?.access_token) {
+    token = req.cookies.access_token;
+  }
+  if (!token) {
+    return fail(res, 401, 'UNAUTHORIZED', 'No access token in session');
+  }
+  return ok(res, { token });
+});
 
 /** List conversations the current user participates in */
 router.get('/conversations', async (req, res) => {

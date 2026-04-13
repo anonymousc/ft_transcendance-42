@@ -3,8 +3,39 @@ import { flattenUserInterests } from "@/features/friends/utils";
 import { PROFILES_BASE_URL } from "./api";
 import { toProfileAvatarUrl, type Profile } from "./profilesApi";
 
-export const FRIENDS_BASE_URL =
-  (import.meta.env.VITE_FRIENDS_URL as string) || "http://localhost:4003";
+function stripTrailingSlashes(url: string): string {
+  return url.replace(/\/+$/, "");
+}
+
+export const FRIENDS_BASE_URL = stripTrailingSlashes(
+  (import.meta.env.VITE_FRIENDS_URL as string) || "http://localhost:4003",
+);
+
+/**
+ * WebSocket URL for notification pushes (friends-service `notificationSocket`).
+ * Override with `VITE_NOTIFICATION_WS_URL`, or set `VITE_NOTIFICATION_WS_PORT` if the host
+ * matches `VITE_FRIENDS_URL` but the published port differs (default8182).
+ */
+export function getNotificationWebSocketUrl(): string {
+  const explicit = (import.meta.env.VITE_NOTIFICATION_WS_URL as string | undefined)
+    ?.trim();
+  if (explicit) return stripTrailingSlashes(explicit);
+
+  const portRaw = import.meta.env.VITE_NOTIFICATION_WS_PORT as string | undefined;
+  const port =
+    portRaw != null && String(portRaw).trim() !== ""
+      ? Number(portRaw)
+      : 8182;
+  const safePort = Number.isFinite(port) && port > 0 ? port : 8182;
+
+  try {
+    const u = new URL(FRIENDS_BASE_URL);
+    const proto = u.protocol === "https:" ? "wss:" : "ws:";
+    return `${proto}//${u.hostname}:${safePort}`;
+  } catch {
+    return `ws://localhost:${safePort}`;
+  }
+}
 
 type FriendsOk<T> = { ok: true; data: T };
 type FriendsErr = { ok: false; error: { code?: string; message?: string } };
@@ -54,7 +85,9 @@ interface FriendStub {
   status?: string;
 }
 
-async function fetchInternalProfile(userId: string): Promise<Profile | null> {
+export async function fetchProfileByUserId(
+  userId: string,
+): Promise<Profile | null> {
   try {
     const res = await fetch(
       `${PROFILES_BASE_URL}/profiles/internal/${encodeURIComponent(userId)}`,
@@ -98,7 +131,7 @@ function profileToFriendFields(profile: Profile | null): Pick<
 }
 
 async function stubToFriend(stub: FriendStub): Promise<Friend> {
-  const profile = await fetchInternalProfile(stub.id);
+  const profile = await fetchProfileByUserId(stub.id);
   const fromProfile = profileToFriendFields(profile);
   return {
     id: stub.id,
@@ -148,7 +181,7 @@ export async function fetchIncomingRequests(): Promise<PendingFriendRequest[]> {
   }
   const enriched = await Promise.all(
     body.data.map(async (row) => {
-      const profile = await fetchInternalProfile(row.fromUserId);
+      const profile = await fetchProfileByUserId(row.fromUserId);
       const fields = profileToFriendFields(profile);
       const pending: PendingFriendRequest = {
         id: row.id,
@@ -202,4 +235,206 @@ export async function removeFriend(userId: string): Promise<void> {
   if (!res.ok) {
     throw new Error(await readFriendsError(res));
   }
+}
+
+/** JWT for `VITE_WS_URL?token=` — same session as REST (`credentials: include`). */
+export async function fetchChatWsToken(): Promise<string> {
+  const res = await fetch(`${FRIENDS_BASE_URL}/chat/ws-token`, {
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new Error(await readFriendsError(res));
+  }
+  const body = await parseJson<FriendsOk<{ token: string }>>(res);
+  if (!body.ok || typeof body.data?.token !== "string" || !body.data.token) {
+    throw new Error("Invalid ws-token response");
+  }
+  return body.data.token;
+}
+
+/** Row from GET /notifications (friends-service Prisma shape, JSON dates). */
+export interface NotificationRow {
+  id: string;
+  userId: string;
+  type: string;
+  title: string | null;
+  body: string | null;
+  data: unknown;
+  read: boolean;
+  readAt: string | null;
+  archived: boolean;
+  archivedAt: string | null;
+  createdAt: string;
+}
+
+export async function fetchNotifications(): Promise<NotificationRow[]> {
+  const res = await fetch(`${FRIENDS_BASE_URL}/notifications`, {
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new Error(await readFriendsError(res));
+  }
+  const body = await parseJson<FriendsOk<NotificationRow[]>>(res);
+  if (!body.ok || !Array.isArray(body.data)) {
+    throw new Error("Invalid notifications response");
+  }
+  return body.data;
+}
+
+export async function patchNotificationRead(
+  id: string,
+): Promise<NotificationRow> {
+  const q = new URLSearchParams({ id: id.trim() });
+  const res = await fetch(
+    `${FRIENDS_BASE_URL}/notifications/read?${q.toString()}`,
+    { method: "PATCH", credentials: "include" },
+  );
+  if (!res.ok) {
+    throw new Error(await readFriendsError(res));
+  }
+  const body = await parseJson<FriendsOk<NotificationRow>>(res);
+  if (!body.ok || !body.data?.id) {
+    throw new Error("Invalid read notification response");
+  }
+  return body.data;
+}
+
+export async function patchNotificationsReadAll(): Promise<number> {
+  const res = await fetch(`${FRIENDS_BASE_URL}/notifications/readAll`, {
+    method: "PATCH",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new Error(await readFriendsError(res));
+  }
+  const body = await parseJson<FriendsOk<{ count: number }>>(res);
+  if (!body.ok || typeof body.data?.count !== "number") {
+    throw new Error("Invalid read-all notifications response");
+  }
+  return body.data.count;
+}
+
+export async function patchNotificationArchive(id: string): Promise<NotificationRow> {
+  const q = new URLSearchParams({ id: id.trim() });
+  const res = await fetch(
+    `${FRIENDS_BASE_URL}/notifications/archive?${q.toString()}`,
+    { method: "PATCH", credentials: "include" },
+  );
+  if (!res.ok) {
+    throw new Error(await readFriendsError(res));
+  }
+  const body = await parseJson<FriendsOk<NotificationRow>>(res);
+  if (!body.ok || !body.data?.id) {
+    throw new Error("Invalid archive notification response");
+  }
+  return body.data;
+}
+
+/** Row from GET /chat/conversations */
+export interface ChatConversationRow {
+  id: string;
+  createdAt: string;
+  peerUserId: string | null;
+  participantCount: number;
+  lastMessage: {
+    id: string;
+    senderId: string;
+    content: string;
+    createdAt: string;
+  } | null;
+}
+
+/** Row from GET /chat/conversations/:id/messages */
+export interface ChatMessageRow {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  createdAt: string;
+}
+
+/** Response from POST /chat/conversations (open or create DM). */
+export interface OpenChatDmResult {
+  id: string;
+  createdAt: string;
+  peerUserId: string;
+  participantCount: number;
+}
+
+export async function openOrCreateChatDm(
+  withUserId: string,
+): Promise<OpenChatDmResult> {
+  const res = await fetch(`${FRIENDS_BASE_URL}/chat/conversations`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ withUserId: withUserId.trim() }),
+  });
+  if (!res.ok) {
+    throw new Error(await readFriendsError(res));
+  }
+  const body = await parseJson<FriendsOk<OpenChatDmResult>>(res);
+  if (!body.ok || typeof body.data?.id !== "string") {
+    throw new Error("Invalid open conversation response");
+  }
+  return body.data;
+}
+
+export async function postChatMessage(
+  conversationId: string,
+  content: string,
+): Promise<ChatMessageRow> {
+  const res = await fetch(
+    `${FRIENDS_BASE_URL}/chat/conversations/${encodeURIComponent(conversationId)}/messages`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    },
+  );
+  if (!res.ok) {
+    throw new Error(await readFriendsError(res));
+  }
+  const body = await parseJson<FriendsOk<ChatMessageRow>>(res);
+  if (!body.ok || !body.data?.id) {
+    throw new Error("Invalid send message response");
+  }
+  return body.data;
+}
+
+export async function fetchChatConversations(): Promise<ChatConversationRow[]> {
+  const res = await fetch(`${FRIENDS_BASE_URL}/chat/conversations`, {
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new Error(await readFriendsError(res));
+  }
+  const body = await parseJson<FriendsOk<ChatConversationRow[]>>(res);
+  if (!body.ok || !Array.isArray(body.data)) {
+    throw new Error("Invalid chat conversations response");
+  }
+  return body.data;
+}
+
+export async function fetchChatMessages(
+  conversationId: string,
+  opts?: { before?: string; limit?: number },
+): Promise<{ messages: ChatMessageRow[]; hasMore: boolean }> {
+  const q = new URLSearchParams();
+  if (opts?.before) q.set("before", opts.before);
+  if (opts?.limit != null) q.set("limit", String(opts.limit));
+  const qs = q.toString();
+  const url = `${FRIENDS_BASE_URL}/chat/conversations/${encodeURIComponent(conversationId)}/messages${qs ? `?${qs}` : ""}`;
+  const res = await fetch(url, { credentials: "include" });
+  if (!res.ok) {
+    throw new Error(await readFriendsError(res));
+  }
+  const body = await parseJson<
+    FriendsOk<{ messages: ChatMessageRow[]; hasMore: boolean }>
+  >(res);
+  if (!body.ok || !body.data?.messages || typeof body.data.hasMore !== "boolean") {
+    throw new Error("Invalid chat messages response");
+  }
+  return body.data;
 }

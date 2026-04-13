@@ -34,18 +34,37 @@ router.post('/fav-places', authMiddleware, async (req, res) => {
   if (validationError) return fail(res, 400, 'INVALID_INPUT', validationError);
 
   const userId = req.user.id;
-  const { placeName, city, category, address, image, rating, status = 'favorited' } = req.body;
+  const {
+    placeName,
+    city,
+    category,
+    address,
+    image,
+    rating,
+    status = 'favorited',
+    placeId: placeIdBody,
+  } = req.body;
+
+  const normalizedPlaceId =
+    placeIdBody !== undefined && placeIdBody !== null && String(placeIdBody).trim()
+      ? String(placeIdBody).trim()
+      : null;
 
   try {
+    const updateData = {
+      category: category.trim(),
+      address:  address.trim(),
+      image:    image ?? null,
+      rating:   rating ?? null,
+      status,
+    };
+    if (placeIdBody !== undefined) {
+      updateData.placeId = normalizedPlaceId;
+    }
+
     const saved = await prisma.savedPlace.upsert({
       where: { userId_placeName_city: { userId, placeName: placeName.trim(), city: city.trim() } },
-      update: {
-        category: category.trim(),
-        address:  address.trim(),
-        image:    image ?? null,
-        rating:   rating ?? null,
-        status,
-      },
+      update: updateData,
       create: {
         userId,
         placeName: placeName.trim(),
@@ -53,6 +72,7 @@ router.post('/fav-places', authMiddleware, async (req, res) => {
         category:  category.trim(),
         address:   address.trim(),
         image:     image ?? null,
+        placeId:   normalizedPlaceId,
         rating:    rating ?? null,
         status,
       },
