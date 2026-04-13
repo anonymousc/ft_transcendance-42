@@ -80,7 +80,7 @@ services:
       database:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3001/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://auth:3001/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -409,6 +409,7 @@ services:
     build: backend/devops/backend-services/security/modsecurity/
     ports:
       - "443:443"
+      - "3001:3001"
     networks:
       - saas
     depends_on:
@@ -425,7 +426,7 @@ services:
       planner:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-check-certificate -qO- https://localhost/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

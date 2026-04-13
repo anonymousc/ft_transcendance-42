@@ -11,7 +11,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google', true) {
     super({
       clientID: configService.get<string>('GOOGLE_CLIENT_ID'),
       clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET'),
-      callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL'),
+      callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL') || 'https://localhost/auth/google/callback-disabled',
       scope: ['email', 'profile', 'https://www.googleapis.com/auth/calendar.events'],
     });
   }

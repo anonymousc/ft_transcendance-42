@@ -38,7 +38,7 @@ export class FortyTwoStrategy extends PassportStrategy(OAuth2Strategy, '42', tru
       tokenURL: 'https://api.intra.42.fr/oauth/token',
       clientID: clientID || 'disabled-42-client-id',
       clientSecret: clientSecret || 'disabled-42-client-secret',
-      callbackURL: callbackURL || 'http://auth:3001/auth/42/callback-disabled',
+      callbackURL: callbackURL || 'https://localhost/auth/42/callback-disabled',
       scope: ['public'],
     });
 

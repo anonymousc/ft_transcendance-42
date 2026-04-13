@@ -1,8 +1,8 @@
 export const API_BASE_URL =
-  (import.meta.env.VITE_API_URL as string) || 'http://localhost:3001';
+  (import.meta.env.VITE_API_URL as string) || 'https://localhost:443';
 
 export const PROFILES_BASE_URL =
-  (import.meta.env.VITE_PROFILES_URL as string) || 'http://localhost:3002';
+  (import.meta.env.VITE_PROFILES_URL as string) || 'https://localhost:443';
 
 let cachedCsrfToken: string | null = null;
 

@@ -1,4 +1,4 @@
-const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'https://localhost';
 
 function extractAuthErrorMessage(data) {
   if (!data || typeof data !== 'object') return null;
