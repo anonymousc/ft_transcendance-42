@@ -30,18 +30,25 @@ function parseActivityTime(time) {
 }
 
 /**
- * Midnight UTC for trip day N (1-based), anchored on createdAt's calendar date in UTC.
- * Avoids NaN when dayNumber is missing and avoids server-local TZ shifting the trip anchor.
+ * Midnight UTC for trip day N (1-based).
+ * If planRow.tripStartDate is set (user-picked range), anchor there; else use createdAt (legacy).
  *
- * @param {string|Date} createdAt
+ * @param {{ createdAt: string|Date, tripStartDate?: Date|string|null }} planRow
  * @param {number} dayNumber1Based
  */
-function tripDayBaseDate(createdAt, dayNumber1Based) {
+function tripDayBaseDate(planRow, dayNumber1Based) {
   const n = Number(dayNumber1Based);
   const offsetDays = Number.isFinite(n) && n >= 1 ? Math.floor(n - 1) : 0;
 
-  const created = new Date(createdAt);
-  if (Number.isNaN(created.getTime())) {
+  let anchor = null;
+  if (planRow.tripStartDate) {
+    anchor = new Date(planRow.tripStartDate);
+  }
+  if (!anchor || Number.isNaN(anchor.getTime())) {
+    anchor = new Date(planRow.createdAt);
+  }
+
+  if (Number.isNaN(anchor.getTime())) {
     const now = new Date();
     const y = now.getUTCFullYear();
     const mo = now.getUTCMonth();
@@ -49,9 +56,9 @@ function tripDayBaseDate(createdAt, dayNumber1Based) {
     return new Date(Date.UTC(y, mo, d + offsetDays, 0, 0, 0, 0));
   }
 
-  const y = created.getUTCFullYear();
-  const mo = created.getUTCMonth();
-  const d = created.getUTCDate();
+  const y = anchor.getUTCFullYear();
+  const mo = anchor.getUTCMonth();
+  const d = anchor.getUTCDate();
   return new Date(Date.UTC(y, mo, d + offsetDays, 0, 0, 0, 0));
 }
 
@@ -90,7 +97,7 @@ function buildCalendarEvents(planRow) {
     const dn = Number(day.day);
     const effectiveDay1Based =
       Number.isFinite(dn) && dn >= 1 ? dn : dayIndex + 1;
-    const base = tripDayBaseDate(planRow.createdAt, effectiveDay1Based);
+    const base = tripDayBaseDate(planRow, effectiveDay1Based);
     const activities = day.activities;
     if (!Array.isArray(activities)) continue;
 

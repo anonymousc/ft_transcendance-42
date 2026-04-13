@@ -23,7 +23,16 @@ ${lines.join('\n')}
 }
 
 function buildPlannerPrompt(
-  { city, days, preferences, places, favorites, reviewSummaries },
+  {
+    city,
+    days,
+    preferences,
+    places,
+    favorites,
+    reviewSummaries,
+    tripStartLabel = null,
+    tripEndLabel = null,
+  },
   interests = null,
 ) {
   const favNames = new Set(favorites.map(f => f.placeName?.toLowerCase()));
@@ -52,6 +61,14 @@ function buildPlannerPrompt(
 
   const prefsStr = preferences.length > 0 ? preferences.join(', ') : 'general sightseeing';
 
+  const tripDatesLine =
+    tripStartLabel && tripEndLabel
+      ? `
+TRIP CALENDAR: The traveler chose these exact dates (inclusive): ${tripStartLabel} through ${tripEndLabel}.
+Day 1 of the itinerary = ${tripStartLabel}. Day 2 = the next calendar day, and so on for all ${days} days.
+`
+      : '';
+
   const interestsSection = formatInterestsSection(interests);
   const interestsRules = interestsSection
     ? `
@@ -63,7 +80,7 @@ function buildPlannerPrompt(
     : '';
 
   return `You are an expert travel planner. Create a detailed, personalized ${days}-day trip plan for ${city}.
-
+${tripDatesLine}
 USER PREFERENCES: ${prefsStr}
 ${interestsSection}
 AVAILABLE PLACES (real Google Places data):

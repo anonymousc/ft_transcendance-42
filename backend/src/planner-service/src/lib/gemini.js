@@ -20,12 +20,23 @@ async function generateTripPlan({
   favorites,
   reviewSummaries,
   interests = null,
+  tripStartLabel = null,
+  tripEndLabel = null,
 }) {
   const client = getClient();
   const model = client.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' });
 
   const prompt = buildPlannerPrompt(
-    { city, days, preferences, places, favorites, reviewSummaries },
+    {
+      city,
+      days,
+      preferences,
+      places,
+      favorites,
+      reviewSummaries,
+      tripStartLabel,
+      tripEndLabel,
+    },
     interests,
   );
 

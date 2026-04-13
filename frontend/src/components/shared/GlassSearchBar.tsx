@@ -13,6 +13,10 @@ interface GlassSearchBarProps {
   onSearch?: (value: string) => void;
   /** Called when the user picks a city from the autocomplete dropdown */
   onSelect?: (city: string) => void;
+  /** No inner form and no search button — for use inside another form (e.g. trip planner bar). */
+  embedded?: boolean;
+  wrapperClassName?: string;
+  inputClassName?: string;
 }
 
 function GlassSearchBar({
@@ -21,6 +25,9 @@ function GlassSearchBar({
   onChange,
   onSearch,
   onSelect,
+  embedded = false,
+  wrapperClassName = "",
+  inputClassName = "",
 }: GlassSearchBarProps) {
   const [internalValue, setInternalValue] = useState("");
   const value = controlledValue ?? internalValue;
@@ -103,7 +110,14 @@ function GlassSearchBar({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      if (showDropdown && selectedIndex >= 0 && allSuggestions[selectedIndex]) {
+        e.preventDefault();
+        handleSelect(allSuggestions[selectedIndex]);
+      }
+      return;
+    }
     if (!showDropdown) return;
 
     if (e.key === "ArrowDown") {
@@ -118,23 +132,38 @@ function GlassSearchBar({
     }
   };
 
+  const inputClass =
+    inputClassName.trim() ||
+    (embedded ? "glass-search-input glass-search-input--embedded" : "glass-search-input");
+
+  const inputEl = (
+    <input
+      type="text"
+      className={inputClass}
+      placeholder={placeholder}
+      value={value}
+      onChange={handleChange}
+      onKeyDown={handleKeyDown}
+      autoComplete="off"
+    />
+  );
+
   return (
-    <div className="glass-search-wrapper" ref={wrapperRef}>
-      <form className="glass-search-bar" onSubmit={handleSubmit}>
-        <input
-          type="text"
-          className="glass-search-input"
-          placeholder={placeholder}
-          value={value}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          autoComplete="off"
-        />
-        <button type="submit" className="glass-search-button" aria-label="Search">
-          <Search size={16} />
-          <span>Search</span>
-        </button>
-      </form>
+    <div
+      className={`glass-search-wrapper${embedded ? " glass-search-wrapper--embedded" : ""}${wrapperClassName ? ` ${wrapperClassName}` : ""}`.trim()}
+      ref={wrapperRef}
+    >
+      {embedded ? (
+        <div className="glass-search-embed-inner">{inputEl}</div>
+      ) : (
+        <form className="glass-search-bar" onSubmit={handleSubmit}>
+          {inputEl}
+          <button type="submit" className="glass-search-button" aria-label="Search">
+            <Search size={16} />
+            <span>Search</span>
+          </button>
+        </form>
+      )}
 
       {showDropdown && allSuggestions.length > 0 && (
         <ul className="glass-suggestions" role="listbox">

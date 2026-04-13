@@ -23,6 +23,8 @@ interface PlanSummary {
   city: string;
   days: number;
   preferences: string[];
+  tripStartDate?: string | null;
+  tripEndDate?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -40,6 +42,8 @@ interface TripPlanRow {
   city: string;
   days: number;
   preferences: string[];
+  tripStartDate?: string | null;
+  tripEndDate?: string | null;
   plan: PlanPayload;
   createdAt: string;
   updatedAt: string;
@@ -485,6 +489,12 @@ export default function PlannerPage() {
         days: body.days,
         preferences: body.preferences,
         plan: body.plan,
+        ...(body.tripStartDate && body.tripEndDate
+          ? {
+              tripStartDate: body.tripStartDate,
+              tripEndDate: body.tripEndDate,
+            }
+          : {}),
       }),
     });
     const putData = await parseJson(putRes);
