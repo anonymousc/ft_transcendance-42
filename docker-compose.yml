@@ -7,8 +7,6 @@ services:
     build: ./frontend/
     env_file:
       - .env
-    ports:
-      - "${PORT_FRONT}:${PORT_FRONT}"
     networks:
       - saas
     volumes:
@@ -67,41 +65,9 @@ services:
         labels: "service"
     labels:
       - "service=redis"
-  # maptoposter:
-  #   container_name: maptoposter
-  #   build: ./backend/devops/frontend-services/maptoposter/
-  #   env_file:
-  #     - .env
-  #   ports:
-  #     - "5025:5025"
-  #   networks:
-  #     - saas
-  #   volumes:
-  #     - shared_resources:/data:ro
-  #   depends_on:
-  #     redis:
-  #       condition: service_healthy
-  #     vault:
-  #       condition: service_healthy
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "curl -f http://localhost:5025/ || exit 1"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #   restart: on-failure
-  #   logging:
-  #     driver: json-file
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #       labels: "service"
-  #   labels:
-  #     - "service=maptoposter"
   auth:
     build: ./backend/src/auth-service
     container_name: auth
-    ports:
-      - "3001:3001"
     env_file:
       .env
     networks:
@@ -132,8 +98,6 @@ services:
   profiles:
     build: ./backend/src/profiles-service
     container_name: profiles
-    ports:
-      - "3002:3002"
     env_file:
       - .env
     networks:
@@ -196,8 +160,6 @@ services:
     build: ./backend/devops/backend-services/logbull
     restart: on-failure
     container_name: logbull
-    ports:
-      - "9101:9101"
     env_file:
       - .env
     volumes:
@@ -226,8 +188,6 @@ services:
     container_name: swagger
     environment:
       - SWAGGER_JSON=/app/swagger.json
-    ports:
-      - "8080:8080"
     volumes:
       - ./backend/devops/data/:/app/
     networks:
@@ -279,8 +239,6 @@ services:
   ai-places:
     build: ./backend/src/ai-places-service
     container_name: ai-places
-    ports:
-      - "4000:4000"
     env_file:
       - .env
     networks:
@@ -312,8 +270,6 @@ services:
   review-places:
     build: ./backend/src/review-places
     container_name: review-places
-    ports:
-      - "4001:4001"
     environment:
       - PORT=4001
       - PORT_VAULT=${PORT_VAULT}
@@ -345,8 +301,6 @@ services:
   fav-places:
     build: ./backend/src/fav-places
     container_name: fav-places
-    ports:
-      - "4002:4002"
     environment:
       - PORT=4002
       - PORT_VAULT=${PORT_VAULT}
@@ -378,9 +332,6 @@ services:
   friends:
     build: ./backend/src/friends-service
     container_name: friends
-    ports:
-      - "4003:4003"
-      - "8181:8181"
     environment:
       - PORT=4003
       - WS_PORT=8181
@@ -413,8 +364,6 @@ services:
   planner:
     build: ./backend/src/planner-service
     container_name: planner
-    ports:
-      - "7000:7000"
     environment:
       - FAV_PLACES_URL=http://fav-places:4002
       - REVIEW_PLACES_URL=http://review-places:4001
@@ -455,47 +404,40 @@ services:
     labels:
       - "service=planner"
 
-  # webserver:
-  #   container_name: webserver
-  #   build: backend-services/security/modsecurity/
-  #   ports:
-  #    - "8080:80" #shoud be changed to 443
-  #   retries: on-failure
-
-  # nginx:
-  #   build: ./backend/devops/nginx
-  #   container_name: nginx-gateway
-  #   ports:
-  #     - "80:80"
-  #   networks:
-  #     - saas
-  #   depends_on:
-  #     auth:
-  #       condition: service_healthy
-  #     profiles:
-  #       condition: service_healthy
-  #     ai-places:
-  #       condition: service_healthy
-  #     review-places:
-  #       condition: service_healthy
-  #     fav-places:
-  #       condition: service_healthy
-  #     planner:
-  #       condition: service_healthy
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #   restart: on-failure
-  #   logging:
-  #     driver: json-file
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #       labels: "service"
-  #   labels:
-  #     - "service=nginx-gateway"
+  webserver:
+    container_name: webserver
+    build: backend/devops/backend-services/security/modsecurity/
+    ports:
+      - "443:443"
+    networks:
+      - saas
+    depends_on:
+      auth:
+        condition: service_healthy
+      profiles:
+        condition: service_healthy
+      ai-places:
+        condition: service_healthy
+      review-places:
+        condition: service_healthy
+      fav-places:
+        condition: service_healthy
+      planner:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=nginx-gateway"
 
   # Monitoring service - Netdata
   # netdata:

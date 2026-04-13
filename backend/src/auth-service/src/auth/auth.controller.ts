@@ -91,7 +91,7 @@ export class AuthController {
     this.setAuthCookie(res, token);
 
     const frontendUrl =
-      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+      this.configService.get<string>('FRONTEND_URL') || 'http://frontend:5173';
     return res.redirect(`${frontendUrl}/oauth-success`);
   }
 
@@ -109,7 +109,7 @@ export class AuthController {
     this.setAuthCookie(res, token);
 
     const frontendUrl =
-      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+      this.configService.get<string>('FRONTEND_URL') || 'http://frontend:5173';
     return res.redirect(`${frontendUrl}/oauth-success`);
   }
 
