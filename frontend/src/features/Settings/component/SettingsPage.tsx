@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   ArrowLeft,
   User,
@@ -56,12 +56,25 @@ const OAUTH_LINK_ERROR_MESSAGES: Record<string, string> = {
 
 function SettingsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isDark, toggleTheme } = useTheme();
 
   const [linkedProviders, setLinkedProviders] = useState<string[] | null>(
     null,
   );
   const [oauthLinkBanner, setOauthLinkBanner] = useState<string | null>(null);
+  const [passwordChangedBanner, setPasswordChangedBanner] = useState(false);
+
+  useEffect(() => {
+    const st = location.state as { passwordChanged?: boolean } | null;
+    if (st?.passwordChanged) {
+      setPasswordChangedBanner(true);
+      navigate(location.pathname + location.search + location.hash, {
+        replace: true,
+        state: {},
+      });
+    }
+  }, [location.state, location.pathname, location.search, location.hash, navigate]);
 
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get(
@@ -106,6 +119,22 @@ function SettingsPage() {
 
       <div className="settings-container">
         <h1 className="settings-title">Settings</h1>
+        {passwordChangedBanner ? (
+          <div
+            className="settings-oauth-banner settings-banner-success"
+            role="status"
+          >
+            Your password was updated successfully.
+            <button
+              type="button"
+              className="settings-oauth-banner-dismiss"
+              aria-label="Dismiss"
+              onClick={() => setPasswordChangedBanner(false)}
+            >
+              ×
+            </button>
+          </div>
+        ) : null}
         {oauthLinkBanner ? (
           <div className="settings-oauth-banner" role="alert">
             {oauthLinkBanner}
@@ -156,7 +185,11 @@ function SettingsPage() {
 
           <div
             className="settings-row settings-row-clickable"
-            onClick={() => console.log("Change password")}
+            onClick={() =>
+              navigate("/profile/change-password", {
+                state: { from: "/settings" },
+              })
+            }
           >
             <div className="settings-row-left">
               <span className="settings-row-icon icon-yellow">

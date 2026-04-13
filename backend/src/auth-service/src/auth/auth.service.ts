@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
-import { SignupDto, SigninDto } from './dto';
+import { SignupDto, SigninDto, ChangePasswordDto } from './dto';
 import * as argon2 from 'argon2';
 
 interface GoogleUser {
@@ -472,7 +472,40 @@ export class AuthService {
       bio: user.profile?.bio || null,
       status: user.profile?.status || 'offline',
       interests: user.profile?.interests ?? null,
+      hasPassword: !!user.hashPassword,
     };
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    if (!user.hashPassword) {
+      throw new BadRequestException(
+        'This account has no password. Sign in with your linked provider instead.',
+      );
+    }
+    const currentOk = await argon2.verify(
+      user.hashPassword,
+      dto.currentPassword,
+    );
+    if (!currentOk) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+    if (dto.newPassword === dto.currentPassword) {
+      throw new BadRequestException(
+        'New password must be different from your current password',
+      );
+    }
+    const newHash = await argon2.hash(dto.newPassword);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { hashPassword: newHash },
+    });
+    return { ok: true };
   }
 
   /** OAuth provider ids stored on `Account.provider` (see strategies). */
