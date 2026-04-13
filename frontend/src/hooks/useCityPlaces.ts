@@ -233,6 +233,7 @@ export function useFavPlace(
             category: placeData.category,
             address:  placeData.address,
             image:    placeData.image ?? undefined,
+            placeId:  placeData.place_id ?? undefined,
             rating:   placeData.rating,
           }),
         });

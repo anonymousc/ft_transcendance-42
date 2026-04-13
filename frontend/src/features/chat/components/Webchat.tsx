@@ -20,6 +20,7 @@ import {
 import {
   apiMessageToMessage,
   conversationRowToConversation,
+  dedupeChatConversationRows,
 } from "../utils/mapApi";
 
 function Webchat() {
@@ -102,7 +103,7 @@ function Webchat() {
         if (openWithPeer && openWithPeer !== userId) {
           opened = await openOrCreateChatDm(openWithPeer);
         }
-        const rows = await fetchChatConversations();
+        const rows = dedupeChatConversationRows(await fetchChatConversations());
         if (cancelled) return;
         const convs = await Promise.all(
           rows.map((row) =>
@@ -113,7 +114,11 @@ function Webchat() {
         setConversations(convs);
 
         if (opened) {
-          const convId = opened.id;
+          let convId = opened.id;
+          if (!rows.some((r) => r.id === convId) && openWithPeer) {
+            const fallback = rows.find((r) => r.peerUserId === openWithPeer);
+            if (fallback) convId = fallback.id;
+          }
           setActiveConversationId(convId);
           setShowSidebar(false);
           if (!loadedThreadsRef.current.has(convId)) {

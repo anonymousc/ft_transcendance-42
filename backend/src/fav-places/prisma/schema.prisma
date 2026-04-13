@@ -15,6 +15,7 @@ model SavedPlace {
   category  String
   address   String
   image     String?
+  placeId   String?
   rating    Float?
   status    String   @default("favorited")
   savedAt   DateTime @default(now())

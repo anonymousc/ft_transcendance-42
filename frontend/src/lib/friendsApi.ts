@@ -3,8 +3,39 @@ import { flattenUserInterests } from "@/features/friends/utils";
 import { PROFILES_BASE_URL } from "./api";
 import { toProfileAvatarUrl, type Profile } from "./profilesApi";
 
-export const FRIENDS_BASE_URL =
-  (import.meta.env.VITE_FRIENDS_URL as string) || "http://localhost:4003";
+function stripTrailingSlashes(url: string): string {
+  return url.replace(/\/+$/, "");
+}
+
+export const FRIENDS_BASE_URL = stripTrailingSlashes(
+  (import.meta.env.VITE_FRIENDS_URL as string) || "http://localhost:4003",
+);
+
+/**
+ * WebSocket URL for notification pushes (friends-service `notificationSocket`).
+ * Override with `VITE_NOTIFICATION_WS_URL`, or set `VITE_NOTIFICATION_WS_PORT` if the host
+ * matches `VITE_FRIENDS_URL` but the published port differs (default8182).
+ */
+export function getNotificationWebSocketUrl(): string {
+  const explicit = (import.meta.env.VITE_NOTIFICATION_WS_URL as string | undefined)
+    ?.trim();
+  if (explicit) return stripTrailingSlashes(explicit);
+
+  const portRaw = import.meta.env.VITE_NOTIFICATION_WS_PORT as string | undefined;
+  const port =
+    portRaw != null && String(portRaw).trim() !== ""
+      ? Number(portRaw)
+      : 8182;
+  const safePort = Number.isFinite(port) && port > 0 ? port : 8182;
+
+  try {
+    const u = new URL(FRIENDS_BASE_URL);
+    const proto = u.protocol === "https:" ? "wss:" : "ws:";
+    return `${proto}//${u.hostname}:${safePort}`;
+  } catch {
+    return `ws://localhost:${safePort}`;
+  }
+}
 
 type FriendsOk<T> = { ok: true; data: T };
 type FriendsErr = { ok: false; error: { code?: string; message?: string } };
@@ -219,6 +250,84 @@ export async function fetchChatWsToken(): Promise<string> {
     throw new Error("Invalid ws-token response");
   }
   return body.data.token;
+}
+
+/** Row from GET /notifications (friends-service Prisma shape, JSON dates). */
+export interface NotificationRow {
+  id: string;
+  userId: string;
+  type: string;
+  title: string | null;
+  body: string | null;
+  data: unknown;
+  read: boolean;
+  readAt: string | null;
+  archived: boolean;
+  archivedAt: string | null;
+  createdAt: string;
+}
+
+export async function fetchNotifications(): Promise<NotificationRow[]> {
+  const res = await fetch(`${FRIENDS_BASE_URL}/notifications`, {
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new Error(await readFriendsError(res));
+  }
+  const body = await parseJson<FriendsOk<NotificationRow[]>>(res);
+  if (!body.ok || !Array.isArray(body.data)) {
+    throw new Error("Invalid notifications response");
+  }
+  return body.data;
+}
+
+export async function patchNotificationRead(
+  id: string,
+): Promise<NotificationRow> {
+  const q = new URLSearchParams({ id: id.trim() });
+  const res = await fetch(
+    `${FRIENDS_BASE_URL}/notifications/read?${q.toString()}`,
+    { method: "PATCH", credentials: "include" },
+  );
+  if (!res.ok) {
+    throw new Error(await readFriendsError(res));
+  }
+  const body = await parseJson<FriendsOk<NotificationRow>>(res);
+  if (!body.ok || !body.data?.id) {
+    throw new Error("Invalid read notification response");
+  }
+  return body.data;
+}
+
+export async function patchNotificationsReadAll(): Promise<number> {
+  const res = await fetch(`${FRIENDS_BASE_URL}/notifications/readAll`, {
+    method: "PATCH",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new Error(await readFriendsError(res));
+  }
+  const body = await parseJson<FriendsOk<{ count: number }>>(res);
+  if (!body.ok || typeof body.data?.count !== "number") {
+    throw new Error("Invalid read-all notifications response");
+  }
+  return body.data.count;
+}
+
+export async function patchNotificationArchive(id: string): Promise<NotificationRow> {
+  const q = new URLSearchParams({ id: id.trim() });
+  const res = await fetch(
+    `${FRIENDS_BASE_URL}/notifications/archive?${q.toString()}`,
+    { method: "PATCH", credentials: "include" },
+  );
+  if (!res.ok) {
+    throw new Error(await readFriendsError(res));
+  }
+  const body = await parseJson<FriendsOk<NotificationRow>>(res);
+  if (!body.ok || !body.data?.id) {
+    throw new Error("Invalid archive notification response");
+  }
+  return body.data;
 }
 
 /** Row from GET /chat/conversations */
