@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Rihla backend APIs",
-    "description": "OpenAPI documentation. Friends service runs on port 4003 (host) or `friends:4003` inside Docker Compose.\n\n**WebSocket chat** (port 8181 by default) is documented with AsyncAPI: open `friends-chat.asyncapi.yaml` from this folder in [AsyncAPI Studio](https://studio.asyncapi.com/) (File → Load file), or mount the same directory in any AsyncAPI viewer.",
+    "description": "OpenAPI documentation. Friends service runs on port 4003 (host) or `friends:4003` inside Docker Compose.\n\n**WebSocket chat** (port 8181 by default) is in `friends-chat.asyncapi.yaml`. **Notification WebSocket** (port 8182 by default) is in `friends-notifications.asyncapi.yaml`. Open either file from this folder in [AsyncAPI Studio](https://studio.asyncapi.com/) (File → Load file), or mount the same directory in any AsyncAPI viewer.",
     "version": "1.0.0"
   },
   "servers": [
@@ -23,6 +23,10 @@
     {
       "name": "Chat",
       "description": "Direct messages between friends (friends-service, `/chat`)"
+    },
+    {
+      "name": "Notifications",
+      "description": "In-app notifications (friends-service, `/notifications`); real-time delivery on WebSocket port 8182"
     }
   ],
   "components": {
@@ -181,6 +185,48 @@
             "description": "Message body (trimmed; max length enforced server-side)"
           }
         }
+      },
+      "Notification": {
+        "type": "object",
+        "description": "Persisted row; `GET /notifications` omits archived notifications.",
+        "properties": {
+          "id": { "type": "string", "description": "Cuid" },
+          "userId": { "type": "string" },
+          "type": {
+            "type": "string",
+            "description": "Aligned with `NOTIFY_TYPES` in friends-service (`utils/notifications.js`).",
+            "enum": [
+              "FRIEND_REQUEST_RECEIVED",
+              "FRIEND_REQUEST_ACCEPTED",
+              "FRIENDSHIP_CREATED",
+              "CHAT_MESSAGE"
+            ]
+          },
+          "title": { "type": "string", "nullable": true },
+          "body": { "type": "string", "nullable": true },
+          "data": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Optional JSON payload (e.g. conversation id for chat)"
+          },
+          "read": { "type": "boolean" },
+          "readAt": { "type": "string", "format": "date-time", "nullable": true },
+          "archived": { "type": "boolean" },
+          "archivedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "userId", "type", "read", "archived", "createdAt"]
+      },
+      "ReadAllNotificationsResult": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Rows updated from unread to read (non-archived only)"
+          }
+        },
+        "required": ["count"]
       }
     }
   },
@@ -703,7 +749,7 @@
       "post": {
         "tags": ["Chat"],
         "summary": "Send a message",
-        "description": "Persists the message; WebSocket broadcast can be added later.",
+        "description": "Persists the message, broadcasts to chat WebSocket participants, and enqueues in-app notifications for other participants.",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
@@ -750,6 +796,203 @@
           },
           "404": {
             "description": "Not a participant",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "List notifications",
+        "description": "Returns non-archived notifications for the authenticated user, newest first.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Notification list in `data`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/OkEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/Notification" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/read": {
+      "patch": {
+        "tags": ["Notifications"],
+        "summary": "Mark one notification read",
+        "description": "Requires query `id` (notification id). Only affects rows owned by the caller that are not archived.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Notification id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated notification in `data`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/OkEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Notification" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or empty `id` (`INVALID_INPUT`)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found or not visible (`NOT_FOUND`)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/readAll": {
+      "patch": {
+        "tags": ["Notifications"],
+        "summary": "Mark all notifications read",
+        "description": "Sets `read` and `readAt` on every unread, non-archived row for the user.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Update count in `data.count`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/OkEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/ReadAllNotificationsResult" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/archive": {
+      "patch": {
+        "tags": ["Notifications"],
+        "summary": "Archive a notification",
+        "description": "Hides the row from `GET /notifications` and emits `notification_archived` on the notification WebSocket. Query `id` required.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Notification id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archived notification in `data`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/OkEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Notification" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or empty `id` (`INVALID_INPUT`)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, already archived, or wrong user (`NOT_FOUND`)",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ErrorBody" }
