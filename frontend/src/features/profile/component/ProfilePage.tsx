@@ -70,7 +70,7 @@ function ProfilePage() {
         ) : null}
         <div className="profile-header">
           <img
-            src={profileAvatar || user?.avatar || "/profile.png"}
+            src={profileAvatar || toProfileAvatarUrl(user?.avatar ?? null) || "/profile.png"}
             alt={user?.displayName || "Profile"}
             className="profile-avatar"
           />

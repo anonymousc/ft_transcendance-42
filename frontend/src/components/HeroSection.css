@@ -7,6 +7,7 @@
   justify-content: flex-start;
   position: relative;
   padding-top: 15rem;
+  box-sizing: border-box;
   transition: background 0.3s ease;
   max-width: 100%;
   overflow-x: clip;
@@ -116,12 +117,16 @@
 
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
+  /* Vertically center hero copy in the viewport; offset = fixed Header (padding + nav row) + notch */
   .hero-section {
-    padding-top: 5rem;
+    min-height: 100svh;
+    justify-content: center;
+    padding-top: calc(1rem + 3.5rem + env(safe-area-inset-top, 0px));
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
   }
 
   .hero-content {
-    padding: 2rem 1.25rem 0;
+    padding: 0 1.25rem;
   }
 
   .hero-title {
@@ -151,6 +156,6 @@
   }
 
   .hero-content {
-    padding: 1.5rem 1rem 0;
+    padding: 0 1rem;
   }
 }

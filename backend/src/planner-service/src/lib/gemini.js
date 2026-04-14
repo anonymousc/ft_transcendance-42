@@ -24,7 +24,7 @@ async function generateTripPlan({
   tripEndLabel = null,
 }) {
   const client = getClient();
-  const model = client.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' });
+  const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const prompt = buildPlannerPrompt(
     {
