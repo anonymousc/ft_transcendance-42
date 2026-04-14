@@ -585,7 +585,7 @@ function ReviewSection({
           placeholder="Share your experience…"
           rows={2}
           className="w-full resize-none rounded-xl px-3 py-2 text-[12.5px] text-stone-800 dark:text-white
-            bg-stone-50 dark:bg-white/[0.04] border border-stone-200 dark:border-white/[0.08]
+            bg-stone-50 dark:bg-white/4 border border-stone-200 dark:border-white/[0.08]
             placeholder:text-stone-400 outline-none focus:border-orange-300 dark:focus:border-orange-500/50
             transition-colors duration-150"
         />
