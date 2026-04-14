@@ -5,7 +5,6 @@ import HomeNavBar from "@/components/shared/HomeNavBar";
 import ChatSidebar from "./ChatSidebar";
 import ChatArea from "./ChatArea";
 import ChatWelcome from "./ChatWelcome";
-import ContactPanel from "./ContactPanel";
 import type { ChatUser, Conversation, Message } from "../types";
 import { useAuth } from "@/context/AuthContext";
 import { useWebSocket } from "../hooks/useWebSocket";
@@ -22,6 +21,7 @@ import {
   conversationRowToConversation,
   dedupeChatConversationRows,
 } from "../utils/mapApi";
+import { toProfileAvatarUrl } from "@/lib/profilesApi";
 
 function Webchat() {
   const { user } = useAuth();
@@ -119,7 +119,8 @@ function Webchat() {
         name: user.displayName || user.username || user.email,
         isOnline: user.status === "online",
       };
-      if (user.avatar) u.avatar = user.avatar;
+      const avatarUrl = toProfileAvatarUrl(user.avatar);
+      if (avatarUrl) u.avatar = avatarUrl;
       return u;
     }
     return { id: "", name: "Me", isOnline: false };
@@ -257,7 +258,7 @@ function Webchat() {
   return (
     <div className="flex min-h-0 flex-col h-dvh overflow-hidden bg-background">
       <HomeNavBar hideMobileGlassNav={Boolean(activeConversation)} />
-      <div className="home-nav-main-offset flex min-h-0 flex-1 overflow-hidden">
+      <div className="home-nav-main-offset flex min-h-0 flex-1 overflow-hidden bg-gray-50/80 dark:bg-zinc-950/80">
         <ChatSidebar
           currentUser={currentUser}
           conversations={conversations}
@@ -283,6 +284,8 @@ function Webchat() {
               messages={currentMessages}
               currentUserId={currentUser.id}
               contactName={activeConversation.participant.name}
+              peerAvatar={activeConversation.participant.avatar}
+              peerOnline={activeConversation.participant.isOnline}
               onSendMessage={handleSendMessage}
               onComposerActivity={notifyComposerTyping}
               peerIsTyping={Boolean(
@@ -290,19 +293,12 @@ function Webchat() {
                   peerTypingByConversation[activeConversationId],
               )}
               onBack={handleBack}
+              onRemoveFriend={handleRemoveFriend}
             />
           ) : (
             <ChatWelcome />
           )}
         </div>
-
-        {activeConversation && (
-          <ContactPanel
-            contact={activeConversation.participant}
-            onRemoveFriend={handleRemoveFriend}
-            className="hidden lg:flex w-72 xl:w-80 shrink-0"
-          />
-        )}
       </div>
     </div>
   );

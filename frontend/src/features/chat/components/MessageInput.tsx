@@ -50,7 +50,7 @@ function MessageInput({
       <div
         style={{ paddingLeft: "1rem", paddingRight: "1rem" }}
         className={cn(
-          "flex items-center gap-3 rounded-2xl py-1.5 w-full max-w-2xl",
+          "flex items-center gap-3 rounded-2xl py-1.5 w-full max-w-3xl",
           "bg-white dark:bg-zinc-800",
           "border-2 border-border/80 shadow-sm",
           "transition-shadow duration-200",

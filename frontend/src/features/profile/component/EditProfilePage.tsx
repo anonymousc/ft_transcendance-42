@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Upload, Save } from "lucide-react";
 import { fetchMyProfile, toProfileAvatarUrl, updateMyProfile, uploadAvatar } from "../../../lib/profilesApi";
+import { useAuth } from "../../../context/AuthContext";
 import "./EditProfilePage.css";
 
 function EditProfilePage() {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -65,10 +67,11 @@ function EditProfilePage() {
     setUploading(true);
     setError(null);
     setSuccess(null);
-    try {
+       try {
       const result = await uploadAvatar(file);
       setAvatarPath(result.avatarUrl || null);
       setSuccess("Profile picture updated.");
+      void refreshUser();
       const uploadedSrc = toProfileAvatarUrl(result.avatarUrl || null);
       if (uploadedSrc) {
         await checkAvatarReachability(uploadedSrc);

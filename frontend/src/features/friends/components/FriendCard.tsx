@@ -119,7 +119,7 @@ function FriendCard({
               <h3 className="truncate text-[15px] font-bold text-stone-900 dark:text-white">
                 {friend.name}
               </h3>
-              <span
+              {/* <span
                 className={cn(
                   "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
                   friend.isOnline
@@ -128,7 +128,7 @@ function FriendCard({
                 )}
               >
                 {friend.isOnline ? "Online" : "Offline"}
-              </span>
+              </span> */}
             </div>
             <p className="truncate text-[12px] font-medium text-orange-500 dark:text-orange-400">
               @{friend.username}
@@ -148,11 +148,6 @@ function FriendCard({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <StatPill
-            label="Places"
-            value={places}
-            icon={<MapPinned size={11} className="shrink-0 opacity-70" />}
-          />
           <StatPill
             label="Friends"
             value={fCount}

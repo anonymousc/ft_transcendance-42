@@ -571,7 +571,7 @@ function SavedPlacesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#faf9f7] dark:bg-[#0e0d0b]">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#1c1c1e]">
       <HomeNavBar />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-8 pt-24 pb-20">
