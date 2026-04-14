@@ -31,6 +31,9 @@ function FooterLinks() {
                     <li className="mb-3">
                         <a href="tel:+212000000000" className={linkClasses}>+212 000 000 000</a>
                     </li>
+                    <li className="mb-3">
+                        <Link to="/healthcheck" className={linkClasses}>Service status</Link>
+                    </li>
                 </ul>
             </div>
         </div>

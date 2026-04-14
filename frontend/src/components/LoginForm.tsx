@@ -1,7 +1,7 @@
+import { useState } from "react";
 import "./LoginForm.css";
 import { Mail, Lock } from "lucide-react";
 import AcceptTerms from "./shared/AcceptTerms";
-
 
 interface LoginFormProps {
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
@@ -9,6 +9,8 @@ interface LoginFormProps {
 }
 
 function LoginForm({ handleSubmit, submitting = false }: LoginFormProps) {
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
   return (
     <form className="login-form" onSubmit={handleSubmit}>
       <div className="input-wrapper">
@@ -31,8 +33,22 @@ function LoginForm({ handleSubmit, submitting = false }: LoginFormProps) {
           required
         />
       </div>
-      <AcceptTerms />
-      <button type="submit" disabled={submitting}>{submitting ? 'Signing in…' : 'Login'}</button>
+      <AcceptTerms
+        id="login-accept-terms"
+        checked={termsAccepted}
+        onCheckedChange={setTermsAccepted}
+      />
+      <button
+        type="submit"
+        disabled={submitting || !termsAccepted}
+        title={
+          !termsAccepted
+            ? "Please accept the Privacy Policy to continue"
+            : undefined
+        }
+      >
+        {submitting ? "Signing in…" : "Login"}
+      </button>
     </form>
   );
 }

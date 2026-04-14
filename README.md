@@ -651,12 +651,18 @@ sudo docker compose up
 curl http://localhost:3001/health  # auth-service
 curl http://localhost:3002/health  # profiles-service
 curl http://localhost:4000/health  # ai-places-service
+curl http://localhost:4001/health  # review-places
+curl http://localhost:4002/health  # fav-places
 curl http://localhost:7000/health  # planner-service
 curl http://localhost:4003/health  # friends-service
 
 # Check VITE_API_URL in frontend/.env
 # Should match the service URLs and FRONTEND_URL
 ```
+
+### Service status page (frontend)
+
+The app includes a **browser status board** at **`/healthcheck`** (e.g. `http://localhost:5173/healthcheck` when using Vite’s default port). It requests `GET /health` on each microservice using the same `VITE_*` base URLs as the rest of the UI (`VITE_API_URL`, `VITE_PROFILES_URL`, `VITE_AI_PLACES_URL`, `VITE_REVIEW_PLACES_URL`, `VITE_FAV_PLACES_URL`, `VITE_PLANNER_URL`, `VITE_FRIENDS_URL`). It auto-refreshes every 30 seconds and can be refreshed manually. If checks fail only in the browser, confirm each API allows CORS for your frontend origin on `/health`.
 
 ## Roadmap
 

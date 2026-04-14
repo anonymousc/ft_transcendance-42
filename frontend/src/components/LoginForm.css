@@ -83,6 +83,11 @@
     transition: background-color 0.3s ease;
 }
 
-.login-form button[type="submit"]:hover {
+.login-form button[type="submit"]:hover:not(:disabled) {
     background-color: #FF7A2E;
+}
+
+.login-form button[type="submit"]:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
