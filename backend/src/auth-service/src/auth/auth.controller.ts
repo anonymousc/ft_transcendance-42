@@ -118,11 +118,6 @@ export class AuthController {
       return this.redirectSettingsLinkError(res, 'invalid_link_state');
     }
 
-<<<<<<< HEAD
-    const frontendUrl =
-      this.configService.get<string>('FRONTEND_URL') || 'https://localhost';
-    return res.redirect(`${frontendUrl}/oauth-success`);
-=======
     try {
       const user =
         link?.provider === 'google'
@@ -152,7 +147,6 @@ export class AuthController {
       }
       throw err;
     }
->>>>>>> 7f2bf2867310d68a779caeb7b3f43035748a797a
   }
 
   @Get('42')
@@ -171,11 +165,6 @@ export class AuthController {
       return this.redirectSettingsLinkError(res, 'invalid_link_state');
     }
 
-<<<<<<< HEAD
-    const frontendUrl =
-      this.configService.get<string>('FRONTEND_URL') || 'https://localhost';
-    return res.redirect(`${frontendUrl}/oauth-success`);
-=======
     try {
       const user =
         link?.provider === '42'
@@ -199,7 +188,6 @@ export class AuthController {
       }
       throw err;
     }
->>>>>>> 7f2bf2867310d68a779caeb7b3f43035748a797a
   }
 
   @Get('me')
