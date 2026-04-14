@@ -52,9 +52,9 @@ function Header() {
   }, []);
 
   const navLinks = [
-    { href: '#about', label: 'About Us', id: 'about' },
-    { href: '#how-it-works', label: 'How it Works', id: 'how-it-works' },
-    { href: '#features', label: 'Features', id: 'features' },
+    { href: '/#about', label: 'About Us', id: 'about' },
+    { href: '/#how-it-works', label: 'How it Works', id: 'how-it-works' },
+    { href: '/#features', label: 'Features', id: 'features' },
   ];
 
   return (

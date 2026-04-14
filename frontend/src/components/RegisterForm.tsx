@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Lock } from "lucide-react";
 import "./RegisterForm.css";
@@ -9,6 +10,8 @@ interface RegisterFormProps {
 }
 
 function RegisterForm({ handleSubmit, submitting = false }: RegisterFormProps) {
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
   return (
     <form className="register-form" onSubmit={handleSubmit}>
       <div className="name-row">
@@ -54,8 +57,22 @@ function RegisterForm({ handleSubmit, submitting = false }: RegisterFormProps) {
       </div>
 
 
-      <AcceptTerms />
-      <button type="submit" disabled={submitting}>{submitting ? 'Creating…' : 'Create Account'}</button>
+      <AcceptTerms
+        id="register-accept-terms"
+        checked={termsAccepted}
+        onCheckedChange={setTermsAccepted}
+      />
+      <button
+        type="submit"
+        disabled={submitting || !termsAccepted}
+        title={
+          !termsAccepted
+            ? "Please accept the Privacy Policy to continue"
+            : undefined
+        }
+      >
+        {submitting ? "Creating…" : "Create Account"}
+      </button>
 
       <div className="w-full h-px bg-gray-300 dark:bg-gray-600"></div>
 

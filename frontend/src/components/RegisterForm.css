@@ -99,8 +99,13 @@
     transition: background-color 0.3s ease;
 }
 
-.register-form > button[type="submit"]:hover {
+.register-form > button[type="submit"]:hover:not(:disabled) {
     background-color: #FF7A2E;
+}
+
+.register-form > button[type="submit"]:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 

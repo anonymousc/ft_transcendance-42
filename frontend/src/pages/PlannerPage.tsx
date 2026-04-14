@@ -101,7 +101,24 @@ function blankActivity(): Activity {
   };
 }
 
-function formatTripRange(createdAt: string, days: number): string {
+/** Parse API date: YYYY-MM-DD or ISO datetime (Prisma JSON). Use local calendar fields. */
+function parseTripDateField(value: string | null | undefined): Date | null {
+  if (value == null || String(value).trim() === "") return null;
+  const s = String(value).trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if (m) {
+    const y = Number(m[1]);
+    const mo = Number(m[2]) - 1;
+    const d = Number(m[3]);
+    const dt = new Date(y, mo, d);
+    if (dt.getFullYear() === y && dt.getMonth() === mo && dt.getDate() === d) return dt;
+  }
+  const dt = new Date(s);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+/** Fallback when tripStartDate / tripEndDate are missing (legacy plans). */
+function formatTripRangeFromCreated(createdAt: string, days: number): string {
   const start = new Date(createdAt);
   if (Number.isNaN(start.getTime())) return `${days} day${days === 1 ? "" : "s"}`;
   const end = new Date(start);
@@ -110,6 +127,31 @@ function formatTripRange(createdAt: string, days: number): string {
   const a = start.toLocaleDateString(undefined, opts);
   const b = end.toLocaleDateString(undefined, opts);
   return `${a} – ${b}`;
+}
+
+function formatTripDateRangeLabel(s: {
+  tripStartDate?: string | null;
+  tripEndDate?: string | null;
+  createdAt: string;
+  days: number;
+}): string {
+  const a = parseTripDateField(s.tripStartDate);
+  const b = parseTripDateField(s.tripEndDate);
+  if (a && b) {
+    const sameYear = a.getFullYear() === b.getFullYear();
+    const optsStart: Intl.DateTimeFormatOptions = {
+      month: "short",
+      day: "numeric",
+      ...(sameYear ? {} : { year: "numeric" }),
+    };
+    const optsEnd: Intl.DateTimeFormatOptions = {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    };
+    return `${a.toLocaleDateString(undefined, optsStart)} – ${b.toLocaleDateString(undefined, optsEnd)}`;
+  }
+  return formatTripRangeFromCreated(s.createdAt, s.days);
 }
 
 function Toast({ message, onDismiss }: { message: string; onDismiss: () => void }) {
@@ -344,7 +386,7 @@ function PlannerSidebar({
             <div className="pp-plan-item-body">
               <p className="pp-plan-item-name">{s.city}</p>
               <p className="pp-plan-item-meta">
-                {formatTripRange(s.createdAt, s.days)} · {s.days} day{s.days === 1 ? "" : "s"}
+                {formatTripDateRangeLabel(s)} · {s.days} day{s.days === 1 ? "" : "s"}
               </p>
               <span className="pp-plan-item-saved">Saved</span>
             </div>
@@ -648,7 +690,11 @@ export default function PlannerPage() {
                 <div className="planner-days-content">
                   <p style={{ color: "var(--pp-muted)", fontSize: "0.875rem", marginBottom: "1rem" }}>
                     <CalendarDays size={14} style={{ verticalAlign: "middle", marginRight: 6 }} />
-                    {activePlan.city} · {activePlan.days} day{activePlan.days === 1 ? "" : "s"}
+                    {activePlan.city}
+                    {" · "}
+                    {formatTripDateRangeLabel(activePlan)}
+                    {" · "}
+                    {activePlan.days} day{activePlan.days === 1 ? "" : "s"}
                   </p>
                   {activePlan.plan.summary ? (
                     <p style={{ marginBottom: "1.5rem", lineHeight: 1.5, color: "var(--pp-text)" }}>

@@ -24,13 +24,16 @@ import FriendsPage from './features/friends/components/FriendsPage';
 import NotificationPage from './features/notifications/NotificationPage';
 import SavedPlacesPage from './pages/SavedPlacesPage';
 import InterestsPage from './features/Interests/InterestsPage';
-// import HealthCheckPage from './pages/healthcheck';
+import HealthcheckPage from './pages/HealthcheckPage';
+import PrivacyPage from './pages/PrivacyPage';
 
 function AppContent() {
   return (
     <>
       <Routes>
         <Route path="/" element={<Hero />} />
+        <Route path="/healthcheck" element={<HealthcheckPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
         {/* <Route path="/" element={<HomePage />} /> */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
