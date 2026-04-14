@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import HomeNavBar from "@/components/shared/HomeNavBar";
 import { useAuth } from "@/context/AuthContext";
+import { useNavBadges } from "@/context/NavBadgesContext";
 import ChatAvatar from "@/features/chat/components/ChatAvatar";
 import FriendCard from "./FriendCard";
 import FriendProfile from "./FriendProfile";
@@ -37,6 +38,7 @@ const DISCOVER_MIN_QUERY = 2;
 
 function FriendsPage() {
   const { user } = useAuth();
+  const { refreshIncomingFriendBadge } = useNavBadges();
   const myInterestLabels = useMemo(
     () => flattenUserInterests(user?.interests ?? undefined),
     [user?.interests],
@@ -165,21 +167,23 @@ function FriendsPage() {
     try {
       await acceptFriendRequest(req.id);
       setPending((prev) => prev.filter((p) => p.id !== req.id));
+      refreshIncomingFriendBadge();
       const list = await fetchFriends();
       setFriends(list);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to accept request");
     }
-  }, []);
+  }, [refreshIncomingFriendBadge]);
 
   const handleDecline = useCallback(async (requestId: string) => {
     try {
       await declineOrCancelRequest(requestId);
       setPending((prev) => prev.filter((p) => p.id !== requestId));
+      refreshIncomingFriendBadge();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to decline request");
     }
-  }, []);
+  }, [refreshIncomingFriendBadge]);
 
   const handleAddSuggested = useCallback(async (studentId: string) => {
     try {

@@ -9,15 +9,20 @@ interface NavItem {
     label: string;
 }
 
+export type GlassNavBadgeKey = "home" | "messages" | "friends" | "notifications";
+
 function GlassNavBar({
     activeId = "home",
     handleNavigation,
     surface = "default",
+    badges,
 }: {
     activeId?: string;
     handleNavigation?: (id: string) => void;
     /** Dark frost + white icons on busy backdrops (e.g. /home video). Light & dark theme. */
     surface?: "default" | "home-video";
+    /** Orange activity dots (e.g. unread / pending). */
+    badges?: Partial<Record<GlassNavBadgeKey, boolean>> | undefined;
 }) {
     const labelRefs = useRef<(HTMLSpanElement | null)[]>([]);
     const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -93,7 +98,12 @@ function GlassNavBar({
                     onClick={() => handleClick(index)}
                     aria-label={item.label}
                 >
-                    {item.icon}
+                    <span className="glass-nav-icon-wrap">
+                        {item.icon}
+                        {badges?.[item.id as GlassNavBadgeKey] ? (
+                            <span className="glass-nav-badge" aria-hidden />
+                        ) : null}
+                    </span>
                     <span
                         className="nav-label"
                         ref={(el) => { labelRefs.current[index] = el; }}

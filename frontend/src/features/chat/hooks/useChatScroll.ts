@@ -1,6 +1,9 @@
 import { useEffect, useRef, useCallback } from "react";
 
-export function useChatScroll(messageCount: number) {
+export function useChatScroll(
+  messageCount: number,
+  peerTyping: boolean = false,
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
 
@@ -26,7 +29,7 @@ export function useChatScroll(messageCount: number) {
     if (isNearBottomRef.current) {
       scrollToBottom();
     }
-  }, [messageCount, scrollToBottom]);
+  }, [messageCount, peerTyping, scrollToBottom]);
 
   useEffect(() => {
     scrollToBottom("instant");

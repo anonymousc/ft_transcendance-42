@@ -161,9 +161,10 @@
   border-radius: 4px;
 }
 
-.home-nav-main-offset {
+/* Scoped: unqualified .home-nav-main-offset leaked onto /webchat and other routes. */
+.planner-page-body.home-nav-main-offset {
   padding-top: 70px;
-  background-color: #f5f5f7;
+  background-color: var(--background);
 }
 
 /* ── Plan item in sidebar ────────────────────────────────────────────────── */

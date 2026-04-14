@@ -279,20 +279,7 @@ function SettingsPage() {
             </label>
           </div>
         </div>
-        <div className="settings-section">
-          <div
-            className="settings-row settings-row-clickable settings-row-danger"
-            onClick={() => console.log("Delete account")}
-          >
-            <div className="settings-row-left">
-              <span className="settings-row-icon icon-red">
-                <Trash2 />
-              </span>
-              <span className="settings-row-label">Delete Account</span>
-            </div>
-            <ChevronRight className="settings-row-chevron" />
-          </div>
-        </div>
+
       </div>
     </main>
   );

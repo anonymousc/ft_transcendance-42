@@ -11,6 +11,9 @@ interface ChatAreaProps {
   currentUserId: string;
   contactName: string;
   onSendMessage: (content: string) => void;
+  /** Fired when the draft becomes non-empty or empty (for typing indicators). */
+  onComposerActivity?: ((hasDraft: boolean) => void) | undefined;
+  peerIsTyping?: boolean | undefined;
   isDisabled?: boolean | undefined;
   onBack?: (() => void) | undefined;
   className?: string | undefined;
@@ -21,11 +24,16 @@ function ChatArea({
   currentUserId,
   contactName,
   onSendMessage,
+  onComposerActivity,
+  peerIsTyping = false,
   isDisabled = false,
   onBack,
   className,
 }: ChatAreaProps) {
-  const { containerRef, handleScroll } = useChatScroll(messages.length);
+  const { containerRef, handleScroll } = useChatScroll(
+    messages.length,
+    peerIsTyping,
+  );
 
   return (
     <div
@@ -68,10 +76,22 @@ function ChatArea({
               />
             ))
           )}
+          {peerIsTyping ? (
+            <p
+              className="select-none pl-1 text-xs text-muted-foreground"
+              aria-live="polite"
+            >
+              {contactName} is typing…
+            </p>
+          ) : null}
         </div>
       </div>
 
-      <MessageInput onSend={onSendMessage} disabled={isDisabled} />
+      <MessageInput
+        onSend={onSendMessage}
+        onComposerActivity={onComposerActivity}
+        disabled={isDisabled}
+      />
     </div>
   );
 }

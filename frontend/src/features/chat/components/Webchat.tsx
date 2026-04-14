@@ -59,11 +59,58 @@ function Webchat() {
     });
   }, []);
 
-  const { connectionState, messages, sendMessage, hydrateMessages } =
-    useWebSocket({
-      userId,
-      onChatMessage,
-    });
+  const {
+    connectionState,
+    messages,
+    sendMessage,
+    sendTyping,
+    peerTypingByConversation,
+    hydrateMessages,
+  } = useWebSocket({
+    userId,
+    onChatMessage,
+  });
+
+  const typingIdleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingTrueAtRef = useRef(0);
+  const prevActiveConversationRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    const prev = prevActiveConversationRef.current;
+    if (prev && prev !== activeConversationId) {
+      if (typingIdleRef.current) {
+        clearTimeout(typingIdleRef.current);
+        typingIdleRef.current = null;
+      }
+      sendTyping(prev, false);
+    }
+    prevActiveConversationRef.current = activeConversationId;
+  }, [activeConversationId, sendTyping]);
+
+  const notifyComposerTyping = useCallback(
+    (hasDraft: boolean) => {
+      if (!activeConversationId) return;
+      if (!hasDraft) {
+        if (typingIdleRef.current) {
+          clearTimeout(typingIdleRef.current);
+          typingIdleRef.current = null;
+        }
+        sendTyping(activeConversationId, false);
+        return;
+      }
+      const now = Date.now();
+      if (now - lastTypingTrueAtRef.current > 2000) {
+        sendTyping(activeConversationId, true);
+        lastTypingTrueAtRef.current = now;
+      }
+      if (typingIdleRef.current) clearTimeout(typingIdleRef.current);
+      typingIdleRef.current = setTimeout(() => {
+        sendTyping(activeConversationId, false);
+        typingIdleRef.current = null;
+      }, 2000);
+    },
+    [activeConversationId, sendTyping],
+  );
 
   const currentUser: ChatUser = useMemo(() => {
     if (user) {
@@ -184,9 +231,14 @@ function Webchat() {
   const handleSendMessage = useCallback(
     (content: string) => {
       if (!activeConversationId) return;
+      if (typingIdleRef.current) {
+        clearTimeout(typingIdleRef.current);
+        typingIdleRef.current = null;
+      }
+      sendTyping(activeConversationId, false);
       sendMessage(activeConversationId, content);
     },
-    [activeConversationId, sendMessage],
+    [activeConversationId, sendMessage, sendTyping],
   );
 
   const handleBack = useCallback(() => {
@@ -232,6 +284,11 @@ function Webchat() {
               currentUserId={currentUser.id}
               contactName={activeConversation.participant.name}
               onSendMessage={handleSendMessage}
+              onComposerActivity={notifyComposerTyping}
+              peerIsTyping={Boolean(
+                activeConversationId &&
+                  peerTypingByConversation[activeConversationId],
+              )}
               onBack={handleBack}
             />
           ) : (

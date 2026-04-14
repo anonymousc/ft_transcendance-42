@@ -38,45 +38,43 @@ Rihla is a community-driven travel platform built for students exploring Morocco
 
 ## MVP Features
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| 🔐 Authentication | Register, Login, Logout (incl. OAuth Google) | ✅ Implemented |
-| 👤 Users & Profiles | User accounts, profiles (username, avatar, bio) | ✅ Implemented |
-| 📁 File Uploads | Image and file upload functionality | ✅ Implemented |
-| 📍 Location & Places | Place discovery (Google Places) + personalized suggestions | ✅ Implemented |
-| 🎯 Activity-Based Discovery | Places categorized by activity type | 📋 Planned  |
-| ⭐ Rating System | Rate and review places | 📋 Planned |
-| ⚡ Real-Time Features | WebSockets for messaging & notifications | 📋 Planned |
-| 🤖 AI Support Bot | AI recommendations included in places service | 📋 Planned  |
+| Area | Description | Status |
+|------|-------------|--------|
+| Authentication | Email register/login, logout, **Google + 42 OAuth**, cookie JWT + CSRF, **change password** (local accounts), **link providers** in Settings | Done |
+| Users & profiles | Profiles (username, avatar, bio), edit profile, change-password flow | Done |
+| File uploads | Avatars via profiles service | Done |
+| Location & places | Google Places discovery, city & saved places, planner integration | Done |
+| Activity-based discovery | Places categorized by activity type | Planned |
+| Ratings & reviews | Community reviews + aggregates (`review-places`) | Done |
+| Real-time | **friends-service**: REST + WebSockets (chat / notifications; polish ongoing) | In progress |
+| AI | Trip planner (Gemini) + places suggestions (`ai-places-service`) | Done |
 
 ---
 
 ## Current Implementation Status
 
 ### Backend (microservices)
-- ✅ **auth-service (NestJS + Prisma):** cookie-based JWT auth + CSRF double-submit, Google OAuth 2.0, token validation/introspection
-- ✅ **profiles-service (NestJS + Prisma):** authenticated profile read/update, avatar upload, static serving under `/uploads/*`
-- ✅ **ai-places-service (Express):** Google Places-backed discovery (`/autocomplete`, `/places`, `/places/search`, `/places/suggest`) with Redis caching + rate limits
-- ✅ **planner-service (Express + Prisma):** AI trip planning (`/plan/*`) using Gemini + Google Places; enriches with user favorites and community review summaries via internal service calls
-- ✅ **fav-places (Express + Prisma):** save/visit places per user (`/fav-places/*`)
-- ✅ **review-places (Express + Prisma):** community reviews + rating aggregation (`/reviews/*`)
-- 🧪 **websock-service:** contract documented for realtime chat; implementation pending (see `backend/src/websock-service/handOff.md`)
+- **auth-service (NestJS + Prisma):** cookie JWT, **CSRF** on mutating requests, **Google + 42 OAuth** (sign-in + **account linking**), `GET /auth/me` (incl. `hasPassword`), **`POST /auth/change-password`**, `GET /auth/linked-providers`, `GET /auth/validate`, Google token helper for Calendar
+- **profiles-service (NestJS + Prisma):** profile CRUD/patch, search, avatar upload, static `/uploads/*`
+- **ai-places-service (Express):** Google Places (`/autocomplete`, `/places`, `/places/search`, `/places/suggest`, photos) + Redis + rate limits
+- **planner-service (Express + Prisma):** AI trip `/plan/*` (Gemini); integrates favorites, reviews, profiles, auth
+- **fav-places (Express + Prisma):** saved/visited places (`/fav-places/*`)
+- **review-places (Express + Prisma):** reviews + aggregates (`/reviews/*`)
+- **friends-service (Express + Prisma + `ws`):** friends REST + WebSocket ports for chat/notifications; wired in root `docker-compose.yml`
+- **websock-service:** optional legacy/hand-off docs under `backend/src/websock-service/`; realtime work centers on **friends-service**
 
 ### Frontend (React 19 + Vite 7)
-- ✅ **Pages:** Landing (Hero), Home, Login, Register, Profile, Settings, OAuth callback, 404 error page
-- ✅ **Routing:** React Router v7 with protected routes
-- ✅ **UI Components:** Built with Radix UI primitives + Tailwind CSS v4
-- ✅ **Styling:** Reusable component system (glass card, navigation, sections)
-- ✅ **Context API:** Theme management and authentication state
-- 📋 **Chat Feature:** Structure in place, implementation pending
-- **Animations:** GSAP 3 for smooth transitions
-- **Icons:** Lucide React icon library
+- **Routes:** Hero, Home, Login, Register, **Profile** (view / **edit** / **change password**), **Settings** (theme, OAuth linking), **Planner**, **City**, **Saved**, **Interests**, **Friends**, **Notifications**, **Webchat**, OAuth success, 404
+- **Routing:** React Router v7 + `ProtectedRoute` for authenticated pages
+- **UI:** Radix UI + Tailwind v4, Lucide icons, GSAP where used
+- **Context:** Theme (incl. dark mode) + auth session from `/auth/me`
+- **Chat / realtime:** WebSocket hooks use friends-service (`VITE_WS_URL`, `VITE_FRIENDS_URL`); completeness varies by screen
 
 ### DevOps & Infrastructure
-- **Docker Compose:** Multi-service orchestration with environment configuration
-- **Services:** Frontend, Backend API, PostgreSQL, Restapi, Redis, Netdata, Kibana, Elasticsearch, Vault
-- **Makefile Targets:** Build, start, stop, clean, and manage services easily
-- **Health Monitoring:** Netdata for real-time system metrics
+- **Docker Compose (repo root):** `frontend`, `auth`, `profiles`, `database`, `redis`, `vault`, `swagger`, `logger` (logbull), `ai-places`, `review-places`, `fav-places`, **`friends`**, `planner` — see `docker-compose.yml`
+- **Secrets:** Vault + Docker `secrets:` files under `backend/devops/secrets/` (Google, **42**, Gemini, Places, URLs)
+- **Optional in compose:** nginx, Netdata, and other blocks may be **commented**; enable as needed
+- **Makefile:** `make all`, `make front`, logs, clean (when present)
 
 ---
 
@@ -101,7 +99,7 @@ Rihla is a community-driven travel platform built for students exploring Morocco
 | Tool | Version | Purpose |
 |--------|---------|---------|
 | [NestJS](https://nestjs.com/) | 10 | Auth + Profiles microservices |
-| [Express](https://expressjs.com/) | 4/5 | AI Places / Planner / Favorites / Reviews microservices |
+| [Express](https://expressjs.com/) | 4/5 | AI Places / Planner / Favorites / Reviews / **Friends** microservices |
 | [TypeScript](https://www.typescriptlang.org/) | 5.x | NestJS services |
 | [Prisma](https://www.prisma.io/) | 6.x | ORM for Postgres-backed services |
 | [PostgreSQL](https://www.postgresql.org/) | 15+ | Primary database |
@@ -115,12 +113,12 @@ Rihla is a community-driven travel platform built for students exploring Morocco
 |---------|---------|------|
 | PostgreSQL | Primary database | 5432 |
 | Redis | Caching & sessions | 6379 |
-| Elasticsearch | Log aggregation | 9200 |
-| Kibana | Log visualization | 5601 |
 | Swagger API Docs | API documentation | 8080 |
 | Vault | Secrets management | 8200 |
-| Netdata | System monitoring | 19999 |
-| **AI Places Microservice** | **Express + Google Places + Redis** | **4000** |
+| **AI Places** | Express + Google Places + Redis | **4000** |
+| **Friends** | Express + Prisma + WebSocket | **4003** (+ **8181** / **8182** WS in Docker) |
+
+*Elasticsearch / Kibana / Netdata are not part of the default root compose; add or run separately if needed.*
 
 ---
 
@@ -162,14 +160,14 @@ ft_transcendance-42/
 │
 ├── backend/                     # Backend microservices (NestJS + Express)
 │   ├── src/
-│   │   ├── auth-service/         # NestJS auth microservice (JWT + Google OAuth)
+│   │   ├── auth-service/         # NestJS auth (JWT + Google + 42 OAuth, CSRF, change password)
 │   │   ├── profiles-service/     # NestJS profiles + uploads microservice
 │   │   ├── ai-places-service/    # Express microservice (Google Places + Redis cache)
 │   │   ├── planner-service/      # Express microservice (Gemini trip planner + Prisma)
 │   │   ├── fav-places/           # Express microservice (saved/visited places + Prisma)
 │   │   ├── review-places/        # Express microservice (reviews + aggregates + Prisma)
-│   │   ├── websock-service/      # WebSocket service docs/contract (implementation pending)
-│   │   └── friends/              # Work-in-progress module (not currently wired)
+│   │   ├── friends-service/      # Friends + WebSocket chat/notification ports (Express + Prisma)
+│   │   └── websock-service/      # Legacy notes / hand-off (optional)
 │   │
 │   └── devops/                   # Docker infra (Vault, DB, Redis, Swagger, etc.)
 │       ├── docker-compose.yml  # Complete stack (all services)
@@ -198,7 +196,7 @@ ft_transcendance-42/
 │           └── frontend_url
 │
 ├── Makefile                     # Build & deployment targets
-├── docker-compose.yml          # Root compose (references backend/devops)
+├── docker-compose.yml          # Root stack: frontend + microservices + infra (paths under backend/)
 ├── CNAME                        # DNS configuration
 ├── Oauth2.md                    # OAuth setup guide
 ├── SECURITY.md                 # Security policies
@@ -214,7 +212,7 @@ ft_transcendance-42/
 - [Node.js](https://nodejs.org/) v18+ with npm or pnpm
 - [Docker](https://www.docker.com/) & Docker Compose v2+
 - [Git](https://git-scm.com/)
-- Google OAuth 2.0 credentials (for authentication feature)
+- Google OAuth 2.0 and/or **42 Intra** OAuth credentials (for authentication)
 
 ### Quick Installation
 
@@ -235,6 +233,7 @@ cd backend/src/ai-places-service && npm install && cd ../../..
 cd backend/src/review-places && npm install && cd ../../..
 cd backend/src/fav-places && npm install && cd ../../..
 cd backend/src/planner-service && npm install && cd ../../..
+cd backend/src/friends-service && npm install && cd ../../..
 ```
 
 ### Local Development (No Docker)
@@ -267,6 +266,7 @@ cd backend/src/ai-places-service && npm run startDev
 cd backend/src/review-places && npm run dev
 cd backend/src/fav-places && npm run dev
 cd backend/src/planner-service && npm run dev
+cd backend/src/friends-service && npm run dev
 ```
 
 ### Backend Scripts
@@ -284,6 +284,7 @@ cd backend/src/ai-places-service && npm run startDev
 cd backend/src/review-places && npm run dev
 cd backend/src/fav-places && npm run dev
 cd backend/src/planner-service && npm run dev
+cd backend/src/friends-service && npm run dev
 
 # Prisma (per-service)
 cd backend/src/auth-service && npm run prisma:generate && npm run prisma:migrate
@@ -291,6 +292,7 @@ cd backend/src/profiles-service && npm run prisma:generate && npm run prisma:mig
 cd backend/src/planner-service && npm run prisma:generate && npm run prisma:migrate
 cd backend/src/review-places && npm run prisma:generate && npm run prisma:migrate
 cd backend/src/fav-places && npm run prisma:generate && npm run prisma:migrate
+cd backend/src/friends-service && npm run prisma:generate && npm run prisma:migrate
 ```
 
 ### Frontend Scripts
@@ -312,11 +314,15 @@ npm run lint             # ESLint checks
 
 ```env
 # API Configuration
-VITE_API_URL=http://localhost:3001        # Auth service base URL (cookies + CSRF)
-VITE_PROFILES_URL=http://localhost:3002   # Profiles service base URL
-VITE_AI_PLACES_URL=http://localhost:4000  # AI Places service base URL
-VITE_PLANNER_URL=http://localhost:7000    # Planner service base URL
-VITE_WS_URL=ws://localhost:8000           # WebSocket URL (for real-time features; optional)
+VITE_API_URL=http://localhost:3001        # Auth (cookies + CSRF)
+VITE_PROFILES_URL=http://localhost:3002   # Profiles
+VITE_AI_PLACES_URL=http://localhost:4000
+VITE_REVIEW_PLACES_URL=http://localhost:4001
+VITE_FAV_PLACES_URL=http://localhost:4002
+VITE_PLANNER_URL=http://localhost:7000
+VITE_FRIENDS_URL=http://localhost:4003    # Friends REST
+VITE_WS_URL=ws://localhost:8181           # Chat WebSocket (friends-service)
+# Optional: VITE_NOTIFICATION_WS_URL or VITE_NOTIFICATION_WS_PORT (default 8182)
 ```
 
 ### Backend (Docker compose `.env` at repo root)
@@ -359,6 +365,9 @@ backend/devops/secrets/
   ├── google_client_id
   ├── google_client_secret
   ├── callback_url
+  ├── fortytwo_client_id
+  ├── fortytwo_client_secret
+  ├── fortytwo_callback
   ├── frontend_url
   ├── gemini_api_key
   └── google_places
@@ -398,6 +407,7 @@ make all
 - Review Places: `http://localhost:4001` (`/reviews*`, `/health`)
 - Fav Places: `http://localhost:4002` (`/fav-places*`, `/health`)
 - Planner: `http://localhost:7000` (`/plan*`, `/plans`, `/health`)
+- Friends: `http://localhost:4003` (REST; WebSockets published as `8181`/`8182` in compose for chat/notifications)
 - Swagger UI: `http://localhost:8080`
 - Vault: `http://localhost:${PORT_VAULT}` (default `http://localhost:8200`)
 
@@ -446,17 +456,18 @@ docker compose -f docker-compose.yml build <service_name> --no-cache
 
 | Service | Base URL | Key routes | Description | Status |
 |--------|----------|------------|-------------|--------|
-| **auth-service** | `http://localhost:3001` | `GET /health`, `GET /auth/csrf`, `POST /auth/signup`, `POST /auth/signin`, `POST /auth/logout`, `GET /auth/me`, `GET /auth/validate`, `GET /auth/google/*` | Cookie-based JWT auth + CSRF + Google OAuth | ✅ |
-| **profiles-service** | `http://localhost:3002` | `GET /health`, `GET /profiles/me`, `PUT /profiles/me`, `POST /uploads/avatar`, `GET /uploads/*` | Profiles + uploads (auth required) | ✅ |
+| **auth-service** | `http://localhost:3001` | `GET /health`, `GET /auth/csrf`, `POST /auth/signup`, `POST /auth/signin`, `POST /auth/logout`, `POST /auth/change-password`, `GET /auth/me` (incl. `hasPassword`), `GET /auth/linked-providers`, `GET /auth/validate`, `GET /auth/google/*`, `GET /auth/42/*`, `GET /auth/link/google`, `GET /auth/link/42` | Cookie JWT + CSRF + **Google & 42 OAuth** + password change + provider linking | ✅ |
+| **profiles-service** | `http://localhost:3002` | `GET /health`, `GET /profiles/search`, `GET /profiles/me`, `PUT /profiles/me`, `PATCH /profiles/me`, `POST /uploads/avatar`, `GET /uploads/*` | Profiles + uploads (auth required) | ✅ |
 | **ai-places-service** | `http://localhost:4000` | `GET /health`, `GET /autocomplete`, `POST /autocomplete/recent`, `GET /places`, `GET /places/search`, `POST /places/suggest`, `GET /places/photos` | Discovery (Google Places) + Redis caching + rate limits | ✅ |
 | **review-places** | `http://localhost:4001` | `GET /health`, `GET /reviews`, `GET /reviews/summary`, `POST /reviews/batch`, `POST/PATCH/DELETE /reviews/*` | Reviews + rating aggregates | ✅ |
 | **fav-places** | `http://localhost:4002` | `GET /health`, `GET/POST /fav-places`, `GET /fav-places/check`, `GET /fav-places/public/:userId`, `GET /fav-places/internal/:userId` | Favorites + visited places | ✅ |
 | **planner-service** | `http://localhost:7000` | `GET /health`, `POST /plan/generate`, `GET /plan/:id`, `GET /plans`, `DELETE /plan/:id` | AI trip planning (Gemini) + persistence | ✅ |
+| **friends-service** | `http://localhost:4003` | REST + WebSocket **8181** (chat) / **8182** (notifications) in Docker | Friends, chat token, realtime (see `friendsApi`, `useWebSocket`) | ✅ |
 
-### Planned Modules
+### Planned / evolving
 
-- **Realtime chat (websock-service):** see `backend/src/websock-service/handOff.md`
-- **Social graph:** friends module exists as a WIP draft under `backend/src/friends/` (not currently wired)
+- **Realtime UX:** polish chat and notifications end-to-end (friends-service + frontend)
+- **Legacy websock docs:** `backend/src/websock-service/handOff.md` if still present
 
 ### AI Places Service Details
 
@@ -467,7 +478,7 @@ See `backend/src/ai-places-service/README.md`. Note that the current implementat
 ### Documentation
 
 - **Swagger UI:** Available at `http://localhost:8080` (when running full stack)
-- **OAuth Setup:** See [Oauth2.md](Oauth2.md) for Google OAuth configuration
+- **OAuth setup:** See [Oauth2.md](Oauth2.md) (Google; configure **42 Intra** via `backend/devops/secrets/fortytwo_*` and auth-service env when using Docker)
 
 ---
 
@@ -486,6 +497,7 @@ See `backend/src/ai-places-service/README.md`. Note that the current implementat
 │ - POST /auth/signup         │ ← Argon2 hash, create user/profile
 │ - POST /auth/signin         │ ← Issues JWT
 │ - GET /auth/google/*        │ ← Google OAuth 2.0
+│ - GET /auth/42/*            │ ← 42 Intra OAuth
 └────────┬────────────────────┘
          │ 2. Sets cookies
          ▼
@@ -564,8 +576,8 @@ Currently no test setup. Planned features like Chat will include Jest + React Te
 ## Security
 
 - **Password Hashing:** Argon2 (industry standard)
-- **JWT Tokens:** Signed with `JWT_SECRET` from environment
-- **OAuth 2.0:** Secure Google authentication
+- **JWT Tokens:** Signed with shared secret (e.g. `JWT_ACCESS_SECRET` in env; align all services)
+- **OAuth 2.0:** Google and 42 Intra strategies; provider linking uses signed `state` (short-lived JWT)
 - **CORS:** Configured for frontend domain only
 - **Environment Variables:** Sensitive data never committed (use `.env` and `.gitignore`)
 - **Vault Integration:** DevOps stack includes HashiCorp Vault for secrets management
@@ -576,9 +588,9 @@ See [SECURITY.md](SECURITY.md) for detailed security guidelines.
 
 When running the full stack (`make all`):
 
-- **Netdata:** System metrics dashboard at http://localhost:19999
-- **Kibana + Elasticsearch:** Centralized logging at http://localhost:5601
-- **Redis:** Caching layer for improved performance
+- **Redis:** Caching and rate limiting (AI Places, etc.)
+- **Logbull (`logger` service):** log shipping (see compose)
+- **Netdata / ELK:** not enabled in the default root `docker-compose.yml` (services are commented); add or run separately if you need dashboards
 
 ## Common Issues & Solutions
 
@@ -619,6 +631,7 @@ cd backend/src/profiles-service && npm run prisma:generate
 cd backend/src/planner-service && npm run prisma:generate
 cd backend/src/review-places && npm run prisma:generate
 cd backend/src/fav-places && npm run prisma:generate
+cd backend/src/friends-service && npm run prisma:generate
 ```
 
 ### Docker Permission Denied
@@ -639,6 +652,7 @@ curl http://localhost:3001/health  # auth-service
 curl http://localhost:3002/health  # profiles-service
 curl http://localhost:4000/health  # ai-places-service
 curl http://localhost:7000/health  # planner-service
+curl http://localhost:4003/health  # friends-service
 
 # Check VITE_API_URL in frontend/.env
 # Should match the service URLs and FRONTEND_URL
@@ -647,28 +661,23 @@ curl http://localhost:7000/health  # planner-service
 ## Roadmap
 
 ### Short Term (v1.0)
-- ✅ User authentication (email/Google)
-- ✅ User profiles
-- ✅ File uploads
-- ✅ Place discovery (Google Places + Redis cache)
-- ✅ Favorites & visited places
-- ✅ Reviews & ratings
-- ✅ AI trip planner (Gemini)
-- 📋 Real-time messaging infrastructure
+- Authentication (email, Google, 42) + security (CSRF, password change, OAuth linking)
+- Profiles, settings, avatars
+- Place discovery (Google Places + Redis)
+- Favorites, reviews & ratings
+- AI trip planner (Gemini)
+- Friends + WebSocket plumbing (chat / notifications)
 
 ### Medium Term (v1.5)
-- 📋 Places & locations module
-- 📋 Post creation (travel stories)
-- 📋 Traveller groups
-- 📋 Rating & review system
-- 📋 Notifications
+- Richer social feed & traveller groups
+- Post creation (travel stories)
+- Deeper notifications product UX
+- Activity-based discovery
 
 ### Long Term (v2.0)
-- 📋 Real-time chat (WebSocket)
-- 📋 Advanced AI recommendations
-- 📋 Mobile app
-- 📋 Payment integration
-- 📋 Advanced analytics
+- Mobile app
+- Advanced AI recommendations
+- Payments & analytics
 
 ---
 
@@ -738,4 +747,4 @@ For questions or support:
 
 ---
 
-**Last Updated:** March 2026
+**Last Updated:** April 2026

@@ -55,29 +55,39 @@ export interface WsAckPayload {
   status: "sent";
 }
 
-export interface WsTypingPayload {
-  conversationId: string;
-  senderId: string;
-  isTyping: boolean;
-}
-
 export interface WsErrorPayload {
   code: string;
   message: string;
 }
 
+/** Server → client typing indicator (friends-service / friends-chat.asyncapi.yaml). */
+export interface WsServerTypingInbound {
+  type: "typing";
+  conversationId: string;
+  userId: string;
+  typing: boolean;
+}
+
 export type WsServerEnvelope =
   | { type: "message";     payload: WsMessagePayload; timestamp: string }
   | { type: "message_ack"; payload: WsAckPayload;     timestamp: string }
-  | { type: "typing";      payload: WsTypingPayload;  timestamp: string }
+  | WsServerTypingInbound
   | { type: "error";       payload: WsErrorPayload;   timestamp: string };
 
 // ── Client → Server ───────────────────────────────────────────────────────────
 
 /** Client → server (friends-service WebSocket); optional tempId → `message_ack`. */
-export interface WsClientSend {
+export interface WsClientMessageSend {
   type: "message";
   conversationId: string;
   content: string;
   tempId?: string;
 }
+
+export interface WsClientTypingSend {
+  type: "typing";
+  conversationId: string;
+  typing: boolean;
+}
+
+export type WsClientSend = WsClientMessageSend | WsClientTypingSend;
