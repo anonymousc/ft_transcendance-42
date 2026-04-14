@@ -577,8 +577,27 @@ See [SECURITY.md](SECURITY.md) for detailed security guidelines.
 When running the full stack (`make all`):
 
 - **Netdata:** System metrics dashboard at http://localhost:19999
-- **Kibana + Elasticsearch:** Centralized logging at http://localhost:5601
+- **Logbull:** Log monitoring UI at https://logbull.localhost:8080
+- **Logbull Forwarder:** Ships Docker logs from all services to Logbull intake API
 - **Redis:** Caching layer for improved performance
+
+### Logbull Forwarder Setup
+
+To ingest all service logs into Logbull, configure these variables in repo-root `.env`:
+
+```bash
+LOGBULL_PROJECT_ID=<your-logbull-project-uuid>
+# Optional (required only if the project enforces API key auth)
+LOGBULL_API_KEY=<your-logbull-api-key>
+# Optional (for projects using domain filters)
+LOGBULL_ORIGIN=https://localhost
+# Optional (host docker containers logs path)
+DOCKER_CONTAINERS_PATH=/goinfre/aessadik/docker/containers
+```
+
+The `logbull-forwarder` service reads Docker logs through `/var/run/docker.sock` and posts batches to:
+`/api/v1/logs/receiving/{projectId}`.
+If Docker socket access is restricted, it automatically falls back to tailing Docker JSON logs from `DOCKER_CONTAINERS_PATH`.
 
 ## Common Issues & Solutions
 

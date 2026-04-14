@@ -1,7 +1,3 @@
 FROM owasp/modsecurity:nginx-alpine
 
-COPY default.conf /etc/nginx/conf.d/default.conf
-
-ENTRYPOINT [ "nginx" ]
-
-CMD ["-g", "daemon off;"]
+COPY default.conf /etc/nginx/templates/conf.d/default.conf.template

@@ -39,4 +39,9 @@ clean :
 	@$(DOCKER) network rm -f $(NETWORKS) 2> /dev/null || echo "no network to clean"
 	@echo "cleaned"
 
-.PHONY: front backend logs clean stop
+fclean: clean
+	@$(DOCKER) system prune -a --volumes -f
+
+re : fclean all
+
+.PHONY: front backend logs clean stop fclean

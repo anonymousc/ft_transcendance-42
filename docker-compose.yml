@@ -157,7 +157,7 @@ services:
 
   #logger
   logger:
-    build: ./backend/devops/backend-services/logbull
+    image: logbull/logbull:latest
     restart: on-failure
     container_name: logbull
     env_file:
@@ -173,6 +173,11 @@ services:
         condition: service_healthy
     networks:
       - saas
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9100/api/v1/system/health || exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     logging:
       driver: json-file
       options:
@@ -181,6 +186,37 @@ services:
         labels: "service"
     labels:
       - "service=logbull"
+
+  logbull-forwarder:
+    container_name: logbull-forwarder
+    build: ./backend/devops/backend-services/logbull-forwarder/
+    env_file:
+      - .env
+    environment:
+      - LOGBULL_BASE_URL=${LOGBULL_BASE_URL:-http://logbull:4005}
+      - LOGBULL_PROJECT_ID=${LOGBULL_PROJECT_ID:-}
+      - LOGBULL_API_KEY=${LOGBULL_API_KEY:-}
+      - LOGBULL_ORIGIN=${LOGBULL_ORIGIN:-}
+      - LOGBULL_EXCLUDED_CONTAINERS=${LOGBULL_EXCLUDED_CONTAINERS:-logbull,logbull-forwarder}
+      - DOCKER_LOGS_DIR=${DOCKER_LOGS_DIR:-/var/lib/docker/containers}
+      - LOG_LEVEL=${LOGBULL_FORWARDER_LOG_LEVEL:-INFO}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${DOCKER_CONTAINERS_PATH:-/goinfre/aessadik/docker/containers}:/var/lib/docker/containers:ro
+    depends_on:
+      logger:
+        condition: service_started
+    networks:
+      - saas
+    restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=logbull-forwarder"
   ######################
   ######################
   swagger:
@@ -408,10 +444,12 @@ services:
     container_name: webserver
     build: backend/devops/backend-services/security/modsecurity/
     ports:
-      - "8080:443"
+      - "443:443"
     networks:
       - saas
     depends_on:
+      logger:
+        condition: service_healthy
       auth:
         condition: service_healthy
       profiles:
@@ -421,6 +459,8 @@ services:
       review-places:
         condition: service_healthy
       fav-places:
+        condition: service_healthy
+      netdata:
         condition: service_healthy
       planner:
         condition: service_healthy
@@ -439,52 +479,46 @@ services:
     labels:
       - "service=nginx-gateway"
 
-  # Monitoring service - Netdata
-  # netdata:
-  #   image: netdata/netdata:stable
-  #   container_name: netdata
-  #   hostname: netdata-monitor
-  #   ports:
-  #     - "19999:19999"
-  #   cap_add:
-  #     - SYS_PTRACE
-  #     - SYS_ADMIN
-  #   security_opt:
-  #     - apparmor:unconfined
-  #   volumes:
-  #     - netdata_config:/etc/netdata
-  #     - netdata_lib:/var/lib/netdata
-  #     - netdata_cache:/var/cache/netdata
-  #     - ./backend/devops/backend-services/netdata/go.d/prometheus.conf:/etc/netdata/go.d/prometheus.conf:ro
-  #     - /etc/passwd:/host/etc/passwd:ro
-  #     - /etc/group:/host/etc/group:ro
-  #     - /etc/localtime:/etc/localtime:ro
-  #     - /proc:/host/proc:ro
-  #     - /sys:/host/sys:ro
-  #     - /var/run/docker.sock:/var/run/docker.sock:ro
-  #   environment:
-  #     - NETDATA_CLAIM_TOKEN=${NETDATA_CLAIM_TOKEN:-}
-  #     - NETDATA_CLAIM_URL=${NETDATA_CLAIM_URL:-https://app.netdata.cloud}
-  #     - DOCKER_HOST=unix:///var/run/docker.sock
-  #   networks:
-  #     - saas
-  #   # depends_on:
-  #   #   amq:
-  #   #     condition: service_healthy
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:19999/api/v1/info"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #   logging:
-  #     driver: json-file
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #       labels: "service"
-  #   labels:
-  #     - "service=netdata"
+  netdata:
+    image: netdata/netdata:stable
+    container_name: netdata
+    hostname: netdata-monitor
+    cap_add:
+      - SYS_PTRACE
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+      - netdata_config:/etc/netdata
+      - netdata_lib:/var/lib/netdata
+      - netdata_cache:/var/cache/netdata
+      - ./backend/devops/backend-services/netdata/go.d/prometheus.conf:/etc/netdata/go.d/prometheus.conf:ro
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/group:/host/etc/group:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - NETDATA_CLAIM_TOKEN=${NETDATA_CLAIM_TOKEN:-}
+      - NETDATA_CLAIM_URL=${NETDATA_CLAIM_URL:-https://app.netdata.cloud}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    networks:
+      - saas
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:19999/api/v1/info"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=netdata"
 
 networks:
   saas :
