@@ -10,12 +10,17 @@ import {
   HttpCode,
   HttpStatus,
   HttpException,
+  ConflictException,
+  BadRequestException,
+  ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleOAuthGuard } from './guards/google-oauth.guard';
+import { GoogleOAuthLinkGuard } from './guards/google-oauth-link.guard';
 import { FortyTwoOAuthGuard } from './guards/fortytwo-oauth.guard';
+import { FortyTwoOAuthLinkGuard } from './guards/fortytwo-oauth-link.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { SignupDto, SigninDto } from './dto';
+import { SignupDto, SigninDto, ChangePasswordDto } from './dto';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { randomBytes } from 'crypto';
@@ -45,6 +50,14 @@ export class AuthController {
       sameSite: (isProd ? 'none' : 'lax') as any,
       path: '/',
     });
+  }
+
+  private redirectSettingsLinkError(res: Response, code: string) {
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+    return res.redirect(
+      `${frontendUrl}/settings?oauth_link_error=${encodeURIComponent(code)}`,
+    );
   }
 
   @Get('csrf')
@@ -77,6 +90,18 @@ export class AuthController {
     return { ok: true };
   }
 
+  @Get('link/google')
+  @UseGuards(GoogleOAuthLinkGuard)
+  async linkGoogleAuth() {
+    // Guard redirects to Google with signed link state
+  }
+
+  @Get('link/42')
+  @UseGuards(FortyTwoOAuthLinkGuard)
+  async linkFortyTwoAuth() {
+    // Guard redirects to 42 with signed link state
+  }
+
   @Get('google')
   @UseGuards(GoogleOAuthGuard)
   async googleAuth() {
@@ -86,13 +111,48 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleOAuthGuard)
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
-    const user = await this.authService.validateGoogleUser(req.user as any);
-    const token = this.authService.generateJwt(user);
-    this.setAuthCookie(res, token);
+    const rawState =
+      typeof req.query?.state === 'string' ? req.query.state : undefined;
+    const link = this.authService.tryParseOAuthLinkState(rawState);
+    if (rawState?.trim() && !link) {
+      return this.redirectSettingsLinkError(res, 'invalid_link_state');
+    }
 
+<<<<<<< HEAD
     const frontendUrl =
       this.configService.get<string>('FRONTEND_URL') || 'https://localhost';
     return res.redirect(`${frontendUrl}/oauth-success`);
+=======
+    try {
+      const user =
+        link?.provider === 'google'
+          ? await this.authService.linkGoogleAccount(
+              link.userId,
+              req.user as any,
+            )
+          : await this.authService.validateGoogleUser(req.user as any);
+      const token = this.authService.generateJwt(user);
+      this.setAuthCookie(res, token);
+
+      const frontendUrl =
+        this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+      return res.redirect(`${frontendUrl}/oauth-success`);
+    } catch (err) {
+      if (
+        link?.provider === 'google' &&
+        err instanceof ConflictException
+      ) {
+        return this.redirectSettingsLinkError(res, 'account_already_linked');
+      }
+      if (
+        link?.provider === 'google' &&
+        err instanceof BadRequestException
+      ) {
+        return this.redirectSettingsLinkError(res, 'link_failed');
+      }
+      throw err;
+    }
+>>>>>>> 7f2bf2867310d68a779caeb7b3f43035748a797a
   }
 
   @Get('42')
@@ -104,13 +164,42 @@ export class AuthController {
   @Get('42/callback')
   @UseGuards(FortyTwoOAuthGuard)
   async fortyTwoAuthCallback(@Req() req: Request, @Res() res: Response) {
-    const user = await this.authService.validateFortyTwoUser(req.user as any);
-    const token = this.authService.generateJwt(user);
-    this.setAuthCookie(res, token);
+    const rawState =
+      typeof req.query?.state === 'string' ? req.query.state : undefined;
+    const link = this.authService.tryParseOAuthLinkState(rawState);
+    if (rawState?.trim() && !link) {
+      return this.redirectSettingsLinkError(res, 'invalid_link_state');
+    }
 
+<<<<<<< HEAD
     const frontendUrl =
       this.configService.get<string>('FRONTEND_URL') || 'https://localhost';
     return res.redirect(`${frontendUrl}/oauth-success`);
+=======
+    try {
+      const user =
+        link?.provider === '42'
+          ? await this.authService.linkFortyTwoAccount(
+              link.userId,
+              req.user as any,
+            )
+          : await this.authService.validateFortyTwoUser(req.user as any);
+      const token = this.authService.generateJwt(user);
+      this.setAuthCookie(res, token);
+
+      const frontendUrl =
+        this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+      return res.redirect(`${frontendUrl}/oauth-success`);
+    } catch (err) {
+      if (link?.provider === '42' && err instanceof ConflictException) {
+        return this.redirectSettingsLinkError(res, 'account_already_linked');
+      }
+      if (link?.provider === '42' && err instanceof BadRequestException) {
+        return this.redirectSettingsLinkError(res, 'link_failed');
+      }
+      throw err;
+    }
+>>>>>>> 7f2bf2867310d68a779caeb7b3f43035748a797a
   }
 
   @Get('me')
@@ -122,6 +211,25 @@ export class AuthController {
       throw new UnauthorizedException('User not found');
     }
     return profile;
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  async changePassword(
+    @Req() req: Request,
+    @Body(ValidationPipe) dto: ChangePasswordDto,
+  ) {
+    const { id } = req.user as { id: string };
+    return this.authService.changePassword(id, dto);
+  }
+
+  @Get('linked-providers')
+  @UseGuards(JwtAuthGuard)
+  async getLinkedProviders(@Req() req: Request) {
+    const { id } = req.user as { id: string };
+    const providers = await this.authService.getLinkedOAuthProviders(id);
+    return { providers };
   }
 
   /**

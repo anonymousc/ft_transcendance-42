@@ -60,3 +60,22 @@ model Message {
   @@index([conversationId, createdAt])
   @@index([senderId])
 }
+
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  type        String
+  title       String?
+  body        String?
+  data        Json?
+  read        Boolean   @default(false)
+  readAt      DateTime?
+  archived    Boolean   @default(false)
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([userId, read])
+  @@index([userId, archived])
+  @@index([userId, createdAt])
+}

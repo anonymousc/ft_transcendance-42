@@ -1,0 +1,167 @@
+asyncapi: '2.6.0'
+info:
+  title: Friends service — notification WebSocket
+  version: '1.0.0'
+  description: |
+    Push-only channel for persisted in-app notifications. Same JWT access token as REST (`JWT_ACCESS_SECRET`, payload `sub` = user id).
+
+    **Connect:** `ws://<host>:<NOTIFICATION_WS_PORT>/?token=<access_jwt>`  
+    Default **NOTIFICATION_WS_PORT** is `8182` (see `friends-service` env / Docker Compose).
+
+    After a successful upgrade the server sends `type: ready`. Further frames are JSON objects with a `type` string. The server does not process client text frames; clients only listen.
+
+    Notification **types** in payloads mirror `NOTIFY_TYPES` in friends-service (`FRIEND_REQUEST_RECEIVED`, `FRIEND_REQUEST_ACCEPTED`, `FRIENDSHIP_CREATED`, `CHAT_MESSAGE`).
+
+  license:
+    name: MIT
+
+servers:
+  local:
+    url: ws://localhost:8182/
+    protocol: ws
+    protocolVersion: '13'
+    description: Host (Compose publishes 8182→8182 when configured)
+  docker-internal:
+    url: ws://friends:8182/
+    protocol: ws
+    protocolVersion: '13'
+    description: From other containers on network `saas`
+
+defaultContentType: application/json
+
+channels:
+  '/':
+    description: |
+      Single endpoint after HTTP upgrade. Query parameter `token` is required on the handshake URL.
+    bindings:
+      ws:
+        bindingVersion: '0.1.0'
+        method: GET
+        query:
+          type: object
+          description: Handshake query string
+          properties:
+            token:
+              type: string
+              description: Bearer access JWT (same as `Authorization` for REST)
+          required:
+            - token
+    subscribe:
+      description: Server → client (push only)
+      operationId: notificationServerPush
+      message:
+        oneOf:
+          - $ref: '#/components/messages/ServerReady'
+          - $ref: '#/components/messages/ServerNotification'
+          - $ref: '#/components/messages/ServerNotificationArchived'
+          - $ref: '#/components/messages/ServerHandshakeError'
+
+components:
+  messages:
+    ServerReady:
+      name: ServerReady
+      title: Subscribed
+      summary: Sent immediately after JWT verification
+      payload:
+        $ref: '#/components/schemas/ServerReadyNotificationPayload'
+    ServerNotification:
+      name: ServerNotification
+      title: New or updated notification
+      summary: Emitted when a row is created (and after some REST updates that reload the row)
+      payload:
+        $ref: '#/components/schemas/ServerNotificationPushPayload'
+    ServerNotificationArchived:
+      name: ServerNotificationArchived
+      title: Notification archived
+      summary: Emitted when `PATCH /notifications/archive` succeeds
+      payload:
+        $ref: '#/components/schemas/ServerNotificationArchivedPayload'
+    ServerHandshakeError:
+      name: ServerHandshakeError
+      title: Connection rejected
+      summary: Invalid or missing token, or server misconfiguration; socket is closed after this frame
+      payload:
+        $ref: '#/components/schemas/ServerHandshakeErrorPayload'
+
+  schemas:
+    ServerReadyNotificationPayload:
+      type: object
+      required: [type, userId, channel]
+      properties:
+        type:
+          type: string
+          enum: [ready]
+        userId:
+          type: string
+          description: JWT subject
+        channel:
+          type: string
+          enum: [notifications]
+          description: Fixed label for clients
+    NotificationDto:
+      type: object
+      required: [id, userId, type, read, archived, createdAt]
+      properties:
+        id:
+          type: string
+          description: Cuid
+        userId:
+          type: string
+        type:
+          type: string
+          description: e.g. FRIEND_REQUEST_RECEIVED, CHAT_MESSAGE
+        title:
+          type: string
+          nullable: true
+        body:
+          type: string
+          nullable: true
+        data:
+          type: object
+          nullable: true
+          additionalProperties: true
+        read:
+          type: boolean
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+        archived:
+          type: boolean
+        archivedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    ServerNotificationPushPayload:
+      type: object
+      required: [type, notification]
+      properties:
+        type:
+          type: string
+          enum: [notification]
+        notification:
+          $ref: '#/components/schemas/NotificationDto'
+    ServerNotificationArchivedPayload:
+      type: object
+      required: [type, notificationId]
+      properties:
+        type:
+          type: string
+          enum: [notification_archived]
+        notificationId:
+          type: string
+    ServerHandshakeErrorPayload:
+      type: object
+      required: [type, code, message]
+      properties:
+        type:
+          type: string
+          enum: [error]
+        code:
+          type: string
+          description: e.g. UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED, INTERNAL_ERROR
+        message:
+          type: string

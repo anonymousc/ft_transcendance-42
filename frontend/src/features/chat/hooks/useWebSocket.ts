@@ -1,156 +1,153 @@
 /**
- * useWebSocket
- *
- * Manages the full WebSocket lifecycle for the chat feature.
- *
- * MOCK MODE (default — no backend needed):
- *   Leave VITE_WS_URL unset. The hook sets connectionState to "connected"
- *   immediately and simulates ACKs with a short setTimeout.
- *
- * REAL MODE:
- *   Set VITE_WS_URL=ws://localhost:8000 (or your websocket-service address).
- *   The hook connects, reconnects with exponential back-off, and processes
- *   WsServerEnvelope messages from the server.
- *
- * The message contract lives in features/chat/types.ts:
- *   WsServerEnvelope — what the backend must send
- *   WsClientSend     — what the frontend sends
+ * WebSocket chat transport. Requires `VITE_WS_URL` (e.g. ws://localhost:8181).
+ * Token: GET /chat/ws-token on friends service (`VITE_FRIENDS_URL`).
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import type {
   ConnectionState,
-  Conversation,
   Message,
+  WsClientMessageSend,
   WsClientSend,
-  WsServerEnvelope,
 } from "../types";
+import { fetchChatWsToken, postChatMessage } from "@/lib/friendsApi";
+import { apiMessageToMessage } from "../utils/mapApi";
 
-// ── Config ────────────────────────────────────────────────────────────────────
-
-const WS_URL = (import.meta.env.VITE_WS_URL as string | undefined) ?? "";
-const MOCK_MODE = !WS_URL;
+const WS_URL = (import.meta.env.VITE_WS_URL as string | undefined) || "ws://localhost:8181";
+const CAN_USE_WS = Boolean(WS_URL);
 const MAX_RECONNECT_DELAY_MS = 30_000;
-const MOCK_ACK_DELAY_MS = 400;
-
-// ── Type guard ────────────────────────────────────────────────────────────────
-
-function isWsEnvelope(raw: unknown): raw is WsServerEnvelope {
-  if (typeof raw !== "object" || raw === null) return false;
-  const r = raw as Record<string, unknown>;
-  return (
-    typeof r.type === "string" &&
-    typeof r.payload === "object" &&
-    r.payload !== null &&
-    typeof r.timestamp === "string"
-  );
-}
-
-// ── Hook interface ────────────────────────────────────────────────────────────
 
 interface UseWebSocketOptions {
   userId: string;
-  initialMessages?: Record<string, Message[]>;
-  initialConversations?: Conversation[];
+  onChatMessage?: (msg: Message) => void;
 }
 
 interface UseWebSocketReturn {
   connectionState: ConnectionState;
   messages: Record<string, Message[]>;
-  conversations: Conversation[];
   sendMessage: (conversationId: string, content: string) => void;
+  sendTyping: (conversationId: string, typing: boolean) => void;
+  peerTypingByConversation: Record<string, boolean>;
+  hydrateMessages: (conversationId: string, list: Message[]) => void;
 }
-
-// ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useWebSocket({
   userId,
-  initialMessages = {},
-  initialConversations = [],
+  onChatMessage,
 }: UseWebSocketOptions): UseWebSocketReturn {
-  const [connectionState, setConnectionState] = useState<ConnectionState>(
-    // In mock mode we are always "connected" — no real socket needed
-    MOCK_MODE ? "connected" : "disconnected",
-  );
-  const [messages, setMessages] =
-    useState<Record<string, Message[]>>(initialMessages);
-  const [conversations] = useState<Conversation[]>(initialConversations);
-
-  // Keep a stable ref to the live socket so sendMessage can reach it
-  const wsRef = useRef<WebSocket | null>(null);
-  // Track whether the component that owns this hook is still mounted
-  const isMountedRef = useRef(true);
-
-  // ── WebSocket lifecycle (real mode only) ──────────────────────────────────
+  const [connectionState, setConnectionState] =
+    useState<ConnectionState>("disconnected");
+  const [messages, setMessages] = useState<Record<string, Message[]>>({});
+  const [peerTypingByConversation, setPeerTypingByConversation] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
-    isMountedRef.current = true;
+    setMessages({});
+    setPeerTypingByConversation({});
+  }, [userId]);
 
-    if (MOCK_MODE || !userId) return;
+  const wsRef = useRef<WebSocket | null>(null);
+  const onChatMessageRef = useRef(onChatMessage);
+  onChatMessageRef.current = onChatMessage;
+
+  const hydrateMessages = useCallback((conversationId: string, list: Message[]) => {
+    setMessages((prev) => ({ ...prev, [conversationId]: list }));
+  }, []);
+
+  useEffect(() => {
+    if (!CAN_USE_WS || !userId) return;
 
     let attempts = 0;
     let destroyed = false;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
+    function scheduleReconnect() {
+      if (destroyed) return;
+      const delay = Math.min(1_000 * 2 ** attempts, MAX_RECONNECT_DELAY_MS);
+      attempts++;
+      timeoutId = setTimeout(connect, delay);
+    }
+
     function connect() {
       if (destroyed) return;
       setConnectionState("connecting");
 
-      let ws: WebSocket;
-      try {
-        ws = new WebSocket(`${WS_URL}?userId=${encodeURIComponent(userId)}`);
-      } catch {
-        // WebSocket constructor can throw synchronously on bad URLs
-        setConnectionState("error");
-        scheduleReconnect();
-        return;
-      }
-
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        if (destroyed) return;
-        setConnectionState("connected");
-        attempts = 0;
-      };
-
-      ws.onmessage = (event: MessageEvent<string>) => {
-        if (destroyed) return;
-
-        let parsed: unknown;
+      void (async () => {
+        let token: string;
         try {
-          parsed = JSON.parse(event.data);
+          token = await fetchChatWsToken();
         } catch {
-          return; // ignore non-JSON frames
+          if (destroyed) return;
+          setConnectionState("error");
+          scheduleReconnect();
+          return;
         }
 
-        if (!isWsEnvelope(parsed)) return; // drop malformed envelopes
+        if (destroyed) return;
 
-        switch (parsed.type) {
-          case "message": {
-            const p = parsed.payload;
-            // Hydrate the ISO timestamp string into a real Date object
-            const incomingMsg: Message = {
-              id: p.id,
-              conversationId: p.conversationId,
-              senderId: p.senderId,
-              content: p.content,
-              timestamp: new Date(p.timestamp),
-              status: p.status,
-            };
-            setMessages((prev) => ({
-              ...prev,
-              [p.conversationId]: [
-                ...(prev[p.conversationId] ?? []),
-                incomingMsg,
-              ],
-            }));
-            break;
+        let ws: WebSocket;
+        try {
+          const base = WS_URL.replace(/\/$/, "");
+          ws = new WebSocket(`${base}?token=${encodeURIComponent(token)}`);
+        } catch {
+          if (destroyed) return;
+          setConnectionState("error");
+          scheduleReconnect();
+          return;
+        }
+
+        wsRef.current = ws;
+
+        ws.onopen = () => {
+          if (destroyed) return;
+          setConnectionState("connected");
+          attempts = 0;
+        };
+
+        ws.onmessage = (event: MessageEvent<string>) => {
+          if (destroyed) return;
+
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(event.data);
+          } catch {
+            return;
           }
 
-          case "message_ack": {
-            const { tempId, id, status } = parsed.payload;
-            // Swap the optimistic message (tempId) for the server-confirmed one
+          if (typeof parsed !== "object" || parsed === null) return;
+          const r = parsed as Record<string, unknown>;
+
+          if (r.type === "error") {
+            setConnectionState("error");
+            return;
+          }
+
+          if (r.type === "ready" || r.type === "joined") return;
+
+          if (r.type === "typing") {
+            const conversationId =
+              typeof r.conversationId === "string" ? r.conversationId : "";
+            const peerId = typeof r.userId === "string" ? r.userId : "";
+            const isTyping = Boolean(r.typing);
+            if (!conversationId || !peerId || peerId === userId) return;
+            setPeerTypingByConversation((prev) => ({
+              ...prev,
+              [conversationId]: isTyping,
+            }));
+            return;
+          }
+
+          if (r.type === "message_ack") {
+            const payload = r.payload as Record<string, unknown> | undefined;
+            if (
+              !payload ||
+              typeof payload.tempId !== "string" ||
+              typeof payload.id !== "string"
+            )
+              return;
+            const status = "sent" as const;
+            const { tempId, id } = payload;
             setMessages((prev) => {
               const next = { ...prev };
               for (const cid of Object.keys(next)) {
@@ -160,44 +157,99 @@ export function useWebSocket({
               }
               return next;
             });
-            break;
+            return;
           }
 
-          // "typing" and "error" envelopes are handled here in future iterations
-          default:
-            break;
-        }
-      };
+          if (r.type === "message") {
+            let id: string;
+            let conversationId: string;
+            let senderId: string;
+            let content: string;
+            let tsRaw: string | undefined;
 
-      ws.onclose = () => {
-        if (destroyed) return;
-        wsRef.current = null;
-        setConnectionState("disconnected");
-        scheduleReconnect();
-      };
+            if (r.payload && typeof r.payload === "object") {
+              const p = r.payload as Record<string, unknown>;
+              if (
+                typeof p.id !== "string" ||
+                typeof p.conversationId !== "string" ||
+                typeof p.senderId !== "string" ||
+                typeof p.content !== "string"
+              )
+                return;
+              id = p.id;
+              conversationId = p.conversationId;
+              senderId = p.senderId;
+              content = p.content;
+              tsRaw =
+                typeof p.timestamp === "string"
+                  ? p.timestamp
+                  : typeof p.createdAt === "string"
+                    ? p.createdAt
+                    : undefined;
+            } else if (r.message && typeof r.message === "object") {
+              const m = r.message as Record<string, unknown>;
+              if (
+                typeof m.id !== "string" ||
+                typeof m.conversationId !== "string" ||
+                typeof m.senderId !== "string" ||
+                typeof m.content !== "string"
+              )
+                return;
+              id = m.id;
+              conversationId = m.conversationId;
+              senderId = m.senderId;
+              content = m.content;
+              tsRaw = typeof m.createdAt === "string" ? m.createdAt : undefined;
+            } else return;
 
-      ws.onerror = () => {
-        if (destroyed) return;
-        setConnectionState("error");
-        // ws.close() fires onclose which schedules the reconnect
-      };
-    }
+            if (!tsRaw) return;
+            const incomingMsg: Message = {
+              id,
+              conversationId,
+              senderId,
+              content,
+              timestamp: new Date(tsRaw),
+              status: "sent",
+            };
 
-    function scheduleReconnect() {
-      if (destroyed) return;
-      const delay = Math.min(1_000 * 2 ** attempts, MAX_RECONNECT_DELAY_MS);
-      attempts++;
-      timeoutId = setTimeout(connect, delay);
+            setMessages((prev) => {
+              const list = prev[conversationId] ?? [];
+              if (list.some((m) => m.id === incomingMsg.id)) return prev;
+              return {
+                ...prev,
+                [conversationId]: [...list, incomingMsg],
+              };
+            });
+            if (incomingMsg.senderId !== userId) {
+              setPeerTypingByConversation((prev) => ({
+                ...prev,
+                [conversationId]: false,
+              }));
+            }
+            onChatMessageRef.current?.(incomingMsg);
+          }
+        };
+
+        ws.onclose = () => {
+          if (destroyed) return;
+          wsRef.current = null;
+          setConnectionState("disconnected");
+          scheduleReconnect();
+        };
+
+        ws.onerror = () => {
+          if (destroyed) return;
+          setConnectionState("error");
+        };
+      })();
     }
 
     connect();
 
     return () => {
       destroyed = true;
-      isMountedRef.current = false;
       if (timeoutId !== null) clearTimeout(timeoutId);
       if (wsRef.current) {
-        // Null out handlers before closing to suppress the onclose reconnect
         wsRef.current.onopen = null;
         wsRef.current.onmessage = null;
         wsRef.current.onclose = null;
@@ -208,13 +260,10 @@ export function useWebSocket({
     };
   }, [userId]);
 
-  // ── Send ──────────────────────────────────────────────────────────────────
-
   const sendMessage = useCallback(
     (conversationId: string, content: string) => {
       const tempId = `temp-${Date.now()}`;
 
-      // Optimistic update — message appears immediately as "sending"
       const optimistic: Message = {
         id: tempId,
         conversationId,
@@ -229,39 +278,59 @@ export function useWebSocket({
         [conversationId]: [...(prev[conversationId] ?? []), optimistic],
       }));
 
-      if (MOCK_MODE) {
-        // Simulate a server ACK so the bubble transitions from "sending" to "sent"
-        setTimeout(() => {
+      const ws = wsRef.current;
+      if (CAN_USE_WS && ws?.readyState === WebSocket.OPEN) {
+        const frame: WsClientMessageSend = {
+          type: "message",
+          conversationId,
+          content,
+          tempId,
+        };
+        ws.send(JSON.stringify(frame));
+        return;
+      }
+
+      void (async () => {
+        try {
+          const row = await postChatMessage(conversationId, content);
+          const confirmed = apiMessageToMessage(row);
           setMessages((prev) => ({
             ...prev,
             [conversationId]: (prev[conversationId] ?? []).map((m) =>
-              m.id === tempId ? { ...m, status: "sent" as const } : m,
+              m.id === tempId ? confirmed : m,
             ),
           }));
-        }, MOCK_ACK_DELAY_MS);
-        return;
-      }
-
-      const ws = wsRef.current;
-      if (!ws || ws.readyState !== WebSocket.OPEN) {
-        // Socket not open — mark message as failed so the user can retry
-        setMessages((prev) => ({
-          ...prev,
-          [conversationId]: (prev[conversationId] ?? []).map((m) =>
-            m.id === tempId ? { ...m, status: "failed" as const } : m,
-          ),
-        }));
-        return;
-      }
-
-      const frame: WsClientSend = {
-        type: "send_message",
-        payload: { conversationId, content, tempId },
-      };
-      ws.send(JSON.stringify(frame));
+          onChatMessageRef.current?.(confirmed);
+        } catch {
+          setMessages((prev) => ({
+            ...prev,
+            [conversationId]: (prev[conversationId] ?? []).map((m) =>
+              m.id === tempId ? { ...m, status: "failed" as const } : m,
+            ),
+          }));
+        }
+      })();
     },
     [userId],
   );
 
-  return { connectionState, messages, conversations, sendMessage };
+  const sendTyping = useCallback((conversationId: string, typing: boolean) => {
+    const ws = wsRef.current;
+    if (!CAN_USE_WS || ws?.readyState !== WebSocket.OPEN) return;
+    const frame: WsClientSend = {
+      type: "typing",
+      conversationId,
+      typing,
+    };
+    ws.send(JSON.stringify(frame));
+  }, []);
+
+  return {
+    connectionState,
+    messages,
+    sendMessage,
+    sendTyping,
+    peerTypingByConversation,
+    hydrateMessages,
+  };
 }

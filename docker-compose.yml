@@ -368,9 +368,17 @@ services:
   friends:
     build: ./backend/src/friends-service
     container_name: friends
+<<<<<<< HEAD
+=======
+    ports:
+      - "4003:4003"
+      - "8181:8181"
+      - "8182:8182"
+>>>>>>> 7f2bf2867310d68a779caeb7b3f43035748a797a
     environment:
       - PORT=4003
       - WS_PORT=8181
+      - NOTIFICATION_WS_PORT=8182
       - PORT_VAULT=${PORT_VAULT}
     networks:
       - saas

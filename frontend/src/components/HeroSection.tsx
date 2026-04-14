@@ -23,9 +23,9 @@ function HeroSection() {
         </p>
         <DiscoverBtn />
       </div>
-      <div className="hero-image">
+      {/* <div className="hero-image">
         <img src={friendsImage} alt="Friends exploring together" />
-      </div>
+      </div> */}
     </section>
   );
 }

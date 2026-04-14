@@ -8,6 +8,8 @@ const {
   getOtherUserIdInFriendship,
   removeFriendship,
 } = require('../services/friendshipService');
+const { notifyUser } = require('../services/notificationService');
+const { NOTIFY_TYPES } = require('../utils/notifications');
 
 const router = express.Router();
 
@@ -73,6 +75,33 @@ router.post('/requests', async (req, res) => {
       const { status, code, message } = result.error;
       return fail(res, status, code, message);
     }
+    if (result.autoAccepted) {
+      notifyUser(
+        req.userId,
+        NOTIFY_TYPES.FRIENDSHIP_CREATED,
+        'New friend',
+        'You are now friends',
+        { peerUserId: target },
+      );
+      notifyUser(
+        target,
+        NOTIFY_TYPES.FRIENDSHIP_CREATED,
+        'New friend',
+        'You are now friends',
+        { peerUserId: req.userId },
+      );
+    } else if (result.request) {
+      notifyUser(
+        result.request.toUserId,
+        NOTIFY_TYPES.FRIEND_REQUEST_RECEIVED,
+        'Friend request',
+        `Someone sent you a friend request`,
+        {
+          requestId: result.request.id,
+          fromUserId: result.request.fromUserId,
+        },
+      );
+    }
     return ok(res, result);
   } catch (e) {
     console.error('[friends] send request', e);
@@ -92,6 +121,15 @@ router.post('/requests/:requestId/accept', async (req, res) => {
     if (result.error) {
       const { status, code, message } = result.error;
       return fail(res, status, code, message);
+    }
+    if (result.fromUserId) {
+      notifyUser(
+        result.fromUserId,
+        NOTIFY_TYPES.FRIEND_REQUEST_ACCEPTED,
+        'Friend request accepted',
+        'You are now friends',
+        { acceptedBy: result.toUserId },
+      );
     }
     return res.status(204).send();
   } catch (e) {

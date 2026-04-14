@@ -1,18 +1,56 @@
-import { useState } from "react";
-import { CalendarDays, Sparkles, MapPin, Minus, Plus } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CalendarDays, Sparkles } from "lucide-react";
 import TripPlanModal from "./TripPlanModal";
+import GlassSearchBar from "./GlassSearchBar";
+import GlassCalendar from "./GlassCalendar";
 import { useAuth } from "../../context/AuthContext";
 import "./TripPlannerBar.css";
 
 const PLANNER_URL =
   (import.meta.env.VITE_PLANNER_URL as string) || "http://localhost:7000";
 
+const MAX_TRIP_DAYS = 14;
+
+function startOfDay(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function defaultTripRange(): { start: Date; end: Date } {
+  const start = startOfDay(new Date());
+  const end = new Date(start);
+  end.setDate(end.getDate() + 2);
+  return { start, end };
+}
+
+function inclusiveDays(start: Date, end: Date): number {
+  const s = startOfDay(start).getTime();
+  const e = startOfDay(end).getTime();
+  if (e < s) return 1;
+  return Math.floor((e - s) / 86400000) + 1;
+}
+
+function formatShort(d: Date): string {
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+/** Local calendar date as YYYY-MM-DD (matches planner-service parseISODateOnly). */
+function toIsoDateLocal(d: Date): string {
+  const x = startOfDay(d);
+  const y = x.getFullYear();
+  const m = String(x.getMonth() + 1).padStart(2, "0");
+  const day = String(x.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 
 export interface TripPlan {
   id: string;
   city: string;
   days: number;
   preferences: string[];
+  tripStartDate?: string | null;
+  tripEndDate?: string | null;
   plan: {
     title: string;
     summary: string;
@@ -46,9 +84,7 @@ export interface Activity {
 
 interface TripPlannerBarProps {
   defaultCity?: string;
-  /** Show generated plan in the document flow instead of a modal overlay. */
   inlinePlanDisplay?: boolean;
-  /** When set, successful generation calls this instead of opening the modal (e.g. redirect to /planner). */
   onPlanGenerated?: (plan: TripPlan) => void;
 }
 
@@ -59,22 +95,45 @@ function TripPlannerBar({
 }: TripPlannerBarProps) {
   const { user } = useAuth();
   const [city, setCity] = useState(defaultCity);
-  const [days, setDays] = useState(3);
-  const [preferences, setPreferences] = useState<string[]>([]);
+  const [tripRange, setTripRange] = useState(defaultTripRange);
+  const [preferences] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [plan, setPlan] = useState<TripPlan | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  const togglePreference = (label: string) => {
-    setPreferences(prev =>
-      prev.includes(label) ? prev.filter(p => p !== label) : [...prev, label]
-    );
-  };
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const calendarRootRef = useRef<HTMLDivElement>(null);
 
-  const handleDaysChange = (delta: number) => {
-    setDays(d => Math.min(14, Math.max(1, d + delta)));
-  };
+  const days = useMemo(
+    () => inclusiveDays(tripRange.start, tripRange.end),
+    [tripRange.start, tripRange.end],
+  );
+
+  const today = startOfDay(new Date());
+
+  const openCalendar = useCallback(() => {
+    setCalendarOpen((o) => !o);
+  }, []);
+
+  const onRangeComplete = useCallback((start: Date, end: Date) => {
+    setTripRange({ start, end });
+    setCalendarOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (!calendarOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (
+        calendarRootRef.current &&
+        !calendarRootRef.current.contains(e.target as Node)
+      ) {
+        setCalendarOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [calendarOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,6 +158,8 @@ function TripPlannerBar({
           city: city.trim(),
           days,
           preferences,
+          tripStartDate: toIsoDateLocal(tripRange.start),
+          tripEndDate: toIsoDateLocal(tripRange.end),
         }),
       });
 
@@ -126,52 +187,56 @@ function TripPlannerBar({
   return (
     <>
       <div className="planner-bar-wrapper">
-        {/* <div className="planner-bar-label">
-          <Sparkles size={13} />
-          <span>AI Trip Planner</span>
-        </div> */}
-
         <form className="planner-bar" onSubmit={handleSubmit}>
-          {/* City input */}
-          <div className="planner-bar-field">
-            {/* <MapPin size={16} className="planner-bar-icon" /> */}
-            <input
-              type="text"
-              className="planner-bar-input"
-              placeholder="Where to?"
-              value={city}
-              onChange={e => setCity(e.target.value)}
-              autoComplete="off"
-            />
-          </div>
+          <GlassSearchBar
+            embedded
+            placeholder="Where to?"
+            value={city}
+            onChange={setCity}
+            onSelect={setCity}
+            wrapperClassName="planner-bar-field"
+            inputClassName="planner-bar-input"
+          />
 
           <div className="planner-bar-divider" />
 
-          {/* Days selector */}
-          <div className="planner-bar-days">
-            <CalendarDays size={17} className="planner-bar-icon" />
+          <div className="planner-bar-calendar" ref={calendarRootRef}>
             <button
               type="button"
-              className="planner-bar-step"
-              onClick={() => handleDaysChange(-1)}
-              aria-label="Fewer days"
+              className="planner-bar-calendar-trigger"
+              onClick={openCalendar}
+              aria-expanded={calendarOpen}
+              aria-haspopup="dialog"
             >
-              <Minus size={13} />
+              <CalendarDays size={17} className="planner-bar-icon" />
+              <span className="planner-bar-calendar-label">
+                <span className="planner-bar-calendar-dates">
+                  {formatShort(tripRange.start)} – {formatShort(tripRange.end)}
+                </span>
+                <span className="planner-bar-calendar-days">
+                  {days} {days === 1 ? "day" : "days"}
+                </span>
+              </span>
             </button>
-            <span className="planner-bar-days-value">
-              {days} {days === 1 ? "day" : "days"}
-            </span>
-            <button
-              type="button"
-              className="planner-bar-step"
-              onClick={() => handleDaysChange(1)}
-              aria-label="More days"
-            >
-              <Plus size={13} />
-            </button>
+
+            {calendarOpen ? (
+              <div
+                className="planner-calendar-popover"
+                role="dialog"
+                aria-label="Trip dates"
+              >
+                <GlassCalendar
+                  variant="embedded"
+                  mode="range"
+                  rangeValue={tripRange}
+                  onRangeComplete={onRangeComplete}
+                  maxRangeDays={MAX_TRIP_DAYS}
+                  minDate={today}
+                />
+              </div>
+            ) : null}
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             className="planner-bar-submit"
@@ -188,21 +253,6 @@ function TripPlannerBar({
             )}
           </button>
         </form>
-
-        {/* Preference chips */}
-        {/* <div className="planner-bar-prefs">
-          {PREFERENCE_OPTIONS.map(({ label, emoji }) => (
-            <button
-              key={label}
-              type="button"
-              className={`planner-pref-chip${preferences.includes(label) ? " active" : ""}`}
-              onClick={() => togglePreference(label)}
-            >
-              <span>{emoji}</span>
-              <span>{label}</span>
-            </button>
-          ))}
-        </div> */}
 
         {error && <p className="planner-bar-error">{error}</p>}
       </div>

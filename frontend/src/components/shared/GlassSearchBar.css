@@ -5,6 +5,19 @@
     max-width: 600px;
 }
 
+.glass-search-wrapper--embedded {
+    max-width: none;
+    flex: 1;
+    min-width: 0;
+}
+
+.glass-search-embed-inner {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
 /* ── Search bar — match .planner-bar (TripPlannerBar.css) ─────────────────── */
 .glass-search-bar {
     display: flex;

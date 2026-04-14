@@ -8,14 +8,16 @@ datasource db {
 }
 
 model TripPlan {
-  id          String   @id @default(uuid())
-  userId      String
-  city        String
-  days        Int
-  preferences String[]
-  plan        Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String    @id @default(uuid())
+  userId        String
+  city          String
+  days          Int
+  preferences   String[]
+  plan          Json
+  tripStartDate DateTime? @db.Date
+  tripEndDate   DateTime? @db.Date
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([userId])
   @@index([userId, city])
