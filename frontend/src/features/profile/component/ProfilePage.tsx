@@ -105,10 +105,6 @@ function ProfilePage() {
               {user?.status || "offline"}
             </span>
           </div>
-          <div className="profile-info-item">
-            <span className="profile-info-label">Share my profile</span>
-            <span className="profile-info-value">Private</span>
-          </div>
         </div>
 
         <div className="profile-actions-row">

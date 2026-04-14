@@ -212,16 +212,6 @@ function FriendCard({
               <DropdownMenu.Item
                 className={cn(
                   "flex cursor-pointer select-none items-center rounded-lg px-3 py-2 text-[13px] font-medium",
-                  "text-stone-800 outline-none data-highlighted:bg-stone-100",
-                  "dark:text-stone-100 dark:data-highlighted:bg-white/10",
-                )}
-                onSelect={() => onShareProfile()}
-              >
-                Share profile
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                className={cn(
-                  "flex cursor-pointer select-none items-center rounded-lg px-3 py-2 text-[13px] font-medium",
                   "text-rose-600 outline-none data-highlighted:bg-rose-50",
                   "dark:text-rose-400 dark:data-highlighted:bg-rose-950/40",
                 )}
