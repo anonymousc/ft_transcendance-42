@@ -4,7 +4,12 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { ConnectionState, Message, WsClientSend } from "../types";
+import type {
+  ConnectionState,
+  Message,
+  WsClientMessageSend,
+  WsClientSend,
+} from "../types";
 import { fetchChatWsToken, postChatMessage } from "@/lib/friendsApi";
 import { apiMessageToMessage } from "../utils/mapApi";
 
@@ -21,6 +26,8 @@ interface UseWebSocketReturn {
   connectionState: ConnectionState;
   messages: Record<string, Message[]>;
   sendMessage: (conversationId: string, content: string) => void;
+  sendTyping: (conversationId: string, typing: boolean) => void;
+  peerTypingByConversation: Record<string, boolean>;
   hydrateMessages: (conversationId: string, list: Message[]) => void;
 }
 
@@ -31,9 +38,13 @@ export function useWebSocket({
   const [connectionState, setConnectionState] =
     useState<ConnectionState>("disconnected");
   const [messages, setMessages] = useState<Record<string, Message[]>>({});
+  const [peerTypingByConversation, setPeerTypingByConversation] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     setMessages({});
+    setPeerTypingByConversation({});
   }, [userId]);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -113,6 +124,19 @@ export function useWebSocket({
           }
 
           if (r.type === "ready" || r.type === "joined") return;
+
+          if (r.type === "typing") {
+            const conversationId =
+              typeof r.conversationId === "string" ? r.conversationId : "";
+            const peerId = typeof r.userId === "string" ? r.userId : "";
+            const isTyping = Boolean(r.typing);
+            if (!conversationId || !peerId || peerId === userId) return;
+            setPeerTypingByConversation((prev) => ({
+              ...prev,
+              [conversationId]: isTyping,
+            }));
+            return;
+          }
 
           if (r.type === "message_ack") {
             const payload = r.payload as Record<string, unknown> | undefined;
@@ -196,6 +220,12 @@ export function useWebSocket({
                 [conversationId]: [...list, incomingMsg],
               };
             });
+            if (incomingMsg.senderId !== userId) {
+              setPeerTypingByConversation((prev) => ({
+                ...prev,
+                [conversationId]: false,
+              }));
+            }
             onChatMessageRef.current?.(incomingMsg);
           }
         };
@@ -250,7 +280,7 @@ export function useWebSocket({
 
       const ws = wsRef.current;
       if (CAN_USE_WS && ws?.readyState === WebSocket.OPEN) {
-        const frame: WsClientSend = {
+        const frame: WsClientMessageSend = {
           type: "message",
           conversationId,
           content,
@@ -284,5 +314,23 @@ export function useWebSocket({
     [userId],
   );
 
-  return { connectionState, messages, sendMessage, hydrateMessages };
+  const sendTyping = useCallback((conversationId: string, typing: boolean) => {
+    const ws = wsRef.current;
+    if (!CAN_USE_WS || ws?.readyState !== WebSocket.OPEN) return;
+    const frame: WsClientSend = {
+      type: "typing",
+      conversationId,
+      typing,
+    };
+    ws.send(JSON.stringify(frame));
+  }, []);
+
+  return {
+    connectionState,
+    messages,
+    sendMessage,
+    sendTyping,
+    peerTypingByConversation,
+    hydrateMessages,
+  };
 }

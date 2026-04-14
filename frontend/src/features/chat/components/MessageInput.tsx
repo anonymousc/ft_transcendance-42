@@ -5,21 +5,28 @@ import { cn } from "@/lib/utils";
 
 interface MessageInputProps {
   onSend: (content: string) => void;
+  onComposerActivity?: ((hasDraft: boolean) => void) | undefined;
   disabled?: boolean | undefined;
   className?: string | undefined;
 }
 
-function MessageInput({ onSend, disabled, className }: MessageInputProps) {
+function MessageInput({
+  onSend,
+  onComposerActivity,
+  disabled,
+  className,
+}: MessageInputProps) {
   const [value, setValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSend = useCallback(() => {
     const trimmed = value.trim();
     if (!trimmed || disabled) return;
+    onComposerActivity?.(false);
     onSend(trimmed);
     setValue("");
     inputRef.current?.focus();
-  }, [value, onSend, disabled]);
+  }, [value, onSend, onComposerActivity, disabled]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
@@ -54,7 +61,11 @@ function MessageInput({ onSend, disabled, className }: MessageInputProps) {
           ref={inputRef}
           type="text"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => {
+            const v = e.target.value;
+            setValue(v);
+            onComposerActivity?.(v.trim().length > 0);
+          }}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
           disabled={disabled}

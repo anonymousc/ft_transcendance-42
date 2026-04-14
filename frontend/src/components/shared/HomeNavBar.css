@@ -12,6 +12,17 @@
     background: transparent;
 }
 
+/* Solid strip matches app surface (desktop was transparent and could read as a light bar over chat). */
+.home-nav:not(.home-nav--home-video) {
+    background: var(--background);
+    border-bottom: 1px solid var(--border);
+}
+
+.home-nav.home-nav--home-video {
+    background: transparent;
+    border-bottom: none;
+}
+
 .profile-dropdown-wrapper {
     display: flex;
     align-items: center;
@@ -29,17 +40,6 @@
         padding: 0.75rem 1rem;
         padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
     }
-
-    /* Seamless strip with chat/friends/notifications (not over full-bleed /home video) */
-    .home-nav:not(.home-nav--home-video) {
-        background: #ffffff;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.07);
-    }
-
-    :is(.dark) .home-nav:not(.home-nav--home-video) {
-        background: #18181b;
-        border-bottom-color: rgba(255, 255, 255, 0.07);
-    }
 }
 
 /*
@@ -50,6 +50,8 @@
 .home-nav-main-offset {
     padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem + max(2.5rem, 40px) + 0.75rem);
     box-sizing: border-box;
+    /* Theme surface under fixed header + mobile bottom padding (avoids wrong compositor color). */
+    background-color: var(--background);
 }
 
 @media (min-width: 769px) {

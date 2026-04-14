@@ -10,6 +10,11 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import NotFoundPage from './pages/NotFound';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { GlassToastProvider } from './context/GlassToastContext';
+import { NotificationRealtimeProvider } from './context/NotificationRealtimeContext';
+import { NavBadgesProvider } from './context/NavBadgesContext';
+import GlassToastStack from './components/shared/GlassToastStack';
+import NotificationGlassToasts from './features/notifications/components/NotificationGlassToasts';
 import SettingsPage from './features/Settings/component/SettingsPage';
 import OAuthSuccess from './pages/OAuthSuccess';
 import CityPage from './pages/CityPage';
@@ -49,16 +54,23 @@ function AppContent() {
 }
 
 function App() {
-
   return (
     <ThemeProvider>
       <BrowserRouter>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
+        <GlassToastProvider>
+          <AuthProvider>
+            <NotificationRealtimeProvider>
+              <NavBadgesProvider>
+                <AppContent />
+                <NotificationGlassToasts />
+                <GlassToastStack />
+              </NavBadgesProvider>
+            </NotificationRealtimeProvider>
+          </AuthProvider>
+        </GlassToastProvider>
       </BrowserRouter>
     </ThemeProvider>
-  )
+  );
 }
 
 export default App

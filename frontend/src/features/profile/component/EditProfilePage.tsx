@@ -126,8 +126,8 @@ function EditProfilePage() {
 
         <div className="avatar-row">
           <img src={avatarSrc} alt="Profile avatar" className="avatar-preview" />
-          <label className="avatar-upload-btn">
-            <Upload size={14} />
+          <label className="avatar-upload-btn dark:text-black">
+            <Upload size={14} color="black"/>
             {uploading ? "Uploading..." : "Upload picture"}
             <input
               type="file"
@@ -180,17 +180,7 @@ function EditProfilePage() {
             <small>UI preference for now (not persisted yet).</small>
           </label>
 
-          <label className="field toggle-field">
-            <span>Profile visibility</span>
-            <button
-              type="button"
-              className={`toggle ${visibility ? "on" : ""}`}
-              onClick={() => setVisibility((v) => !v)}
-            >
-              {visibility ? "Public" : "Private"}
-            </button>
-            <small>Coming soon.</small>
-          </label>
+
         </div>
 
         {error && <p className="msg error">{error}</p>}

@@ -16,7 +16,8 @@ import {
   notificationRowToNotificationWithAvatar,
 } from "./mapApi";
 import { useAuth } from "@/context/AuthContext";
-import { useNotificationSocket } from "./hooks/useNotificationSocket";
+import { useNotificationRealtime } from "@/context/NotificationRealtimeContext";
+import { useNavBadges } from "@/context/NavBadgesContext";
 import { cn } from "@/lib/utils";
 
 const SKELETON_PLACEHOLDERS = 7;
@@ -80,11 +81,22 @@ function NotificationPage() {
     setNotifications((prev) => prev.filter((x) => x.id !== notificationId));
   }, []);
 
-  useNotificationSocket({
-    userId,
-    onNotification: onSocketNotification,
-    onArchived: onSocketArchived,
-  });
+  const { subscribeNotifications, subscribeArchived } = useNotificationRealtime();
+  const { notifyNotificationRead, notifyAllNotificationsRead } = useNavBadges();
+
+  useEffect(() => {
+    const unsubN = subscribeNotifications(onSocketNotification);
+    const unsubA = subscribeArchived(onSocketArchived);
+    return () => {
+      unsubN();
+      unsubA();
+    };
+  }, [
+    subscribeNotifications,
+    subscribeArchived,
+    onSocketNotification,
+    onSocketArchived,
+  ]);
 
   const handleNotificationClick = useCallback(
     async (id: string) => {
@@ -99,6 +111,7 @@ function NotificationPage() {
               : n,
           ),
         );
+        notifyNotificationRead(id);
         if (item?.actionUrl) {
           navigate(item.actionUrl);
         }
@@ -106,7 +119,7 @@ function NotificationPage() {
         /* keep list unchanged */
       }
     },
-    [notifications, navigate],
+    [notifications, navigate, notifyNotificationRead],
   );
 
   const handleMarkAllRead = useCallback(async () => {
@@ -115,12 +128,13 @@ function NotificationPage() {
     try {
       await patchNotificationsReadAll();
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      notifyAllNotificationsRead();
     } catch {
       /* ignore */
     } finally {
       setMarkAllBusy(false);
     }
-  }, [notifications]);
+  }, [notifications, notifyAllNotificationsRead]);
 
   const hasUnread = notifications.some((n) => !n.read);
 

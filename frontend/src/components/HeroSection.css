@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: flex-start;
   position: relative;
-  padding-top: 6rem;
+  padding-top: 15rem;
   transition: background 0.3s ease;
   max-width: 100%;
   overflow-x: clip;
@@ -36,7 +36,7 @@
   font-size: 4rem;
   font-weight: 700;
   margin-bottom: 1rem;
-  line-height: 0.9;
+  line-height: 1.1;
   color: #000000;
   transition: color 0.3s ease;
 }
