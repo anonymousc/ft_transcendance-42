@@ -1,0 +1,13 @@
+{
+  "name": "@ft-transcendance/jwt-middleware",
+  "version": "1.0.0",
+  "description": "Shared Express middleware for JWT access token verification",
+  "main": "index.js",
+  "license": "ISC",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2"
+  },
+  "peerDependencies": {
+    "jsonwebtoken": "^9.0.2"
+  }
+}

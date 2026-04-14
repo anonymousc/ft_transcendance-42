@@ -277,7 +277,9 @@ services:
     labels:
       - "service=vault"
   ai-places:
-    build: ./backend/src/ai-places-service
+    build:
+      context: ./backend
+      dockerfile: src/ai-places-service/Dockerfile
     container_name: ai-places
     ports:
       - "4000:4000"
@@ -310,7 +312,9 @@ services:
       - "service=ai-places"
 
   review-places:
-    build: ./backend/src/review-places
+    build:
+      context: ./backend
+      dockerfile: src/review-places/Dockerfile
     container_name: review-places
     ports:
       - "4001:4001"
@@ -343,7 +347,9 @@ services:
       - "service=review-places"
 
   fav-places:
-    build: ./backend/src/fav-places
+    build:
+      context: ./backend
+      dockerfile: src/fav-places/Dockerfile
     container_name: fav-places
     ports:
       - "4002:4002"
@@ -376,7 +382,9 @@ services:
       - "service=fav-places"
 
   friends:
-    build: ./backend/src/friends-service
+    build:
+      context: ./backend
+      dockerfile: src/friends-service/Dockerfile
     container_name: friends
     ports:
       - "4003:4003"
@@ -413,7 +421,9 @@ services:
       - "service=friends"
 
   planner:
-    build: ./backend/src/planner-service
+    build:
+      context: ./backend
+      dockerfile: src/planner-service/Dockerfile
     container_name: planner
     ports:
       - "7000:7000"

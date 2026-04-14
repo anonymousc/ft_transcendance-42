@@ -14,6 +14,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@ft-transcendance/jwt-middleware": "file:../../packages/jwt-middleware",
     "@google/generative-ai": "^0.24.0",
     "@prisma/client": "^6.5.0",
     "cookie-parser": "^1.4.7",

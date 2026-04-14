@@ -227,6 +227,7 @@ cd ..
 
 # 3. Backend setup (per service)
 # Each backend service has its own package.json under backend/src/<service>
+# Express microservices (ai-places, review-places, fav-places, planner, friends) depend on backend/packages/jwt-middleware, linked from each package.json as @ft-transcendance/jwt-middleware.
 cd backend/src/auth-service && npm install && cd ../../..
 cd backend/src/profiles-service && npm install && cd ../../..
 cd backend/src/ai-places-service && npm install && cd ../../..
