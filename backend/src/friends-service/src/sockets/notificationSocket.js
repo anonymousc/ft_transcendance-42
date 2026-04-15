@@ -3,7 +3,6 @@ const jwt = require('jsonwebtoken');
 
 const NOTIFICATION_WS_PORT = Number(process.env.NOTIFICATION_WS_PORT) || 8182;
 
-/** @type {Map<string, Set<WebSocket>>} */
 const socketsByUserId = new Map();
 
 function addUserSocket(userId, ws) {
@@ -48,10 +47,6 @@ function notificationPayload(n) {
   };
 }
 
-/**
- * Push a persisted notification to every connected socket for that user.
- * @param {import('@prisma/client').Notification} notification
- */
 function notifyNewNotification(notification) {
   const userId = notification.userId;
   const body = JSON.stringify({
@@ -65,10 +60,6 @@ function notifyNewNotification(notification) {
   }
 }
 
-/**
- * @param {string} userId
- * @param {string} notificationId
- */
 function notifyNotificationArchived(userId, notificationId) {
   const body = JSON.stringify({
     type: 'notification_archived',

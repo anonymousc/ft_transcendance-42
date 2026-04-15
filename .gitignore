@@ -45,6 +45,11 @@ build/Release
 node_modules/
 jspm_packages/
 
+# Seed outputs (faker users/messages)
+seed-output/
+backend/src/friends-service/scripts/seed-faker.js
+backend/src/auth-service/scripts/seed-faker.ts
+
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
 

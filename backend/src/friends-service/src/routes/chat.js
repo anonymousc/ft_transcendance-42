@@ -20,7 +20,6 @@ function fail(res, status, code, message) {
 
 router.use(authMiddleware);
 
-/** JWT string for WebSocket `?token=` (browser cannot read httpOnly cookie). */
 router.get('/ws-token', (req, res) => {
   const authHeader = req.headers.authorization;
   let token = null;
@@ -35,7 +34,6 @@ router.get('/ws-token', (req, res) => {
   return ok(res, { token });
 });
 
-/** List conversations the current user participates in */
 router.get('/conversations', async (req, res) => {
   try {
     const data = await listConversationsForUser(req.userId);
@@ -46,10 +44,6 @@ router.get('/conversations', async (req, res) => {
   }
 });
 
-/**
- * Open or create a 1:1 conversation with a friend.
- * Body: { withUserId: string }
- */
 router.post('/conversations', async (req, res) => {
   const { withUserId } = req.body || {};
   if (!withUserId || typeof withUserId !== 'string' || !withUserId.trim()) {
@@ -78,7 +72,6 @@ router.post('/conversations', async (req, res) => {
   }
 });
 
-/** List messages in a conversation (newest page: omit beforeMessageId; older: pass beforeMessageId) */
 router.get('/conversations/:conversationId/messages', async (req, res) => {
   const { conversationId } = req.params;
   const beforeMessageId =
@@ -105,7 +98,6 @@ router.get('/conversations/:conversationId/messages', async (req, res) => {
   }
 });
 
-/** Post a message; participants receive the same payload over WebSocket */
 router.post('/conversations/:conversationId/messages', async (req, res) => {
   const { conversationId } = req.params;
   const { content } = req.body || {};

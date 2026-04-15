@@ -8,7 +8,6 @@ const {
 
 const WS_PORT = Number(process.env.WS_PORT) || 8181;
 
-/** @type {Map<string, Set<WebSocket>>} */
 const socketsByUserId = new Map();
 
 function addUserSocket(userId, ws) {
@@ -32,7 +31,6 @@ function sendJson(ws, obj) {
   ws.send(JSON.stringify(obj));
 }
 
-/** Wire format aligned with frontend `WsServerEnvelope` (type `message`). */
 function chatMessageEnvelope(message) {
   const createdAt =
     message.createdAt instanceof Date
@@ -53,10 +51,6 @@ function chatMessageEnvelope(message) {
   });
 }
 
-/**
- * Push a persisted message to every connected socket of each conversation participant.
- * @param {import('@prisma/client').Message} message
- */
 async function notifyNewChatMessage(message) {
   const userIds = await getParticipantUserIds(message.conversationId);
   const body = chatMessageEnvelope(message);
