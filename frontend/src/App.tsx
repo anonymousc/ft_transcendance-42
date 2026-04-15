@@ -34,7 +34,6 @@ function AppContent() {
         <Route path="/" element={<Hero />} />
         <Route path="/healthcheck" element={<HealthcheckPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
-        {/* <Route path="/" element={<HomePage />} /> */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />

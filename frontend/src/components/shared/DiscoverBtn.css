@@ -1,8 +1,8 @@
 .hero-button {
-  background: #FF8C00;
+  background: #f9951b;
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: #111111;
-  padding: 0.95rem 1.4rem;
+  padding: 0.7rem 1rem;
   border-radius: 999px;
   font-size: 1.05rem;
   font-weight: 800;
@@ -20,7 +20,7 @@
 }
 
 ::is(.dark) .hero-button {
-  background: #FF8C00;
+  background: #ff8c00;
   color: #111111;
 }
 

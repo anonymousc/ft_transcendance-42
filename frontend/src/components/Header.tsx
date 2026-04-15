@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import './Header.css';
 import LoginBtn from './shared/LoginBtn.js';
 import DesktopNav from './DesktopNav.jsx';
@@ -7,9 +7,16 @@ import LogoRihla from './LogoRihla.jsx';
 import ThemeToggle from './shared/ThemeToggle';
 
 function Header() {
+  const location = useLocation();
+  const isLanding = location.pathname === '/';
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const heroHeight = window.innerHeight;
+    setIsScrolled(window.scrollY >= heroHeight - 64);
+  }, [location.pathname]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -57,8 +64,14 @@ function Header() {
     { href: '/#features', label: 'Features', id: 'features' },
   ];
 
+  const headerModifierClass = isScrolled
+    ? 'scrolled'
+    : isLanding
+      ? ''
+      : 'bar-document';
+
   return (
-    <header className={`Header ${isScrolled ? 'scrolled' : ''}`}>
+    <header className={`Header ${headerModifierClass}`.trim()}>
       <nav className="nav">
         <div className="nav-container">
           <LogoRihla/>
