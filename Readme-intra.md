@@ -379,14 +379,14 @@ Architected and developed core backend services using a microservices approach. 
 
 ---
 
-### Anass El (<intra_us>)  
+### Anas Chahlabani (achahbal)  
 **Roles:** Mobile Developer  
 **Description:**  
 Developed the mobile application experience for *Rihla*, focusing on performance, usability, and consistency with the web platform. Integrated APIs and contributed to delivering a smooth cross-platform user experience.
 
 ---
 
-### Ali El (<intra_us>)  
+### Ali Ait Bouih (aait-bou)  
 **Roles:** Backend Developer  
 **Description:**  
 Contributed to backend service development, including API implementation, database interactions, and feature integration. Worked on ensuring reliability and maintainability of services.
