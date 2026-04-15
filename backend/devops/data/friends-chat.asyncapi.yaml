@@ -6,12 +6,12 @@ info:
     Real-time chat over raw WebSocket (`ws` library). Same JWT access token as REST (`JWT_ACCESS_SECRET`, payload `sub` = user id).
 
     **Connect:** `ws://<host>:<WS_PORT>/?token=<access_jwt>`  
-    Browsers cannot read the httpOnly `access_token` cookie; obtain a short-lived JWT via **`GET /chat/ws-token`** (same cookie or `Authorization: Bearer` as other `/chat` routes), then pass `data.token` in the query string.  
+    Browsers cannot read the httpOnly `access_token` cookie; obtain a short-lived JWT via **`GET /api/chat/ws-token`** (same cookie or `Authorization: Bearer` as other `/api/chat` routes), then pass `data.token` in the query string.  
     Default **WS_PORT** is `8181` (see `friends-service` env / Docker Compose).
 
     Every frame is a single **JSON object** with a `type` string. Invalid JSON yields an `error` message when parsing is attempted on a text frame.
 
-    Messages created via **HTTP** `POST /chat/conversations/:id/messages` (or the WebSocket `message` command) are pushed to participant sockets with `type: message`, and the service creates **in-app notifications** for other participants (see REST `/notifications` and `friends-notifications.asyncapi.yaml`).
+    Messages created via **HTTP** `POST /api/chat/conversations/:id/messages` (or the WebSocket `message` command) are pushed to participant sockets with `type: message`, and the service creates **in-app notifications** for other participants (see REST `/api/notifications` and `friends-notifications.asyncapi.yaml`).
 
   license:
     name: MIT

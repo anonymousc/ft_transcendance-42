@@ -4,25 +4,25 @@
 
 | Endpoint | Method | Purpose | Request | Response |
 |---|---|---|---|---|
-| `/conversations` | GET | List conversations for current user | `Authorization: Bearer <token>` | `Conversation[]` |
-| `/conversations/:id/messages` | GET | Fetch message history | `?limit=N&before=<cursor>` | `Message[]` |
-| `/conversations/:id/messages` | POST | Send a message | `{ content: string }` | `Message` (server-assigned `id`, `timestamp`, `status: "sent"`) |
+| `/api/chat/conversations` | GET | List conversations for current user | `Authorization: Bearer <token>` | `Conversation[]` |
+| `/api/chat/conversations/:id/messages` | GET | Fetch message history | `?limit=N&before=<cursor>` | `Message[]` |
+| `/api/chat/conversations/:id/messages` | POST | Send a message | `{ content: string }` | `Message` (server-assigned `id`, `timestamp`, `status: "sent"`) |
 
 ### Friends
 
 | Endpoint | Method | Purpose | Request | Response |
 |---|---|---|---|---|
-| `/friends` | GET | List current user's friends | `Authorization: Bearer <token>` | `Friend[]` |
-| `/friends/:id` | GET | Get single friend profile | — | `Friend` |
-| `/friends/:id` | DELETE | Remove friend | — | `204` |
+| `/api/friends` | GET | List current user's friends | `Authorization: Bearer <token>` | `Friend[]` |
+| `/api/friends/:id` | GET | Get single friend profile | — | `Friend` |
+| `/api/friends/:id` | DELETE | Remove friend | — | `204` |
 
 ### Notifications
 
 | Endpoint | Method | Purpose | Request | Response |
 |---|---|---|---|---|
-| `/notifications` | GET | List all notifications | `Authorization: Bearer <token>` | `Notification[]` |
-| `/notifications/:id/read` | PATCH | Mark single notification as read | — | `204` |
-| `/notifications/read-all` | PATCH | Mark all as read | — | `204` |
+| `/api/notifications` | GET | List all notifications | `Authorization: Bearer <token>` | `Notification[]` |
+| `/api/notifications/read?id=` | PATCH | Mark single notification as read | — | `204` |
+| `/api/notifications/readAll` | PATCH | Mark all as read | — | `204` |
 
 ---
 
@@ -96,12 +96,12 @@
 
 | File | What | Replace With |
 |---|---|---|
-| `features/chat/components/Webchat.tsx` lines 34–69 | `MOCK_CONVERSATIONS` | `GET /conversations` |
-| `features/chat/components/Webchat.tsx` lines 72–331 | `MOCK_MESSAGES` | `GET /conversations/:id/messages` |
+| `features/chat/components/Webchat.tsx` lines 34–69 | `MOCK_CONVERSATIONS` | `GET /api/chat/conversations` |
+| `features/chat/components/Webchat.tsx` lines 72–331 | `MOCK_MESSAGES` | `GET /api/chat/conversations/:id/messages` |
 | `features/chat/components/Webchat.tsx` lines 407–416 | `setTimeout` faking delivery | WebSocket `message:send` + `message:status` |
-| `features/friends/components/FriendsPage.tsx` lines 12–19 | `MOCK_FRIENDS` | `GET /friends` |
-| `features/notifications/NotificationPage.tsx` lines 7–19 | `MOCK_NOTIFICATIONS` | `GET /notifications` |
-| `features/chat/components/ContactPanel.tsx` line 65 | `onRemoveFriend` empty callback | `DELETE /friends/:id` |
+| `features/friends/components/FriendsPage.tsx` lines 12–19 | `MOCK_FRIENDS` | `GET /api/friends` |
+| `features/notifications/NotificationPage.tsx` lines 7–19 | `MOCK_NOTIFICATIONS` | `GET /api/notifications` |
+| `features/chat/components/ContactPanel.tsx` line 65 | `onRemoveFriend` empty callback | `DELETE /api/friends/:id` |
 
 ---
 

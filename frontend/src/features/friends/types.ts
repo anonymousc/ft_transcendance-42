@@ -30,6 +30,11 @@ export interface PendingFriendRequest {
   avatar?: string;
 }
 
+/** Outgoing friend request (same display fields plus target user for cancel/sync). */
+export interface OutgoingFriendRequest extends PendingFriendRequest {
+  toUserId: string;
+}
+
 /** Discover tab suggestion (not yet a friend). */
 export interface SuggestedStudent {
   id: string;

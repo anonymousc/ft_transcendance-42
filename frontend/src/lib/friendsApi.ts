@@ -1,4 +1,8 @@
-import type { Friend, PendingFriendRequest } from "@/features/friends/types";
+import type {
+  Friend,
+  OutgoingFriendRequest,
+  PendingFriendRequest,
+} from "@/features/friends/types";
 import { flattenUserInterests } from "@/features/friends/utils";
 import {
   PROFILES_BASE_URL,
@@ -73,7 +77,7 @@ async function readFriendsError(res: Response): Promise<string> {
   return res.statusText || "Request failed";
 }
 
-/** Raw row from GET /friends/requests/incoming */
+/** Raw row from GET /api/friends/requests/incoming */
 export interface FriendRequestRow {
   id: string;
   fromUserId: string;
@@ -82,7 +86,7 @@ export interface FriendRequestRow {
   updatedAt: string;
 }
 
-/** Stub from GET /friends (may include placeholders from backend). */
+/** Stub from GET /api/friends (may include placeholders from backend). */
 interface FriendStub {
   id: string;
   name?: string;
@@ -149,7 +153,7 @@ async function stubToFriend(stub: FriendStub): Promise<Friend> {
 }
 
 export async function fetchFriends(): Promise<Friend[]> {
-  const res = await fetch(`${FRIENDS_BASE_URL}/friends`, {
+  const res = await fetch(`${FRIENDS_BASE_URL}/api/friends`, {
     credentials: "include",
   });
   if (!res.ok) {
@@ -163,7 +167,7 @@ export async function fetchFriends(): Promise<Friend[]> {
 }
 
 export async function fetchOutgoingRequests(): Promise<FriendRequestRow[]> {
-  const res = await fetch(`${FRIENDS_BASE_URL}/friends/requests/outgoing`, {
+  const res = await fetch(`${FRIENDS_BASE_URL}/api/friends/requests/outgoing`, {
     credentials: "include",
   });
   if (!res.ok) {
@@ -176,8 +180,27 @@ export async function fetchOutgoingRequests(): Promise<FriendRequestRow[]> {
   return body.data;
 }
 
+export async function mapOutgoingRequestRowsToPending(
+  rows: FriendRequestRow[],
+): Promise<OutgoingFriendRequest[]> {
+  return Promise.all(
+    rows.map(async (row) => {
+      const profile = await fetchProfileByUserId(row.toUserId);
+      const fields = profileToFriendFields(profile);
+      const item: OutgoingFriendRequest = {
+        id: row.id,
+        toUserId: row.toUserId,
+        name: fields.name,
+        username: fields.username || row.toUserId.slice(0, 8),
+      };
+      if (fields.avatar) item.avatar = fields.avatar;
+      return item;
+    }),
+  );
+}
+
 export async function fetchIncomingRequests(): Promise<PendingFriendRequest[]> {
-  const res = await fetch(`${FRIENDS_BASE_URL}/friends/requests/incoming`, {
+  const res = await fetch(`${FRIENDS_BASE_URL}/api/friends/requests/incoming`, {
     credentials: "include",
   });
   if (!res.ok) {
@@ -204,7 +227,7 @@ export async function fetchIncomingRequests(): Promise<PendingFriendRequest[]> {
 }
 
 export async function sendFriendRequest(toUserId: string): Promise<void> {
-  const res = await fetch(`${FRIENDS_BASE_URL}/friends/requests`, {
+  const res = await fetch(`${FRIENDS_BASE_URL}/api/friends/requests`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -217,7 +240,7 @@ export async function sendFriendRequest(toUserId: string): Promise<void> {
 
 export async function acceptFriendRequest(requestId: string): Promise<void> {
   const res = await fetch(
-    `${FRIENDS_BASE_URL}/friends/requests/${encodeURIComponent(requestId)}/accept`,
+    `${FRIENDS_BASE_URL}/api/friends/requests/${encodeURIComponent(requestId)}/accept`,
     { method: "POST", credentials: "include" },
   );
   if (!res.ok) {
@@ -227,7 +250,7 @@ export async function acceptFriendRequest(requestId: string): Promise<void> {
 
 export async function declineOrCancelRequest(requestId: string): Promise<void> {
   const res = await fetch(
-    `${FRIENDS_BASE_URL}/friends/requests/${encodeURIComponent(requestId)}`,
+    `${FRIENDS_BASE_URL}/api/friends/requests/${encodeURIComponent(requestId)}`,
     { method: "DELETE", credentials: "include" },
   );
   if (!res.ok) {
@@ -237,7 +260,7 @@ export async function declineOrCancelRequest(requestId: string): Promise<void> {
 
 export async function removeFriend(userId: string): Promise<void> {
   const res = await fetch(
-    `${FRIENDS_BASE_URL}/friends/${encodeURIComponent(userId)}`,
+    `${FRIENDS_BASE_URL}/api/friends/${encodeURIComponent(userId)}`,
     { method: "DELETE", credentials: "include" },
   );
   if (!res.ok) {
@@ -247,7 +270,7 @@ export async function removeFriend(userId: string): Promise<void> {
 
 /** JWT for `VITE_WS_URL?token=` — same session as REST (`credentials: include`). */
 export async function fetchChatWsToken(): Promise<string> {
-  const res = await fetch(`${FRIENDS_BASE_URL}/chat/ws-token`, {
+  const res = await fetch(`${FRIENDS_BASE_URL}/api/chat/ws-token`, {
     credentials: "include",
   });
   if (!res.ok) {
@@ -260,7 +283,7 @@ export async function fetchChatWsToken(): Promise<string> {
   return body.data.token;
 }
 
-/** Row from GET /notifications (friends-service Prisma shape, JSON dates). */
+/** Row from GET /api/notifications (friends-service Prisma shape, JSON dates). */
 export interface NotificationRow {
   id: string;
   userId: string;
@@ -276,7 +299,7 @@ export interface NotificationRow {
 }
 
 export async function fetchNotifications(): Promise<NotificationRow[]> {
-  const res = await fetch(`${FRIENDS_BASE_URL}/notifications`, {
+  const res = await fetch(`${FRIENDS_BASE_URL}/api/notifications`, {
     credentials: "include",
   });
   if (!res.ok) {
@@ -294,7 +317,7 @@ export async function patchNotificationRead(
 ): Promise<NotificationRow> {
   const q = new URLSearchParams({ id: id.trim() });
   const res = await fetch(
-    `${FRIENDS_BASE_URL}/notifications/read?${q.toString()}`,
+    `${FRIENDS_BASE_URL}/api/notifications/read?${q.toString()}`,
     { method: "PATCH", credentials: "include" },
   );
   if (!res.ok) {
@@ -308,7 +331,7 @@ export async function patchNotificationRead(
 }
 
 export async function patchNotificationsReadAll(): Promise<number> {
-  const res = await fetch(`${FRIENDS_BASE_URL}/notifications/readAll`, {
+  const res = await fetch(`${FRIENDS_BASE_URL}/api/notifications/readAll`, {
     method: "PATCH",
     credentials: "include",
   });
@@ -325,7 +348,7 @@ export async function patchNotificationsReadAll(): Promise<number> {
 export async function patchNotificationArchive(id: string): Promise<NotificationRow> {
   const q = new URLSearchParams({ id: id.trim() });
   const res = await fetch(
-    `${FRIENDS_BASE_URL}/notifications/archive?${q.toString()}`,
+    `${FRIENDS_BASE_URL}/api/notifications/archive?${q.toString()}`,
     { method: "PATCH", credentials: "include" },
   );
   if (!res.ok) {
@@ -338,7 +361,7 @@ export async function patchNotificationArchive(id: string): Promise<Notification
   return body.data;
 }
 
-/** Row from GET /chat/conversations */
+/** Row from GET /api/chat/conversations */
 export interface ChatConversationRow {
   id: string;
   createdAt: string;
@@ -352,7 +375,7 @@ export interface ChatConversationRow {
   } | null;
 }
 
-/** Row from GET /chat/conversations/:id/messages */
+/** Row from GET /api/chat/conversations/:id/messages */
 export interface ChatMessageRow {
   id: string;
   conversationId: string;
@@ -361,7 +384,7 @@ export interface ChatMessageRow {
   createdAt: string;
 }
 
-/** Response from POST /chat/conversations (open or create DM). */
+/** Response from POST /api/chat/conversations (open or create DM). */
 export interface OpenChatDmResult {
   id: string;
   createdAt: string;
@@ -372,7 +395,7 @@ export interface OpenChatDmResult {
 export async function openOrCreateChatDm(
   withUserId: string,
 ): Promise<OpenChatDmResult> {
-  const res = await fetch(`${FRIENDS_BASE_URL}/chat/conversations`, {
+  const res = await fetch(`${FRIENDS_BASE_URL}/api/chat/conversations`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -393,7 +416,7 @@ export async function postChatMessage(
   content: string,
 ): Promise<ChatMessageRow> {
   const res = await fetch(
-    `${FRIENDS_BASE_URL}/chat/conversations/${encodeURIComponent(conversationId)}/messages`,
+    `${FRIENDS_BASE_URL}/api/chat/conversations/${encodeURIComponent(conversationId)}/messages`,
     {
       method: "POST",
       credentials: "include",
@@ -412,7 +435,7 @@ export async function postChatMessage(
 }
 
 export async function fetchChatConversations(): Promise<ChatConversationRow[]> {
-  const res = await fetch(`${FRIENDS_BASE_URL}/chat/conversations`, {
+  const res = await fetch(`${FRIENDS_BASE_URL}/api/chat/conversations`, {
     credentials: "include",
   });
   if (!res.ok) {
@@ -433,7 +456,7 @@ export async function fetchChatMessages(
   if (opts?.before) q.set("before", opts.before);
   if (opts?.limit != null) q.set("limit", String(opts.limit));
   const qs = q.toString();
-  const url = `${FRIENDS_BASE_URL}/chat/conversations/${encodeURIComponent(conversationId)}/messages${qs ? `?${qs}` : ""}`;
+  const url = `${FRIENDS_BASE_URL}/api/chat/conversations/${encodeURIComponent(conversationId)}/messages${qs ? `?${qs}` : ""}`;
   const res = await fetch(url, { credentials: "include" });
   if (!res.ok) {
     throw new Error(await readFriendsError(res));

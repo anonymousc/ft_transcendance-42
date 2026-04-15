@@ -6,6 +6,7 @@ import EmptyState from "./components/EmptyState";
 import type { Notification } from "./types";
 import {
   fetchNotifications,
+  patchNotificationArchive,
   patchNotificationRead,
   patchNotificationsReadAll,
   type NotificationRow,
@@ -30,6 +31,7 @@ function NotificationPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [markAllBusy, setMarkAllBusy] = useState(false);
+  const [archivingId, setArchivingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userId) {
@@ -136,6 +138,18 @@ function NotificationPage() {
     }
   }, [notifications, notifyAllNotificationsRead]);
 
+  const handleArchive = useCallback(async (id: string) => {
+    setArchivingId(id);
+    try {
+      await patchNotificationArchive(id);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    } catch {
+      /* keep list unchanged */
+    } finally {
+      setArchivingId(null);
+    }
+  }, []);
+
   const hasUnread = notifications.some((n) => !n.read);
 
   return (
@@ -179,10 +193,12 @@ function NotificationPage() {
           ) : notifications.length > 0 ? (
             <div className="space-y-3">
               {notifications.map((notification) => (
-                <NotificationCard
+                               <NotificationCard
                   key={notification.id}
                   notification={notification}
                   onClick={handleNotificationClick}
+                  onArchive={(nid) => void handleArchive(nid)}
+                  archiveBusy={archivingId === notification.id}
                 />
               ))}
             </div>
