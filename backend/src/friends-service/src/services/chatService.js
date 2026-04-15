@@ -49,15 +49,14 @@ async function findDmBetweenTx(tx, userId, otherUserId) {
 }
 
 async function getOrCreateDmConversation(userId, otherUserId) {
-  const friendId = await getOtherUserIdInFriendship(userId, otherUserId);
-  if (!friendId || friendId !== otherUserId) {
-    return { error: { status: 403, code: 'NOT_FRIEND', message: 'You can only chat with friends' } };
-  }
-
   return prisma.$transaction(async (tx) => {
     const existing = await findDmBetweenTx(tx, userId, otherUserId);
     if (existing) {
       return { conversation: existing };
+    }
+    const friendId = await getOtherUserIdInFriendship(userId, otherUserId);
+    if (!friendId || friendId !== otherUserId) {
+      return { error: { status: 403, code: 'NOT_FRIEND', message: 'You can only chat with friends' } };
     }
     const conversation = await tx.conversation.create({
       data: {
