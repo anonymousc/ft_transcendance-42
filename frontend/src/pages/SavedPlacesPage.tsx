@@ -26,7 +26,6 @@ const FAV_PLACES_URL =
 const PLANNER_URL =
   (import.meta.env.VITE_PLANNER_URL as string) || "http://localhost:7000";
 
-// ── Types ──────────────────────────────────────────────────────────────────
 
 interface SavedPlace {
   id: string;
@@ -78,7 +77,6 @@ function tripThumbColor(id: string): string {
   return `hsl(${hue} 62% 46%)`;
 }
 
-// ── Category icon map ──────────────────────────────────────────────────────
 
 function CategoryIcon({ category }: { category: string }) {
   const icons: Record<string, React.ReactNode> = {
@@ -274,7 +272,6 @@ function useTripCardHeroImage(city: string) {
   return { photoUrl, showPhoto: photoUrl !== null };
 }
 
-// ── SavedPlaceCard ─────────────────────────────────────────────────────────
 
 function SavedPlaceCard({
   place,
@@ -434,7 +431,6 @@ function SavedPlaceCard({
   );
 }
 
-// ── SavedTripRow ────────────────────────────────────────────────────────────
 
 function SavedTripCard({
   trip,
@@ -522,7 +518,6 @@ function SavedTripCard({
   );
 }
 
-// ── SavedPlacesPage ────────────────────────────────────────────────────────
 
 function SavedPlacesPage() {
   const { user } = useAuth();
@@ -575,7 +570,6 @@ function SavedPlacesPage() {
       <HomeNavBar />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-8 pt-24 pb-20">
-        {/* Header */}
         <div className="mb-10">
           <button
             onClick={() => navigate(-1)}
@@ -594,7 +588,6 @@ function SavedPlacesPage() {
           </p>
         </div>
 
-        {/* Saved trips */}
         <section className="mb-14" aria-labelledby="saved-trips-heading">
           <div className="flex items-end justify-between gap-4 mb-4">
             <h2
@@ -651,7 +644,6 @@ function SavedPlacesPage() {
           )}
         </section>
 
-        {/* Saved places */}
         <section className="mb-6" aria-labelledby="saved-places-heading">
           <h2
             id="saved-places-heading"
@@ -668,7 +660,6 @@ function SavedPlacesPage() {
           </p>
         </section>
 
-        {/* Error */}
         {error && (
           <div className="flex items-center gap-3 px-5 py-4 mb-8 rounded-2xl
             bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800
@@ -678,7 +669,6 @@ function SavedPlacesPage() {
           </div>
         )}
 
-        {/* Skeleton grid */}
         {loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -695,7 +685,6 @@ function SavedPlacesPage() {
           </div>
         )}
 
-        {/* Cards grid */}
         {!loading && places.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {places.map((place) => (
@@ -704,7 +693,6 @@ function SavedPlacesPage() {
           </div>
         )}
 
-        {/* Empty state */}
         {!loading && !error && places.length === 0 && (
           <div className="text-center py-24">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full

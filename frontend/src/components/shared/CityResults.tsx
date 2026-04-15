@@ -42,7 +42,6 @@ export default function CityResults({ query, city }: CityResultsProps) {
           </div>
         )}
 
-        {/* Title */}
         <h2
           className={`text-3xl sm:text-4xl font-bold text-stone-900 dark:text-white tracking-tight mb-3
             transition-all duration-600 ease-out delay-100
@@ -55,7 +54,6 @@ export default function CityResults({ query, city }: CityResultsProps) {
           )}
         </h2>
 
-        {/* Subtitle */}
         <p
           className={`text-[15px] text-stone-500 dark:text-stone-400 max-w-lg mx-auto leading-relaxed
             transition-all duration-500 ease-out delay-200
@@ -68,7 +66,6 @@ export default function CityResults({ query, city }: CityResultsProps) {
         </p>
       </div>
 
-      {/* Error state */}
       {error && (
         <div className="max-w-3xl mx-auto mb-8 flex items-center gap-3 px-5 py-4 rounded-2xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300">
           <AlertCircle size={16} className="shrink-0" />
@@ -81,7 +78,6 @@ export default function CityResults({ query, city }: CityResultsProps) {
         </div>
       )}
 
-      {/* Cards list */}
       <div className="max-w-3xl mx-auto flex flex-col gap-3">
         {loading
           ? Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
@@ -96,7 +92,6 @@ export default function CityResults({ query, city }: CityResultsProps) {
         </p>
       )}
 
-      {/* Personalized suggestions section */}
       {!loading && (
         <SuggestSection
           city={displayCity}

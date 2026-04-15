@@ -31,7 +31,6 @@ import {
 } from "@/hooks/useCityPlaces";
 import { useInView } from "@/hooks/useInView";
 
-// ── Category styles ─────────────────────────────────────────────────────────
 
 interface CategoryStyle {
   icon: React.ReactNode;
@@ -96,7 +95,6 @@ function getCategoryStyle(category: string): CategoryStyle {
   );
 }
 
-// ── StarRating ───────────────────────────────────────────────────────────────
 
 export function StarRating({ rating }: { rating: number | null }) {
   const safeRating = rating ?? 0;
@@ -127,7 +125,6 @@ export function StarRating({ rating }: { rating: number | null }) {
   );
 }
 
-// ── StarPicker ───────────────────────────────────────────────────────────────
 
 export function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hovered, setHovered] = useState(0);
@@ -163,7 +160,6 @@ export function StarPicker({ value, onChange }: { value: number; onChange: (v: n
   );
 }
 
-// ── ReviewSection ────────────────────────────────────────────────────────────
 
 const REVIEW_PLACES_URL =
   (import.meta.env.VITE_REVIEW_PLACES_URL as string) || "http://localhost:4001";
@@ -241,7 +237,6 @@ export function ReviewSection({
   return (
     <div className="px-5 pb-5 pt-4 border-t border-stone-100 dark:border-white/[0.06]">
 
-      {/* Community rating summary */}
       {summary && summary.totalReviews > 0 && (
         <div className="flex items-center gap-3 mb-4">
           <div className="flex items-center gap-1.5">
@@ -272,7 +267,6 @@ export function ReviewSection({
         </div>
       )}
 
-      {/* Review list */}
       {loading ? (
         <div className="space-y-2 mb-4">
           {[1, 2].map((i) => (
@@ -330,7 +324,6 @@ export function ReviewSection({
         </p>
       )}
 
-      {/* Write-a-review form */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
         <StarPicker value={rating} onChange={setRating} />
 
@@ -368,7 +361,6 @@ export function ReviewSection({
   );
 }
 
-// ── PlaceCard ────────────────────────────────────────────────────────────────
 
 export function PlaceCard({
   place,
@@ -404,7 +396,6 @@ export function PlaceCard({
         transition-all duration-500 ease-out
         ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
     >
-      {/* Main card row */}
       <div className="flex flex-row h-[200px]">
         {place.must_visit && (
           <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-orange-400 rounded-l-2xl" />
@@ -543,7 +534,6 @@ export function PlaceCard({
   );
 }
 
-// ── SkeletonCard ─────────────────────────────────────────────────────────────
 
 export function SkeletonCard() {
   return (
@@ -565,7 +555,6 @@ export function SkeletonCard() {
   );
 }
 
-// ── SuggestSection ───────────────────────────────────────────────────────────
 
 const PREFERENCE_OPTIONS = [
   "History", "Street Food", "Nature", "Art", "Shopping",

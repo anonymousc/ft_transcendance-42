@@ -50,14 +50,12 @@ function ActivityCard({ activity }: { activity: Activity }) {
 
   return (
     <div className="tpm-activity">
-      {/* Time badge */}
       <div className="tpm-activity-time">
         <Clock size={11} />
         <span>{activity.time}</span>
       </div>
 
       <div className="tpm-activity-body">
-        {/* Image */}
         {activity.image && !imgError && (
           <div className="tpm-activity-img-wrap">
             <img
@@ -153,7 +151,6 @@ function TripPlanModal({ plan, onClose, inline = false }: TripPlanModalProps) {
 
   const panel = (
     <div className={`tpm-panel${inline ? " tpm-panel--inline" : ""}`}>
-        {/* Header */}
         <div className="tpm-header">
           <div className="tpm-header-text">
             <h2 className="tpm-title">{plan.plan?.title ?? `${plan.days}-Day Trip to ${plan.city}`}</h2>
@@ -175,12 +172,10 @@ function TripPlanModal({ plan, onClose, inline = false }: TripPlanModalProps) {
           </button>
         </div>
 
-        {/* Summary */}
         {plan.plan?.summary && (
           <p className="tpm-summary">{plan.plan.summary}</p>
         )}
 
-        {/* Day tabs */}
         <div className="tpm-day-tabs">
           <button
             className="tpm-tab-nav"
@@ -213,7 +208,6 @@ function TripPlanModal({ plan, onClose, inline = false }: TripPlanModalProps) {
           </button>
         </div>
 
-        {/* Day content */}
         <div className="tpm-content" ref={contentRef}>
           {currentDay ? (
             <>
@@ -232,7 +226,6 @@ function TripPlanModal({ plan, onClose, inline = false }: TripPlanModalProps) {
             <p className="tpm-empty">No activities planned for this day.</p>
           )}
 
-          {/* General tips (shown on last day) */}
           {activeDay === dayPlans.length - 1 && plan.plan?.tips && plan.plan.tips.length > 0 && (
             <div className="tpm-general-tips">
               <h4 className="tpm-tips-title">

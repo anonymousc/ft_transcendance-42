@@ -27,7 +27,6 @@
     color: #F5F5F7;
 }
 
-/* ── Page title ── */
 .settings-title {
     font-family: 'Inter', sans-serif;
     font-size: 1.75rem;
@@ -73,7 +72,6 @@
     padding: 1rem 1.25rem 0.5rem;
 }
 
-/* ── Row ── */
 .settings-row {
     display: flex;
     align-items: center;
@@ -157,7 +155,6 @@
     flex-shrink: 0;
 }
 
-/* ── Toggle switch ── */
 .settings-toggle {
     position: relative;
     width: 48px;
@@ -201,7 +198,6 @@
     transform: translateX(20px);
 }
 
-/* ── OAuth link feedback ── */
 .settings-oauth-banner {
     display: flex;
     align-items: flex-start;
@@ -247,7 +243,6 @@
     color: #5bd37a;
 }
 
-/* ── Connected accounts ── */
 .settings-row-connected {
     cursor: default;
 }
@@ -370,13 +365,11 @@
     }
 }
 
-/* ── Danger zone ── */
 .settings-row-danger .settings-row-label {
     color: #FF3B30;
     font-weight: 600;
 }
 
-/* ── Responsive ── */
 @media (max-width: 768px) {
     .settings-page {
         padding: 4.5rem 1.25rem 1.5rem;

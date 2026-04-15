@@ -92,12 +92,12 @@
     background: transparent;
     border: none;
     gap: 1rem;
-    padding: 0;  /* Changed from 0 0.75rem */
+    padding: 0;
 }
 
 .vertical-nav.expanded .nav-item {
     justify-content: flex-start;
-    padding: 0 0.75rem;  /* Add this line */
+    padding: 0 0.75rem;
 }
 
 .nav-label {
@@ -146,7 +146,6 @@
     background: rgba(255, 140, 0, 0.1);
 }
 
-/* ── Responsive: bottom nav on mobile ───────────────────────────────────── */
 
 /* Add bottom padding to pages that use VerticalNav so content isn't hidden */
 @media (max-width: 768px) {

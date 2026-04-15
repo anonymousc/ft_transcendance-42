@@ -1,7 +1,6 @@
 import "./HeroSection.css";
 import DiscoverBtn from "./shared/DiscoverBtn";
 import RihlaLogo from "../assets/white-logo-rihla.svg";
-import { Link } from "react-router-dom";
 import { ShieldCheck, Zap, Headset, Code2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 
@@ -34,12 +33,10 @@ function HeroSection() {
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight || 1;
 
-      // progress: 0 when hero fully in view; 1 when bottom reaches top-ish
       const raw = (vh - rect.bottom) / vh;
       const progress = Math.max(0, Math.min(1, raw));
 
-      // Subtle parallax shift for the fade (moves as you scroll)
-      const shiftPx = Math.round(progress * 48); // 0 → 48px
+      const shiftPx = Math.round(progress * 48);
       el.style.setProperty("--hero-fade-shift", `${shiftPx}px`);
     };
 
@@ -90,9 +87,6 @@ function HeroSection() {
 
             <div className="hero-actions">
               <DiscoverBtn />
-              {/* <Link to="/home" className="hero-button-secondary">
-                Explore the app
-              </Link> */}
             </div>
           </div>
         </div>

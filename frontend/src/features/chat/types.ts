@@ -1,5 +1,3 @@
-// ── Domain models (in-memory state) ──────────────────────────────────────────
-
 export interface ChatUser {
   id: string;
   name: string;
@@ -25,20 +23,10 @@ export interface Conversation {
   unreadCount: number;
 }
 
-// ── WebSocket connection state ────────────────────────────────────────────────
 
 export type ConnectionState = "connecting" | "connected" | "disconnected" | "error";
 
-// ── WebSocket wire format — CONTRACT FOR THE BACKEND DEVELOPER ────────────────
-//
-// The websocket-service MUST send messages that conform to WsServerEnvelope.
-// The frontend sends messages that conform to WsClientSend.
-//
-// Env: VITE_WS_URL=ws://localhost:8181 (friends-service WebSocket port).
-//
-// Connection: GET /chat/ws-token → ws://<host>?token=<JWT> (see friends-service)
-
-// ── Server → Client ───────────────────────────────────────────────────────────
+/** Wire format: server → WsServerEnvelope, client → WsClientSend. Env VITE_WS_URL; token GET /chat/ws-token. */
 
 export interface WsMessagePayload {
   id: string;            // server-assigned permanent message ID
@@ -74,7 +62,6 @@ export type WsServerEnvelope =
   | WsServerTypingInbound
   | { type: "error";       payload: WsErrorPayload;   timestamp: string };
 
-// ── Client → Server ───────────────────────────────────────────────────────────
 
 /** Client → server (friends-service WebSocket); optional tempId → `message_ack`. */
 export interface WsClientMessageSend {

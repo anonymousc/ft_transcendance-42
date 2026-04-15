@@ -15,7 +15,6 @@ interface ChatAreaProps {
   peerAvatar?: string | undefined;
   peerOnline?: boolean | undefined;
   onSendMessage: (content: string) => void;
-  /** Fired when the draft becomes non-empty or empty (for typing indicators). */
   onComposerActivity?: ((hasDraft: boolean) => void) | undefined;
   peerIsTyping?: boolean | undefined;
   isDisabled?: boolean | undefined;
@@ -81,22 +80,9 @@ function ChatArea({
           <p className="truncate text-sm font-semibold text-foreground">
             {contactName}
           </p>
-          {/* {peerOnline !== undefined ? (
-            <p
-              className={cn(
-                "text-xs",
-                peerOnline
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-muted-foreground",
-              )}
-            >
-              {peerOnline ? "Online" : "Offline"}
-            </p>
-          ) : null} */}
         </div>
       </header>
 
-      {/* Messages */}
       <div
         ref={containerRef}
         onScroll={handleScroll}

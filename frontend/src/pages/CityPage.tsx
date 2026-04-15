@@ -486,7 +486,6 @@ function ReviewSection({
   return (
     <div className="px-5 pb-5 pt-4 border-t border-stone-100 dark:border-white/6">
 
-      {/* Community rating summary */}
       {summary && summary.totalReviews > 0 && (
         <div className="flex items-center gap-3 mb-4">
           <div className="flex items-center gap-1.5">
@@ -517,7 +516,6 @@ function ReviewSection({
         </div>
       )}
 
-      {/* Review list */}
       {loading ? (
         <div className="space-y-2 mb-4">
           {[1, 2].map((i) => (
@@ -575,7 +573,6 @@ function ReviewSection({
         </p>
       )}
 
-      {/* Write-a-review form */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
         <StarPicker value={rating} onChange={setRating} />
 
@@ -613,7 +610,6 @@ function ReviewSection({
   );
 }
 
-// ── PlaceCard ──────────────────────────────────────────────────────────────
 
 function PlaceCard({
   place,
@@ -649,7 +645,6 @@ function PlaceCard({
         transition-all duration-500 ease-out
         ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
     >
-      {/* Main card row */}
       <div className="flex flex-col sm:flex-row sm:h-[200px]">
         {place.must_visit && (
           <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-orange-400 rounded-l-2xl" />
@@ -677,7 +672,6 @@ function PlaceCard({
             </h3>
             <div className="flex items-center gap-3 flex-wrap">
               <StarRating rating={place.rating} />
-              {/* Community badge */}
               {summary && summary.totalReviews > 0 && (
                 <button
                   onClick={() => setReviewsOpen((o) => !o)}
@@ -709,7 +703,6 @@ function PlaceCard({
             </div>
 
             <div className="flex items-center gap-2 flex-wrap justify-start sm:justify-end shrink-0 sm:ml-3">
-              {/* Save / unsave bookmark */}
               {userId && (
                 <button
                   onClick={toggle}
@@ -730,7 +723,6 @@ function PlaceCard({
                 </button>
               )}
 
-              {/* Open in Google Maps */}
               {((place.lat != null && place.lng != null) || place.place_id) && (
                 <a
                   href={
@@ -750,7 +742,6 @@ function PlaceCard({
                 </a>
               )}
 
-              {/* Toggle reviews */}
               <button
                 onClick={() => setReviewsOpen((o) => !o)}
                 className="flex items-center gap-1 text-[11px] font-medium
@@ -782,7 +773,6 @@ function PlaceCard({
         </div>
       </div>
 
-      {/* Expandable review section */}
       {reviewsOpen && (
         <ReviewSection
           placeName={place.name}
@@ -816,7 +806,6 @@ function SkeletonCard() {
   );
 }
 
-// ── Suggest ────────────────────────────────────────────────────────────────
 
 const PREFERENCE_OPTIONS = [
   "History", "Street Food", "Nature", "Art", "Shopping",
@@ -896,7 +885,6 @@ function SuggestSection({
         </p>
       </div>
 
-      {/* Preference chips */}
       <div className="flex flex-wrap gap-2 mb-5">
         {PREFERENCE_OPTIONS.map((pref) => (
           <button
@@ -960,7 +948,6 @@ function SuggestSection({
   );
 }
 
-// ── Page ───────────────────────────────────────────────────────────────────
 
 function CityPage() {
   const [searchParams] = useSearchParams();
@@ -1001,7 +988,6 @@ function CityPage() {
       >
         <div ref={headerRef} className="max-w-3xl mx-auto mb-8 sm:mb-12 text-center">
 
-          {/* Mode badge */}
           <div
             className={`inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full
               bg-stone-100 dark:bg-white/[0.06] border border-stone-200 dark:border-white/[0.08]
@@ -1014,7 +1000,6 @@ function CityPage() {
             </span>
           </div>
 
-          {/* Search query pill */}
           {isSearchMode && qParam && (
             <div
               className={`flex items-center justify-center gap-2 mb-3
@@ -1030,7 +1015,6 @@ function CityPage() {
             </div>
           )}
 
-          {/* Title */}
           <h2
             className={`text-4xl sm:text-5xl font-bold text-stone-900 dark:text-white tracking-tight mb-4
               transition-all duration-600 ease-out delay-100
@@ -1043,7 +1027,6 @@ function CityPage() {
             )}
           </h2>
 
-          {/* Subtitle */}
           <p
             className={`text-[15px] text-stone-500 dark:text-stone-400 max-w-lg mx-auto leading-relaxed
               transition-all duration-500 ease-out delay-200
@@ -1056,7 +1039,6 @@ function CityPage() {
           </p>
         </div>
 
-        {/* Error state */}
         {error && (
           <div className="max-w-3xl mx-auto mb-8 flex items-center gap-3 px-5 py-4 rounded-2xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300">
             <AlertCircle size={16} className="shrink-0" />
@@ -1069,7 +1051,6 @@ function CityPage() {
           </div>
         )}
 
-        {/* Cards list */}
         <div className="max-w-3xl mx-auto flex flex-col gap-4">
           {loading
             ? Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
@@ -1084,7 +1065,6 @@ function CityPage() {
           </p>
         )}
 
-        {/* Personalized suggestions section */}
         {!loading && (
           <SuggestSection
             city={displayCity}
