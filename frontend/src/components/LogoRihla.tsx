@@ -1,9 +1,17 @@
 import "./LogoRihla.css";
+import { Link } from "react-router-dom";
+import RihlaimgOrange from "../assets/RIHLA-orange.svg";
 
 function LogoRihla() {
     return (
         <div className="logo">
-            <h1>RIHLA</h1>
+            <Link to="/home" aria-label="Go to home">
+                <img
+                    src={RihlaimgOrange}
+                    alt="Rihla"
+                    className="logo-img"
+                />
+            </Link>
         </div>
     );
 }

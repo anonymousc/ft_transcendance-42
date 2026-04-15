@@ -8,6 +8,7 @@ import GlassNavBar from "./shared/GlassNavBar";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useNavBadges } from "../context/NavBadgesContext";
+import RihlaimgOrange from "../assets/RIHLA-orange.svg";
 
 function HomePage() {
   const navigate = useNavigate();
@@ -38,7 +39,18 @@ function HomePage() {
       </video>
       <nav className="home-nav">
         <div className="text-white text-2xl font-bold">
-          <h1>RIHLA</h1>
+          <button
+            type="button"
+            onClick={() => navigate("/home")}
+            aria-label="Go to home"
+            className="appearance-none bg-transparent border-0 p-0 m-0 cursor-pointer block"
+          >
+            <img
+              src={RihlaimgOrange}
+              alt="Rihla"
+              className="block h-7 sm:h-8 w-auto object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.55)]"
+            />
+          </button>
         </div>
         <GlassNavBar
           handleNavigation={handleNavigation}
