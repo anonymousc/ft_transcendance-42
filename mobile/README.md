@@ -4,13 +4,13 @@ Welcome to the **RIHLA MVP**. This document is designed to serve as both technic
 
 ---
 
-## 🎯 The Pitch: What is RIHLA?
+## The Pitch: What is RIHLA?
 
 *"RIHLA is a modern mobile application built for iOS that revolutionizes how people discover new cities. Instead of manually Googling places and building spreadsheets for your trips, RIHLA acts as an automated compass. It connects directly to live Google Maps data to show you the best spots in a city, and then uses Google's powerful Gemini AI to mathematically build out a personalized, day-by-day travel itinerary for you."*
 
 ---
 
-## 🗣️ HOW TO EXPLAIN THE CODE (Presentation Script)
+## HOW TO EXPLAIN THE CODE (Presentation Script)
 
 If you are asked "How does the code work?", open the codebase and use this exact script to guide them through the files. Show them the code while you explain it:
 
