@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Menu, Home, MessageSquare, Users, Bell, User, LogOut } from "lucide-react";
+import RihlaimgOrange from "../../assets/RIHLA-orange.svg";
 import "./VerticalNav.css";
 
 interface NavItem {
@@ -37,7 +38,20 @@ function VerticalNav({ onNavigate, activeItem: controlledActive }: VerticalNavPr
     return (
         <nav className={`vertical-nav ${isExpanded ? "expanded" : ""}`}>
             <div className="nav-header">
-                {isExpanded && <span className="nav-brand">RIHLA</span>}
+                {isExpanded && (
+                    <button
+                        type="button"
+                        className="nav-brand-btn"
+                        onClick={() => handleClick("home")}
+                        aria-label="Go to home"
+                    >
+                        <img
+                            src={RihlaimgOrange}
+                            alt="Rihla"
+                            className="nav-brand-logo"
+                        />
+                    </button>
+                )}
                 <button className="nav-toggle" onClick={toggleExpand} aria-label="Menu">
                     <Menu size={28} />
                 </button>

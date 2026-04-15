@@ -3,6 +3,7 @@ import GlassNavBar from "./GlassNavBar";
 import ProfileDropdown from "./ProfileDropdown";
 import { useAuth } from "../../context/AuthContext";
 import { useNavBadges } from "@/context/NavBadgesContext";
+import RihlaimgOrange from "../../assets/RIHLA-orange.svg";
 import "./HomeNavBar.css";
 
 const NAV_ID_TO_PATH: Record<string, string> = {
@@ -62,7 +63,23 @@ function HomeNavBar({ hideMobileGlassNav = false }: HomeNavBarProps) {
             : "text-[#1C1C1E] dark:text-white text-2xl font-bold transition-colors duration-300"
         }
       >
-        <h1>RIHLA</h1>
+        <button
+          type="button"
+          className="home-nav-brand-link"
+          onClick={() => navigate("/home")}
+          aria-label="Go to home"
+        >
+          <img
+            src={RihlaimgOrange}
+            alt="Rihla"
+            className={[
+              "block h-7 sm:h-8 w-auto object-contain",
+              isHomeVideo ? "drop-shadow-[0_1px_3px_rgba(0,0,0,0.55)]" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          />
+        </button>
       </div>
       <GlassNavBar
         activeId={activeId}
