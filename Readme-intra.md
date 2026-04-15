@@ -1,4 +1,4 @@
-This project has been created as part of the 42 curriculum by iouhssei, , ,
+This project has been created as part of the 42 curriculum by iouhssei, mel-rhay, ,
 
 # Rihla — Student Travel Platform for Morocco
 
@@ -372,7 +372,7 @@ Led the infrastructure and DevOps strategy, ensuring scalability, reliability, a
 
 ---
 
-### Hamid El (<intra_us>)  
+### Mohammed El Rhayour (mel-rhay)  
 **Roles:** Tech Lead, Backend Developer  
 **Description:**  
 Architected and developed core backend services using a microservices approach. Designed APIs, handled business logic, and ensured system consistency and performance. Collaborated closely on authentication, data models, and service communication.
