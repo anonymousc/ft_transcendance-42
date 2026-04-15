@@ -41,3 +41,30 @@ export async function ensureCsrfToken(): Promise<string> {
 export function clearCachedCsrfToken() {
   cachedCsrfToken = null;
 }
+
+/**
+ * Read response body as text and parse JSON. Avoids `res.json()` throwing
+ * `Unexpected token '<'` when nginx/upstream returns an HTML error page.
+ */
+export async function parseApiJson(res: Response): Promise<unknown> {
+  const text = await res.text();
+  const t = text.trim();
+  if (!t) return null;
+  const looksHtml = /^<!DOCTYPE/i.test(t) || /^<html/i.test(t) || t.startsWith('<h');
+  if (looksHtml) {
+    const hint =
+      res.status >= 500
+        ? ' Planner may be down or the gateway returned an error page.'
+        : ' Check that the URL hits the API (e.g. /plan/... under https://localhost), not the SPA.';
+    throw new Error(
+      `Server returned HTML instead of JSON (HTTP ${res.status}).${hint}`,
+    );
+  }
+  try {
+    return JSON.parse(t);
+  } catch {
+    throw new Error(
+      `Invalid JSON (HTTP ${res.status}): ${t.slice(0, 180)}${t.length > 180 ? '…' : ''}`,
+    );
+  }
+}

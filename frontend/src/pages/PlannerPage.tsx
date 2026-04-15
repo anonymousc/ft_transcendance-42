@@ -11,7 +11,7 @@ import { needsInterestsOnboarding } from "@/lib/interestsOnboarding";
 import { useTheme } from "@/context/ThemeContext";
 import BackArrow from "@/components/shared/BackArrow";
 import GoogleCalendar from "@/components/shared/GoogleCalendar";
-import { resolveGatewayUrl } from "@/lib/api";
+import { parseApiJson, resolveGatewayUrl } from "@/lib/api";
 
 const PLANNER_URL =
   resolveGatewayUrl(import.meta.env.VITE_PLANNER_URL as string | undefined);
@@ -400,9 +400,16 @@ function PlannerSidebar({
 
 async function parseJson(res: Response): Promise<{ ok: boolean; data?: unknown; error?: { message?: string } }> {
   try {
-    return await res.json();
-  } catch {
-    return { ok: false, error: { message: "Invalid response" } };
+    const raw = await parseApiJson(res);
+    if (raw == null) {
+      return { ok: false, error: { message: "Empty response from server" } };
+    }
+    return raw as { ok: boolean; data?: unknown; error?: { message?: string } };
+  } catch (e) {
+    return {
+      ok: false,
+      error: { message: e instanceof Error ? e.message : "Invalid response" },
+    };
   }
 }
 

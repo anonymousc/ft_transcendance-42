@@ -4,7 +4,7 @@ import HomeNavBar from "@/components/shared/HomeNavBar";
 import { useAuth } from "@/context/AuthContext";
 import { AI_PLACES_URL, resolvePlaceImageUrl } from "@/hooks/useCityPlaces";
 import { cn } from "@/lib/utils";
-import { resolveGatewayUrl } from "@/lib/api";
+import { parseApiJson, resolveGatewayUrl } from "@/lib/api";
 import {
   MapPin,
   Star,
@@ -553,7 +553,7 @@ function SavedPlacesPage() {
     setTripsLoading(true);
     setTripsError(null);
     fetch(`${PLANNER_URL}/plans`, { credentials: "include" })
-      .then((r) => r.json())
+      .then(async (r) => (await parseApiJson(r)) as PlansEnvelope)
       .then((env: PlansEnvelope) => {
         if (!env.ok) throw new Error(env.error?.message ?? "Failed to load saved trips");
         setTrips(env.data ?? []);

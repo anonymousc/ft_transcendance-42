@@ -21,7 +21,6 @@ const PATH_TO_NAV_ID: Record<string, string> = {
 };
 
 type HomeNavBarProps = {
-  /** Hide bottom glass pill on small viewports (e.g. active chat thread). */
   hideMobileGlassNav?: boolean;
 };
 
