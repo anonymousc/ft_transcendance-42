@@ -358,7 +358,7 @@ From the repo root, with `DOCKER=docker` and `COMPOSE=./docker-compose.yml`:
 
 ## Team Information
 
-### Ilyass Ouhsseine (<iouhssei>)  
+### Ilyass Ouhsseine (iouhssei)  
 **Roles:** Product Owner, Project Manager, Frontend Developer  
 **Description:**  
 Defined and led the product vision of *Rihla*, a travel discovery platform built on a microservices architecture (React / Node.js). Managed the full product lifecycle — from ideation and feature prioritization to delivery — while contributing to frontend development. Focused on AI-powered trip planning, personalized recommendations, and seamless user experience.
