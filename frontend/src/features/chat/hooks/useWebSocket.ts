@@ -11,9 +11,13 @@ import type {
   WsClientSend,
 } from "../types";
 import { fetchChatWsToken, postChatMessage } from "@/lib/friendsApi";
+import { resolveGatewayWebSocketUrl } from "@/lib/api";
 import { apiMessageToMessage } from "../utils/mapApi";
 
-const WS_URL = (import.meta.env.VITE_WS_URL as string | undefined) || "wss://localhost/ws";
+const WS_URL = resolveGatewayWebSocketUrl(
+  import.meta.env.VITE_WS_URL as string | undefined,
+  "/ws",
+);
 const CAN_USE_WS = Boolean(WS_URL);
 const MAX_RECONNECT_DELAY_MS = 30_000;
 
