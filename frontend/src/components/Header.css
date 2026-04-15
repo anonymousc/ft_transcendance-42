@@ -1,5 +1,5 @@
 .Header {
-  background-color: #F5F5F7;
+  background-color: transparent;
   box-shadow: none;
   position: fixed;
   top: 0;
@@ -7,7 +7,6 @@
   right: 0;
   z-index: 100;
   width: 100%;
-  /*100vw includes scrollbar gutter on some browsers and causes horizontal overflow */
   max-width: 100%;
   overflow-x: hidden;
   box-sizing: border-box;
@@ -20,7 +19,37 @@
 }
 
 :is(.dark) .Header {
-  background-color: #1C1C1E;
+  background-color: transparent;
+}
+
+/* Document pages (e.g. /privacy): solid bar at top, same as pre–hero-landing default */
+.Header.bar-document {
+  background-color: #f5f5f7;
+  box-shadow: none;
+}
+
+:is(.dark) .Header.bar-document {
+  background-color: #1c1c1e;
+}
+
+/* Over the hero image on `/` only: readable chrome until the bar frosts on scroll */
+.Header:not(.scrolled):not(.bar-document) .desktop-nav .nav-link {
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.Header:not(.scrolled):not(.bar-document) .desktop-nav .nav-link:hover,
+.Header:not(.scrolled):not(.bar-document) .desktop-nav .nav-link.active {
+  color: #ff6600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+.Header:not(.scrolled):not(.bar-document) .logo-img {
+  filter: drop-shadow(0 1px 3px rgba(255, 255, 255, 0.094));
+}
+
+.Header.scrolled .logo-img {
+  filter: none;
 }
 
 .Header.scrolled {
@@ -32,7 +61,6 @@
 
 :is(.dark) .Header.scrolled {
   background-color: rgba(28, 28, 30, 0.9);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .nav {
@@ -47,7 +75,6 @@
   overflow-x: clip;
 }
 
-/* Grid: logo | centered links | theme + login + burger — keeps Login on same baseline as links */
 .nav-container {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
@@ -106,6 +133,10 @@
   background: rgba(0, 0, 0, 0.06);
 }
 
+.Header:not(.scrolled):not(.bar-document) .nav-hamburger:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .nav-hamburger:focus {
   outline: none;
 }
@@ -125,12 +156,30 @@
   height: 2px;
   background-color: #000000;
   border-radius: 2px;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease,
+    box-shadow 0.3s ease;
   transform-origin: center;
+}
+
+.Header:not(.scrolled):not(.bar-document) .nav-hamburger span {
+  background-color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 :is(.dark) .nav-hamburger span {
   background-color: #ffffff;
+}
+
+.Header.scrolled .nav-hamburger span {
+  box-shadow: none;
+}
+
+:is(.dark) .Header.scrolled .nav-hamburger span {
+  background-color: #ffffff;
+}
+
+:is(:not(.dark)) .Header.scrolled .nav-hamburger span {
+  background-color: #000000;
 }
 
 /* 5px gap ×2 between bars — middle bar meets X intersection */

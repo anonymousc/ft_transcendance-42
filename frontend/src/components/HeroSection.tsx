@@ -1,6 +1,6 @@
 import "./HeroSection.css";
 import DiscoverBtn from "./shared/DiscoverBtn";
-import RihlaLogo from "../assets/RIHLA-orange.svg";
+import RihlaLogo from "../assets/white-logo-rihla.svg";
 import { Link } from "react-router-dom";
 import { ShieldCheck, Zap, Headset, Code2 } from "lucide-react";
 import { useEffect, useRef } from "react";
@@ -90,9 +90,9 @@ function HeroSection() {
 
             <div className="hero-actions">
               <DiscoverBtn />
-              <Link to="/home" className="hero-button-secondary">
+              {/* <Link to="/home" className="hero-button-secondary">
                 Explore the app
-              </Link>
+              </Link> */}
             </div>
           </div>
         </div>

@@ -8,34 +8,47 @@
   max-width: 100%;
   overflow-x: clip;
   background-image:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.70) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.259) 0%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.70) 100%),
     url("../assets/imssouane.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   --hero-page-bg: 245, 245, 247;
-  --hero-surface: rgba(255, 255, 255, 0.68);
-  --hero-card-surface: rgba(255, 255, 255, 0.60);
-  --hero-border: rgba(0, 0, 0, 0.10);
-  --hero-shadow: 0 24px 60px rgba(0, 0, 0, 0.18), 0 1px 0 rgba(255, 255, 255, 0.55) inset;
-  --hero-text: rgba(17, 17, 17, 0.92);
-  --hero-muted: rgba(17, 17, 17, 0.68);
-  --hero-secondary-bg: rgba(255, 255, 255, 0.55);
-  --hero-secondary-text: rgba(17, 17, 17, 0.92);
-  --hero-secondary-shadow: 0 14px 30px rgba(0, 0, 0, 0.16);
+  --hero-surface: rgba(255, 255, 255, 0.38);
+  --hero-card-surface: rgba(255, 255, 255, 0.30);
+  --hero-border: rgba(255, 255, 255, 0.197);
+  --hero-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  --hero-text: rgba(17, 17, 17, 0.94);
+  --hero-muted: rgba(17, 17, 17, 0.72);
+  --hero-secondary-bg: rgba(255, 255, 255, 0.34);
+  --hero-secondary-text: rgba(17, 17, 17, 0.94);
+  --hero-secondary-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --hero-glass-blur: blur(7px) saturate(1.45);
 }
 
 .dark .hero-section {
   --hero-page-bg: 28, 28, 30;
-  --hero-surface: rgba(28, 28, 30, 0.62);
-  --hero-card-surface: rgba(17, 17, 17, 0.46);
-  --hero-border: rgba(255, 255, 255, 0.14);
-  --hero-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  --hero-surface: rgba(22, 22, 24, 0.42);
+  --hero-card-surface: rgba(14, 14, 16, 0.36);
+  --hero-border: rgba(255, 255, 255, 0.067);
+  --hero-shadow:
+    0 12px 48px rgba(0, 0, 0, 0.35),
+    0 2px 10px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   --hero-text: rgba(255, 255, 255, 1);
-  --hero-muted: rgba(255, 255, 255, 0.84);
-  --hero-secondary-bg: rgba(0, 0, 0, 0.30);
-  --hero-secondary-text: rgba(255, 255, 255, 0.92);
-  --hero-secondary-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
+  --hero-muted: rgba(255, 255, 255, 0.86);
+  --hero-secondary-bg: rgba(0, 0, 0, 0.26);
+  --hero-secondary-text: rgba(255, 255, 255, 0.94);
+  --hero-secondary-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .hero-overlay {
@@ -48,7 +61,13 @@
     radial-gradient(45% 45% at 80% 85%, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.00) 60%);
 }
 
+/* Fade into the next section’s page bg — reads as a harsh white band on the photo in light mode */
 .hero-bottom-fade {
+  display: none;
+}
+
+.dark .hero-bottom-fade {
+  display: block;
   position: absolute;
   left: 0;
   right: 0;
@@ -95,10 +114,25 @@
 .hero-copy {
   padding: clamp(1.1rem, 2.6vw, 1.8rem);
   border-radius: 24px;
-  background: var(--hero-surface);
+  background: linear-gradient(
+      165deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    ),
+    var(--hero-surface);
   border: 1px solid var(--hero-border);
   box-shadow: var(--hero-shadow);
-  backdrop-filter: blur(10px);
+  backdrop-filter: var(--hero-glass-blur);
+  -webkit-backdrop-filter: var(--hero-glass-blur);
+}
+
+.dark .hero-copy {
+  background: linear-gradient(
+      165deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    ),
+    var(--hero-surface);
 }
 
 .hero-brand {
@@ -171,7 +205,12 @@
   justify-content: center;
   padding: 0.95rem 1.2rem;
   border-radius: 999px;
-  background: var(--hero-secondary-bg);
+  background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0) 100%
+    ),
+    var(--hero-secondary-bg);
   border: 1px solid var(--hero-border);
   color: var(--hero-secondary-text);
   font-family: 'Inter', sans-serif;
@@ -180,6 +219,17 @@
   text-decoration: none;
   transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
   box-shadow: var(--hero-secondary-shadow);
+  backdrop-filter: var(--hero-glass-blur);
+  -webkit-backdrop-filter: var(--hero-glass-blur);
+}
+
+.dark .hero-button-secondary {
+  background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0) 100%
+    ),
+    var(--hero-secondary-bg);
 }
 
 .hero-button-secondary:hover {
@@ -209,11 +259,33 @@
 .hero-card {
   padding: 1.05rem 1.05rem 1rem;
   border-radius: 18px;
-  background: var(--hero-card-surface);
+  background: linear-gradient(
+      155deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    ),
+    var(--hero-card-surface);
   border: 1px solid var(--hero-border);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(10px);
+  box-shadow:
+    0 10px 36px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: var(--hero-glass-blur);
+  -webkit-backdrop-filter: var(--hero-glass-blur);
   min-height: 120px;
+}
+
+.dark .hero-card {
+  background: linear-gradient(
+      155deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    ),
+    var(--hero-card-surface);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 .hero-card-icon {
