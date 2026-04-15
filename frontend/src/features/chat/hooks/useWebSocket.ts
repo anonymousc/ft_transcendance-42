@@ -1,5 +1,5 @@
 /**
- * WebSocket chat transport. Requires `VITE_WS_URL` (e.g. ws://localhost:8181).
+ * WebSocket chat transport. Requires `VITE_WS_URL` (e.g. wss://localhost/ws).
  * Token: GET /chat/ws-token on friends service (`VITE_FRIENDS_URL`).
  */
 
@@ -13,7 +13,7 @@ import type {
 import { fetchChatWsToken, postChatMessage } from "@/lib/friendsApi";
 import { apiMessageToMessage } from "../utils/mapApi";
 
-const WS_URL = (import.meta.env.VITE_WS_URL as string | undefined) || "ws://localhost:8181";
+const WS_URL = (import.meta.env.VITE_WS_URL as string | undefined) || "wss://localhost/ws";
 const CAN_USE_WS = Boolean(WS_URL);
 const MAX_RECONNECT_DELAY_MS = 30_000;
 

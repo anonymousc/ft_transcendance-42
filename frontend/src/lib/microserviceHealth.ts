@@ -23,33 +23,33 @@ export function getMicroserviceTargets(): MicroserviceTarget[] {
       id: 'ai-places',
       label: 'ai-places-service',
       baseUrl:
-        (import.meta.env.VITE_AI_PLACES_URL as string) || 'http://localhost:4000',
+        (import.meta.env.VITE_AI_PLACES_URL as string) || 'https://localhost',
     },
     {
       id: 'review-places',
       label: 'review-places',
       baseUrl:
         (import.meta.env.VITE_REVIEW_PLACES_URL as string) ||
-        'http://localhost:4001',
+        'https://localhost',
     },
     {
       id: 'fav-places',
       label: 'fav-places',
       baseUrl:
         (import.meta.env.VITE_FAV_PLACES_URL as string) ||
-        'http://localhost:4002',
+        'https://localhost',
     },
     {
       id: 'planner',
       label: 'planner-service',
       baseUrl:
-        (import.meta.env.VITE_PLANNER_URL as string) || 'http://localhost:7000',
+        (import.meta.env.VITE_PLANNER_URL as string) || 'https://localhost',
     },
     {
       id: 'friends',
       label: 'friends-service',
       baseUrl:
-        (import.meta.env.VITE_FRIENDS_URL as string) || 'http://localhost:4003',
+        (import.meta.env.VITE_FRIENDS_URL as string) || 'https://localhost',
     },
   ];
 }

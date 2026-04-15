@@ -11,9 +11,10 @@ import { needsInterestsOnboarding } from "@/lib/interestsOnboarding";
 import { useTheme } from "@/context/ThemeContext";
 import BackArrow from "@/components/shared/BackArrow";
 import GoogleCalendar from "@/components/shared/GoogleCalendar";
+import { resolveGatewayUrl } from "@/lib/api";
 
 const PLANNER_URL =
-  (import.meta.env.VITE_PLANNER_URL as string) || "http://localhost:7000";
+  resolveGatewayUrl(import.meta.env.VITE_PLANNER_URL as string | undefined);
 
 const STOP_TYPES = ["Food", "Sightseeing", "Stay", "Transport"] as const;
 type StopType = (typeof STOP_TYPES)[number];

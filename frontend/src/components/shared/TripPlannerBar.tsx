@@ -5,9 +5,11 @@ import GlassSearchBar from "./GlassSearchBar";
 import GlassCalendar from "./GlassCalendar";
 import { useAuth } from "../../context/AuthContext";
 import "./TripPlannerBar.css";
+import { resolveGatewayUrl } from "@/lib/api";
 
-const PLANNER_URL =
-  (import.meta.env.VITE_PLANNER_URL as string) || "http://localhost:7000";
+const PLANNER_URL = resolveGatewayUrl(
+  import.meta.env.VITE_PLANNER_URL as string | undefined,
+);
 
 const MAX_TRIP_DAYS = 14;
 

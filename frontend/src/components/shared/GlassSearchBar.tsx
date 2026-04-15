@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Search, MapPin } from "lucide-react";
 import "./GlassSearchBar.css";
+import { resolveGatewayUrl } from "@/lib/api";
 
-const AI_PLACES_URL =
-  (import.meta.env.VITE_AI_PLACES_URL as string) || "http://localhost:4000";
+const AI_PLACES_URL = resolveGatewayUrl(
+  import.meta.env.VITE_AI_PLACES_URL as string | undefined,
+);
 
 interface GlassSearchBarProps {
   placeholder?: string;
