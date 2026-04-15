@@ -1,4 +1,4 @@
-# RIHLA - The AI Travel Explorer
+# RIHLA-MOBILE - The AI Travel Explorer
 
 ---
 
