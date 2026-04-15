@@ -13,9 +13,10 @@ import {
 import { cn } from "@/lib/utils";
 import ChatAvatar from "@/features/chat/components/ChatAvatar";
 import type { Friend, FriendLastVisited } from "../types";
+import { resolveGatewayUrl } from "@/lib/api";
 
 const FAV_PLACES_URL =
-  (import.meta.env.VITE_FAV_PLACES_URL as string) || "http://localhost:4002";
+  resolveGatewayUrl(import.meta.env.VITE_FAV_PLACES_URL as string | undefined);
 
 async function fetchPublicLastPlace(
   userId: string,

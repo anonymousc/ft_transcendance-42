@@ -54,7 +54,7 @@ export class AuthController {
 
   private redirectSettingsLinkError(res: Response, code: string) {
     const frontendUrl =
-      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+      this.configService.get<string>('FRONTEND_URL') || 'https://localhost';
     return res.redirect(
       `${frontendUrl}/settings?oauth_link_error=${encodeURIComponent(code)}`,
     );
@@ -130,7 +130,7 @@ export class AuthController {
       this.setAuthCookie(res, token);
 
       const frontendUrl =
-        this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+        this.configService.get<string>('FRONTEND_URL') || 'https://localhost';
       return res.redirect(`${frontendUrl}/oauth-success`);
     } catch (err) {
       if (
@@ -177,7 +177,7 @@ export class AuthController {
       this.setAuthCookie(res, token);
 
       const frontendUrl =
-        this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+        this.configService.get<string>('FRONTEND_URL') || 'https://localhost';
       return res.redirect(`${frontendUrl}/oauth-success`);
     } catch (err) {
       if (link?.provider === '42' && err instanceof ConflictException) {

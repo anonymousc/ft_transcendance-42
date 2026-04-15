@@ -5,9 +5,6 @@ const {
 } = require('../sockets/notificationSocket');
 const { normalizeJsonData } = require('../utils/notifications');
 
-/**
- * @param {string} userId
- */
 async function listNotifications(userId) {
   return prisma.notification.findMany({
     where: { userId, archived: false },
@@ -15,10 +12,6 @@ async function listNotifications(userId) {
   });
 }
 
-/**
- * @param {string} userId
- * @param {string} notificationId
- */
 async function readNotification(userId, notificationId) {
   if (!notificationId || typeof notificationId !== 'string' || !notificationId.trim()) {
     return {
@@ -44,9 +37,6 @@ async function readNotification(userId, notificationId) {
   return { notification };
 }
 
-/**
- * @param {string} userId
- */
 async function readAllNotifications(userId) {
   const now = new Date();
   const result = await prisma.notification.updateMany({
@@ -56,10 +46,6 @@ async function readAllNotifications(userId) {
   return { count: result.count };
 }
 
-/**
- * @param {string} userId
- * @param {string} notificationId
- */
 async function archiveNotification(userId, notificationId) {
   if (!notificationId || typeof notificationId !== 'string' || !notificationId.trim()) {
     return {
@@ -90,13 +76,6 @@ async function archiveNotification(userId, notificationId) {
   return { notification };
 }
 
-/**
- * @param {string} userId
- * @param {string} type
- * @param {string | null | undefined} title
- * @param {string | null | undefined} body
- * @param {unknown} [data]
- */
 async function createNotification(userId, type, title, body, data) {
   if (!type || typeof type !== 'string' || !type.trim()) {
     return {
@@ -134,13 +113,6 @@ async function createNotification(userId, type, title, body, data) {
   return { notification };
 }
 
-/**
- * @param {string} userId
- * @param {string} type
- * @param {string | null | undefined} title
- * @param {string | null | undefined} body
- * @param {unknown} [data]
- */
 function notifyUser(userId, type, title, body, data) {
   void createNotification(userId, type, title, body, data).then((r) => {
     if (r.error) {

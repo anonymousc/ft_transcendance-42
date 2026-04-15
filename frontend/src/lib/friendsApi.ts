@@ -1,6 +1,10 @@
 import type { Friend, PendingFriendRequest } from "@/features/friends/types";
 import { flattenUserInterests } from "@/features/friends/utils";
-import { PROFILES_BASE_URL } from "./api";
+import {
+  PROFILES_BASE_URL,
+  resolveGatewayUrl,
+  resolveGatewayWebSocketUrl,
+} from "./api";
 import { toProfileAvatarUrl, type Profile } from "./profilesApi";
 
 function stripTrailingSlashes(url: string): string {
@@ -8,7 +12,7 @@ function stripTrailingSlashes(url: string): string {
 }
 
 export const FRIENDS_BASE_URL = stripTrailingSlashes(
-  (import.meta.env.VITE_FRIENDS_URL as string) || "http://localhost:4003",
+  resolveGatewayUrl(import.meta.env.VITE_FRIENDS_URL as string | undefined),
 );
 
 /**
@@ -30,10 +34,14 @@ export function getNotificationWebSocketUrl(): string {
 
   try {
     const u = new URL(FRIENDS_BASE_URL);
+    const isLocal = u.hostname === "localhost" || u.hostname === "127.0.0.1";
+    if (isLocal) {
+      return resolveGatewayWebSocketUrl(undefined, "/notifications/ws");
+    }
     const proto = u.protocol === "https:" ? "wss:" : "ws:";
     return `${proto}//${u.hostname}:${safePort}`;
   } catch {
-    return `ws://localhost:${safePort}`;
+    return resolveGatewayWebSocketUrl(undefined, "/notifications/ws");
   }
 }
 

@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
+import { resolveGatewayUrl } from "@/lib/api";
 
-const AI_PLACES_URL =
-  (import.meta.env.VITE_AI_PLACES_URL as string) || "http://localhost:4000";
+const AI_PLACES_URL = resolveGatewayUrl(
+  import.meta.env.VITE_AI_PLACES_URL as string | undefined,
+);
 
-export const REVIEW_PLACES_URL =
-  (import.meta.env.VITE_REVIEW_PLACES_URL as string) || "http://localhost:4001";
+export const REVIEW_PLACES_URL = resolveGatewayUrl(
+  import.meta.env.VITE_REVIEW_PLACES_URL as string | undefined,
+);
 
-export const FAV_PLACES_URL =
-  (import.meta.env.VITE_FAV_PLACES_URL as string) || "http://localhost:4002";
+export const FAV_PLACES_URL = resolveGatewayUrl(
+  import.meta.env.VITE_FAV_PLACES_URL as string | undefined,
+);
 
 export { AI_PLACES_URL };
 

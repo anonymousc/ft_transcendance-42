@@ -4,6 +4,7 @@ import HomeNavBar from "@/components/shared/HomeNavBar";
 import { useAuth } from "@/context/AuthContext";
 import { AI_PLACES_URL, resolvePlaceImageUrl } from "@/hooks/useCityPlaces";
 import { cn } from "@/lib/utils";
+import { resolveGatewayUrl } from "@/lib/api";
 import {
   MapPin,
   Star,
@@ -21,10 +22,10 @@ import {
 } from "lucide-react";
 
 const FAV_PLACES_URL =
-  (import.meta.env.VITE_FAV_PLACES_URL as string) || "http://localhost:4002";
+  resolveGatewayUrl(import.meta.env.VITE_FAV_PLACES_URL as string | undefined);
 
 const PLANNER_URL =
-  (import.meta.env.VITE_PLANNER_URL as string) || "http://localhost:7000";
+  resolveGatewayUrl(import.meta.env.VITE_PLANNER_URL as string | undefined);
 
 
 interface SavedPlace {
