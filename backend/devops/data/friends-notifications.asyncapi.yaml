@@ -73,7 +73,7 @@ components:
     ServerNotificationArchived:
       name: ServerNotificationArchived
       title: Notification archived
-      summary: Emitted when `PATCH /notifications/archive` succeeds
+      summary: Emitted when `PATCH /api/notifications/archive` succeeds
       payload:
         $ref: '#/components/schemas/ServerNotificationArchivedPayload'
     ServerHandshakeError:

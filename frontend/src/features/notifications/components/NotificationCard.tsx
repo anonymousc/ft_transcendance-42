@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Notification } from "../types";
 import ChatAvatar from "@/features/chat/components/ChatAvatar";
@@ -6,6 +7,8 @@ import ChatAvatar from "@/features/chat/components/ChatAvatar";
 interface NotificationCardProps {
   notification: Notification;
   onClick?: (id: string) => void;
+  onArchive?: (id: string) => void;
+  archiveBusy?: boolean;
 }
 
 function formatRelativeTime(date: Date): string {
@@ -20,54 +23,89 @@ function formatRelativeTime(date: Date): string {
   return `${diffDays}d ago`;
 }
 
-function NotificationCard({ notification, onClick }: NotificationCardProps) {
+function NotificationCard({
+  notification,
+  onClick,
+  onArchive,
+  archiveBusy = false,
+}: NotificationCardProps) {
   const title =
     notification.title?.trim() || "Notification";
   const body = notification.body?.trim() ?? "";
 
   return (
-    <button
-      onClick={() => onClick?.(notification.id)}
+    <div
       className={cn(
-        "w-full flex items-center gap-4 px-5 py-4 text-left",
-        "rounded-2xl border transition-all duration-200 cursor-pointer",
+        "flex w-full items-stretch overflow-hidden rounded-2xl border transition-all duration-200",
         "hover:shadow-sm",
         notification.read
           ? "border-border/30 bg-white dark:bg-zinc-900"
-          : "border-primary/30 bg-primary/5 dark:bg-primary/10"
+          : "border-primary/30 bg-primary/5 dark:bg-primary/10",
       )}
     >
-      {notification.avatar ? (
-        <ChatAvatar src={notification.avatar} name={title} size="md" />
-      ) : (
-        <div className="h-11 w-11 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center shrink-0">
-          <span className="text-primary text-lg font-bold">
-            {title.charAt(0).toUpperCase()}
-          </span>
-        </div>
-      )}
+      <button
+        type="button"
+        onClick={() => onClick?.(notification.id)}
+        className={cn(
+          "flex min-w-0 flex-1 items-center gap-4 px-5 py-4 text-left",
+          "cursor-pointer outline-none",
+        )}
+      >
+        {notification.avatar ? (
+          <ChatAvatar src={notification.avatar} name={title} size="md" />
+        ) : (
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 dark:bg-primary/20">
+            <span className="text-lg font-bold text-primary">
+              {title.charAt(0).toUpperCase()}
+            </span>
+          </div>
+        )}
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <span className={cn(
-            "text-sm truncate",
-            notification.read ? "font-medium text-foreground/80" : "font-semibold text-foreground"
-          )}>
-            {title}
-          </span>
-          <span className="text-xs text-muted-foreground shrink-0">
-            {formatRelativeTime(notification.timestamp)}
-          </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <span
+              className={cn(
+                "truncate text-sm",
+                notification.read
+                  ? "font-medium text-foreground/80"
+                  : "font-semibold text-foreground",
+              )}
+            >
+              {title}
+            </span>
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {formatRelativeTime(notification.timestamp)}
+            </span>
+          </div>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            {body || "—"}
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground truncate mt-0.5">
-          {body || "—"}
-        </p>
-      </div>
 
-      {!notification.read && (
-        <span className="h-2.5 w-2.5 rounded-full bg-primary shrink-0" />
-      )}
-    </button>
+        {!notification.read && (
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary" />
+        )}
+      </button>
+      {onArchive ? (
+        <button
+          type="button"
+          disabled={archiveBusy}
+          onClick={(e) => {
+            e.stopPropagation();
+            onArchive(notification.id);
+          }}
+          className={cn(
+            "flex shrink-0 items-center justify-center border-l border-border/40 px-3",
+            "text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground",
+            "disabled:pointer-events-none disabled:opacity-50",
+            "dark:border-white/10",
+          )}
+          aria-label="Archive notification"
+        >
+          <Archive className="h-4 w-4" />
+        </button>
+      ) : null}
+    </div>
   );
 }
 
