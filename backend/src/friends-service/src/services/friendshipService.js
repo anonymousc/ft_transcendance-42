@@ -101,7 +101,11 @@ async function acceptFriendRequestTx(tx, requestId, recipientUserId) {
     await tx.friendRequest.delete({ where: { id: reverse.id } });
   }
 
-  return { ok: true };
+  return {
+    ok: true,
+    fromUserId: request.fromUserId,
+    toUserId: request.toUserId,
+  };
 }
 
 /**

@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Upload, Save } from "lucide-react";
 import { fetchMyProfile, toProfileAvatarUrl, updateMyProfile, uploadAvatar } from "../../../lib/profilesApi";
+import { useAuth } from "../../../context/AuthContext";
 import "./EditProfilePage.css";
 
 function EditProfilePage() {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -65,10 +67,11 @@ function EditProfilePage() {
     setUploading(true);
     setError(null);
     setSuccess(null);
-    try {
+       try {
       const result = await uploadAvatar(file);
       setAvatarPath(result.avatarUrl || null);
       setSuccess("Profile picture updated.");
+      void refreshUser();
       const uploadedSrc = toProfileAvatarUrl(result.avatarUrl || null);
       if (uploadedSrc) {
         await checkAvatarReachability(uploadedSrc);
@@ -126,8 +129,8 @@ function EditProfilePage() {
 
         <div className="avatar-row">
           <img src={avatarSrc} alt="Profile avatar" className="avatar-preview" />
-          <label className="avatar-upload-btn">
-            <Upload size={14} />
+          <label className="avatar-upload-btn dark:text-black">
+            <Upload size={14} color="black"/>
             {uploading ? "Uploading..." : "Upload picture"}
             <input
               type="file"
@@ -180,17 +183,7 @@ function EditProfilePage() {
             <small>UI preference for now (not persisted yet).</small>
           </label>
 
-          <label className="field toggle-field">
-            <span>Profile visibility</span>
-            <button
-              type="button"
-              className={`toggle ${visibility ? "on" : ""}`}
-              onClick={() => setVisibility((v) => !v)}
-            >
-              {visibility ? "Public" : "Private"}
-            </button>
-            <small>Coming soon.</small>
-          </label>
+
         </div>
 
         {error && <p className="msg error">{error}</p>}

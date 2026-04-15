@@ -307,6 +307,7 @@ services:
     environment:
       - PORT=4003
       - WS_PORT=8181
+      - NOTIFICATION_WS_PORT=8182
       - PORT_VAULT=${PORT_VAULT}
     networks:
       - saas

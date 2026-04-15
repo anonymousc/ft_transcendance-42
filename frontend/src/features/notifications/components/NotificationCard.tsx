@@ -21,6 +21,10 @@ function formatRelativeTime(date: Date): string {
 }
 
 function NotificationCard({ notification, onClick }: NotificationCardProps) {
+  const title =
+    notification.title?.trim() || "Notification";
+  const body = notification.body?.trim() ?? "";
+
   return (
     <button
       onClick={() => onClick?.(notification.id)}
@@ -34,11 +38,11 @@ function NotificationCard({ notification, onClick }: NotificationCardProps) {
       )}
     >
       {notification.avatar ? (
-        <ChatAvatar src={notification.avatar} name={notification.title} size="md" />
+        <ChatAvatar src={notification.avatar} name={title} size="md" />
       ) : (
         <div className="h-11 w-11 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center shrink-0">
           <span className="text-primary text-lg font-bold">
-            {notification.title.charAt(0).toUpperCase()}
+            {title.charAt(0).toUpperCase()}
           </span>
         </div>
       )}
@@ -49,14 +53,14 @@ function NotificationCard({ notification, onClick }: NotificationCardProps) {
             "text-sm truncate",
             notification.read ? "font-medium text-foreground/80" : "font-semibold text-foreground"
           )}>
-            {notification.title}
+            {title}
           </span>
           <span className="text-xs text-muted-foreground shrink-0">
             {formatRelativeTime(notification.timestamp)}
           </span>
         </div>
         <p className="text-xs text-muted-foreground truncate mt-0.5">
-          {notification.body}
+          {body || "—"}
         </p>
       </div>
 

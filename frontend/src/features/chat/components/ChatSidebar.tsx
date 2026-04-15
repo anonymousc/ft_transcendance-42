@@ -11,6 +11,8 @@ interface ChatSidebarProps {
   activeConversationId?: string | undefined;
   onSelectConversation: (id: string) => void;
   connectionState?: ConnectionState | undefined;
+  listLoading?: boolean | undefined;
+  listError?: string | null | undefined;
   className?: string | undefined;
 }
 
@@ -30,6 +32,8 @@ function ChatSidebar({
   activeConversationId,
   onSelectConversation,
   connectionState,
+  listLoading,
+  listError,
   className,
 }: ChatSidebarProps) {
   const badge = connectionState ? CONNECTION_BADGE[connectionState] : null;
@@ -37,15 +41,16 @@ function ChatSidebar({
   return (
     <aside
       className={cn(
-        "flex min-h-0 flex-col border-r border-border/40 bg-white h-full dark:bg-zinc-900",
+        "flex min-h-0 flex-col border-r border-border/40 bg-white shadow-[4px_0_24px_-12px_rgba(0,0,0,0.08)] h-full dark:bg-zinc-900 dark:shadow-[4px_0_24px_-12px_rgba(0,0,0,0.4)]",
         className,
       )}
     >
-      <div className="shrink-0 pt-2">
+      <div className="shrink-0 space-y-1 px-4 pb-2 pt-3">
         <UserChatAvatar currentUser={currentUser} />
+        <h2 className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Chats
+        </h2>
       </div>
-
-      {/* Connection status badge — always visible so teammates can verify their backend */}
       {badge && (
         <div
           className={cn(
@@ -57,17 +62,30 @@ function ChatSidebar({
         </div>
       )}
 
-      <div
-        className="min-h-0 flex-1 overflow-y-auto px-2 pb-4 pt-2 scrollbar-thin"
-      >
+      {listError && (
+        <p className="mx-4 mt-1 text-[11px] text-red-600 dark:text-red-400">
+          {listError}
+        </p>
+      )}
+
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 pb-4 pt-1 scrollbar-thin">
+        {listLoading && (
+          <p className="py-6 text-center text-xs text-muted-foreground">
+            Loading chats…
+          </p>
+        )}
+        {!listLoading && conversations.length === 0 && !listError && (
+          <p className="rounded-xl border border-dashed border-border/50 bg-gray-50/80 px-3 py-6 text-center text-xs leading-relaxed text-muted-foreground dark:bg-zinc-800/40">
+            No conversations yet. Open a chat from your friends list.
+          </p>
+        )}
         {conversations.map((conv) => (
-          <div key={conv.id} style={{ marginBottom: "1rem" }}>
-            <ConversationItem
-              conversation={conv}
-              isActive={conv.id === activeConversationId}
-              onClick={onSelectConversation}
-            />
-          </div>
+          <ConversationItem
+            key={conv.id}
+            conversation={conv}
+            isActive={conv.id === activeConversationId}
+            onClick={onSelectConversation}
+          />
         ))}
       </div>
     </aside>

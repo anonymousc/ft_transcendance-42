@@ -12,6 +12,8 @@ interface UserData {
   bio: string | null;
   status: string;
   interests?: InterestsProfile | null;
+  /** Present when returned by auth `/me`; false for OAuth-only accounts. */
+  hasPassword?: boolean;
 }
 
 export interface SignupInput {
@@ -42,8 +44,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = async (): Promise<UserData | null> => {
+  const fetchUser = async (showLoadingSpinner = true): Promise<UserData | null> => {
     try {
+      if (showLoadingSpinner) setLoading(true);
       const res = await fetch(`${API_BASE_URL}/auth/me`, {
         credentials: 'include',
       });
@@ -59,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       return null;
     } finally {
-      setLoading(false);
+      if (showLoadingSpinner) setLoading(false);
     }
   };
 
@@ -79,10 +82,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const refreshUser = async () => {
-    setLoading(true);
-    return fetchUser();
-  };
+  /** Re-fetch `/me` without toggling global `loading` (avoids ProtectedRoute full-screen flash). */
+  const refreshUser = async () => fetchUser(false);
 
   const signup = async (data: SignupInput) => {
     const csrf = await ensureCsrfToken();
@@ -117,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    fetchUser();
+    void fetchUser(true);
   }, []);
 
   return (

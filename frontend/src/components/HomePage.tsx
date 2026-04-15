@@ -7,10 +7,16 @@ import bgvideo from "../assets/home-background.mp4";
 import GlassNavBar from "./shared/GlassNavBar";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useNavBadges } from "../context/NavBadgesContext";
 
 function HomePage() {
   const navigate = useNavigate();
   const { user, loading, logout } = useAuth();
+  const {
+    showFriendsBadge,
+    showMessagesBadge,
+    showNotificationsBadge,
+  } = useNavBadges();
   const handleNavigation = (id: string) => {
     console.log("Navigate to:", id);
   };
@@ -34,7 +40,15 @@ function HomePage() {
         <div className="text-white text-2xl font-bold">
           <h1>RIHLA</h1>
         </div>
-        <GlassNavBar handleNavigation={handleNavigation} />
+        <GlassNavBar
+          handleNavigation={handleNavigation}
+          surface="home-video"
+          badges={{
+            messages: showMessagesBadge,
+            friends: showFriendsBadge,
+            notifications: showNotificationsBadge,
+          }}
+        />
         <div className="profile-dropdown-wrapper">
           <ProfileDropdown
             onProfile={() => navigate("/profile")}

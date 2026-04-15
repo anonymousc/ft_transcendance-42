@@ -1,5 +1,7 @@
 const prisma = require('../lib/prisma');
 const { getOtherUserIdInFriendship } = require('./friendshipService');
+const { notifyUser } = require('./notificationService');
+const { NOTIFY_TYPES } = require('../utils/notifications');
 
 const MAX_MESSAGE_LENGTH = 8000;
 const DEFAULT_MESSAGE_LIMIT = 50;
@@ -42,11 +44,20 @@ async function findDmBetweenTx(tx, userId, otherUserId) {
         { participants: { some: { userId: otherUserId } } },
       ],
     },
-    include: { participants: true },
+    include: {
+      participants: true,
+      _count: { select: { messages: true } },
+    },
   });
-  return (
-    candidates.find((c) => c.participants.length === 2) ?? null
-  );
+  const dms = candidates.filter((c) => c.participants.length === 2);
+  if (dms.length === 0) return null;
+  if (dms.length === 1) return dms[0];
+  dms.sort((a, b) => {
+    const diff = b._count.messages - a._count.messages;
+    if (diff !== 0) return diff;
+    return new Date(a.createdAt) - new Date(b.createdAt);
+  });
+  return dms[0];
 }
 
 /**
@@ -121,7 +132,44 @@ async function listConversationsForUser(userId) {
     return new Date(tb) - new Date(ta);
   });
 
-  return items;
+  return dedupeDmListItems(items);
+}
+
+/** One DM row per peer pair (DB may contain duplicate 2-user conversations). */
+function activityTimeMs(item) {
+  const t = item.lastMessage?.createdAt ?? item.createdAt;
+  return new Date(t).getTime();
+}
+
+function dedupeDmListItems(items) {
+  const others = [];
+  const dmGroups = new Map();
+  for (const item of items) {
+    if (item.participantCount === 2 && item.peerUserId) {
+      const k = item.peerUserId;
+      if (!dmGroups.has(k)) dmGroups.set(k, []);
+      dmGroups.get(k).push(item);
+    } else {
+      others.push(item);
+    }
+  }
+  const merged = [];
+  for (const group of dmGroups.values()) {
+    if (group.length === 1) {
+      merged.push(group[0]);
+      continue;
+    }
+    const withMsg = group.filter((g) => g.lastMessage != null);
+    const pool = withMsg.length ? withMsg : group;
+    let best = pool[0];
+    for (let i = 1; i < pool.length; i++) {
+      if (activityTimeMs(pool[i]) > activityTimeMs(best)) best = pool[i];
+    }
+    merged.push(best);
+  }
+  const out = [...others, ...merged];
+  out.sort((a, b) => activityTimeMs(b) - activityTimeMs(a));
+  return out;
 }
 
 /**
@@ -210,6 +258,23 @@ async function createMessage(conversationId, senderId, content) {
       content: text,
     },
   });
+
+  const recipients = await getParticipantUserIds(conversationId);
+  const preview = text.length > 120 ? `${text.slice(0, 120)}…` : text;
+  for (const uid of recipients) {
+    if (uid === senderId) continue;
+    notifyUser(
+      uid,
+      NOTIFY_TYPES.CHAT_MESSAGE,
+      'New message',
+      preview,
+      {
+        conversationId,
+        messageId: message.id,
+        senderId,
+      },
+    );
+  }
 
   return { message };
 }

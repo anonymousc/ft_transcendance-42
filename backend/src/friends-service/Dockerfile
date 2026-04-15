@@ -24,6 +24,6 @@ COPY src     ./src
 
 COPY --chmod=700 entrypoint.sh /usr/local/bin/entrypoint.sh
 
-EXPOSE 4003 8181
+EXPOSE 4003 8181 8182
 
 ENTRYPOINT ["entrypoint.sh"]

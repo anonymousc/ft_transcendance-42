@@ -124,6 +124,17 @@ function emptyProfile(): InterestsProfile {
   return { hobbies: [], activities: [], foods: [], topics: [], travelStyle: [] };
 }
 
+/** One pick per category so `needsInterestsOnboarding` passes; user can edit in Settings. */
+function skippedDefaultsProfile(): InterestsProfile {
+  return {
+    hobbies: [STEPS[0].items[0].label],
+    activities: [STEPS[1].items[0].label],
+    foods: [STEPS[2].items[0].label],
+    topics: [STEPS[3].items[0].label],
+    travelStyle: [STEPS[4].items[0].label],
+  };
+}
+
 function InterestsPage() {
   const navigate = useNavigate();
   // Destructure refreshUser but don't let its loading flag affect our render
@@ -155,20 +166,20 @@ function InterestsPage() {
     return () => { cancelled = true; cancelAnimationFrame(id1); };
   }, [done]);
 
-  // After the card has fully entered, start the leave sequence
+  // After the card has fully entered, start the leave sequence (brief beat, then exit)
   useEffect(() => {
     if (!celebIn) return;
-    const t = setTimeout(() => setLeaving(true), 2600);
+    const t = setTimeout(() => setLeaving(true), 900);
     return () => clearTimeout(t);
   }, [celebIn]);
 
-  // Fade-out done → navigate
+  // Fade-out done → navigate (match root `transition-opacity` duration)
   useEffect(() => {
     if (!leaving || navigatedRef.current) return;
     const t = setTimeout(() => {
       navigatedRef.current = true;
       navigate("/home", { replace: true });
-    }, 480);
+    }, 320);
     return () => clearTimeout(t);
   }, [leaving, navigate]);
 
@@ -192,6 +203,21 @@ function InterestsPage() {
   const handleBack = () => {
     if (stepIndex <= 0) { navigate("/home", { replace: true }); return; }
     setStepIndex((i) => i - 1);
+  };
+
+  const handleSkip = async () => {
+    if (saving || done) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await patchMyInterests(skippedDefaultsProfile());
+      void refreshUser();
+      navigate("/home", { replace: true });
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Failed to skip onboarding");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleContinue = async () => {
@@ -238,7 +264,7 @@ function InterestsPage() {
     <div
       className={cn(
         "relative min-h-screen overflow-hidden bg-[#fafafa] dark:bg-[#0a0a0a] text-stone-900 dark:text-stone-100",
-        "transition-opacity duration-500 ease-out",
+        "transition-opacity duration-300 ease-out",
         leaving ? "opacity-0" : "opacity-100",
       )}
       style={{ fontFamily: fontStack }}
@@ -247,7 +273,7 @@ function InterestsPage() {
       {/* ── Wizard (fades + blurs out when done) ─────────────────────────── */}
       <div
         className={cn(
-          "transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
           done
             ? "pointer-events-none opacity-0 blur-sm scale-[0.98]"
             : "opacity-100 blur-0 scale-100",
@@ -272,14 +298,28 @@ function InterestsPage() {
           {/* Card */}
           <div className="rounded-[28px] border border-black/6 dark:border-white/8 bg-white/80 dark:bg-white/5 backdrop-blur-2xl shadow-[0_12px_48px_-16px_rgba(0,0,0,0.1)] dark:shadow-[0_12px_48px_-16px_rgba(0,0,0,0.45)] px-6 py-8 sm:px-8 sm:py-10">
 
-            <button
-              type="button"
-              onClick={handleBack}
-              className="mb-6 flex items-center gap-1 text-[13px] font-medium text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Back
-            </button>
+            <div className="mb-6 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={handleBack}
+                className="flex items-center gap-1 text-[13px] font-medium text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSkip()}
+                disabled={saving || done}
+                className={cn(
+                  "text-[13px] font-medium transition-colors shrink-0",
+                  "text-stone-400 hover:text-stone-700 dark:hover:text-stone-200",
+                  "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-stone-400",
+                )}
+              >
+                Skip for now
+              </button>
+            </div>
 
             <div key={step.key}>
               <h1 className="text-[26px] sm:text-[28px] font-semibold tracking-tight leading-tight text-balance">
@@ -323,7 +363,11 @@ function InterestsPage() {
               </p>
             )}
 
-            <div className="mt-10 flex justify-end">
+            <p className="mt-4 text-center text-[12px] text-stone-400 dark:text-stone-500">
+              Skip saves light defaults; you can change them anytime in Settings.
+            </p>
+
+            <div className="mt-6 flex justify-end">
               <button
                 type="button"
                 disabled={!canContinue || saving}
@@ -349,7 +393,7 @@ function InterestsPage() {
           className={cn(
             "absolute inset-0 z-10 flex flex-col items-center justify-center px-6",
             "bg-[#fafafa]/80 dark:bg-[#0a0a0a]/85 backdrop-blur-[2px]",
-            "transition-opacity duration-500 ease-out",
+            "transition-opacity duration-300 ease-out",
             celebIn ? "opacity-100" : "opacity-0",
           )}
           aria-live="polite"
@@ -360,10 +404,10 @@ function InterestsPage() {
               "bg-white/90 dark:bg-white/8 backdrop-blur-xl",
               "shadow-[0_8px_40px_-12px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)]",
               "px-8 py-10 text-center",
-              "transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform",
+              "transition-all duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform",
               celebIn
                 ? "opacity-100 translate-y-0 scale-100"
-                : "opacity-0 translate-y-6 scale-[0.96]",
+                : "opacity-0 translate-y-4 scale-[0.97]",
             )}
           >
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-black text-white dark:bg-white dark:text-black">

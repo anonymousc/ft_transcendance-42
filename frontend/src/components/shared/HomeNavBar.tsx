@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import GlassNavBar from "./GlassNavBar";
 import ProfileDropdown from "./ProfileDropdown";
 import { useAuth } from "../../context/AuthContext";
+import { useNavBadges } from "@/context/NavBadgesContext";
 import "./HomeNavBar.css";
 
 const NAV_ID_TO_PATH: Record<string, string> = {
@@ -27,6 +28,11 @@ function HomeNavBar({ hideMobileGlassNav = false }: HomeNavBarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
+  const {
+    showFriendsBadge,
+    showMessagesBadge,
+    showNotificationsBadge,
+  } = useNavBadges();
   const pathname =
     location.pathname.replace(/\/+$/, "") || "/";
   const activeId = PATH_TO_NAV_ID[pathname] ?? "home";
@@ -62,6 +68,11 @@ function HomeNavBar({ hideMobileGlassNav = false }: HomeNavBarProps) {
         activeId={activeId}
         handleNavigation={handleNavigation}
         surface={isHomeVideo ? "home-video" : "default"}
+        badges={{
+          messages: showMessagesBadge,
+          friends: showFriendsBadge,
+          notifications: showNotificationsBadge,
+        }}
       />
       <div className="profile-dropdown-wrapper">
         <ProfileDropdown

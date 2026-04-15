@@ -7,6 +7,8 @@ import { AuthService } from './auth.service';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { FortyTwoStrategy } from './strategies/fortytwo.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { GoogleOAuthLinkGuard } from './guards/google-oauth-link.guard';
+import { FortyTwoOAuthLinkGuard } from './guards/fortytwo-oauth-link.guard';
 import { PrismaService } from '../prisma.service';
 
 @Module({
@@ -24,7 +26,15 @@ import { PrismaService } from '../prisma.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, FortyTwoStrategy, JwtStrategy, PrismaService],
+  providers: [
+    AuthService,
+    GoogleStrategy,
+    FortyTwoStrategy,
+    JwtStrategy,
+    GoogleOAuthLinkGuard,
+    FortyTwoOAuthLinkGuard,
+    PrismaService,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}
