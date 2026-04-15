@@ -759,6 +759,55 @@ git push origin feature/your-feature-name
 - Include reproduction steps for bugs
 - Attach screenshots or logs if relevant
 
+### Seed Faker Commands
+
+
+## 1) Start stack (as you normally do)
+
+```bash
+docker compose up -d --build
+```
+
+If you hit Docker permission errors, run with sudo or add your user to the `docker` group.
+
+## 2) Seed 100 auth users (and save emails/passwords)
+
+```bash
+docker compose exec auth sh -lc "npm run seed:faker"
+```
+
+This creates the files **inside the `auth` container** at `./seed-output/`.
+
+Copy them to your host:
+
+```bash
+docker cp auth:/app/seed-output ./seed-output-auth
+```
+
+Your credentials will be in:
+- `./seed-output-auth/auth-users.json`
+- `./seed-output-auth/auth-users.csv`
+
+## 3) Seed friends conversations/messages (optionally reusing the same user IDs)
+
+First copy the auth users file into the friends container (so IDs match):
+
+```bash
+docker cp ./seed-output-auth/auth-users.json friends:/app/auth-users.json
+```
+
+Then run:
+
+```bash
+docker compose exec friends sh -lc "SEED_USERS_JSON=/app/auth-users.json npm run seed:faker"
+```
+
+Copy summary out:
+
+```bash
+docker cp friends:/app/seed-output ./seed-output-friends
+```
+
 ---
 
 ## License
