@@ -21,7 +21,6 @@ COPY --from=build /app/package.json  ./package.json
 
 COPY prisma  ./prisma
 COPY src     ./src
-# COPY scripts ./scripts
 
 COPY --chmod=700 entrypoint.sh /usr/local/bin/entrypoint.sh
 
