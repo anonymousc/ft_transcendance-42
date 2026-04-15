@@ -130,7 +130,7 @@ services:
     env_file:
       - .env
     volumes:
-     - data:/data
+    #  - data_postgres:/data:ro
      - shared_resources:/token
      - logs:/var/logs
     depends_on:
