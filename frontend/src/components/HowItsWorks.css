@@ -121,7 +121,6 @@
   color: #cccccc;
 }
 
-/* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .how-it-works-section {
     padding: 3rem 1.5rem;

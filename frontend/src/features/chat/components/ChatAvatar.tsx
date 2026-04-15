@@ -31,18 +31,10 @@ const iconSizeClasses = {
   xl: "h-10 w-10",
 } as const;
 
-const indicatorClasses = {
-  sm: "h-2.5 w-2.5 border",
-  md: "h-3 w-3 border-[1.5px]",
-  lg: "h-3.5 w-3.5 border-2",
-  xl: "h-5 w-5 border-2",
-} as const;
-
 function ChatAvatar({
   src,
   name,
   size = "md",
-  isOnline,
   className,
 }: ChatAvatarProps) {
   const [imgError, setImgError] = useState(false);
@@ -84,16 +76,6 @@ function ChatAvatar({
           </span>
         )}
       </div>
-
-      {/* {isOnline !== undefined && (
-        <span
-          className={cn(
-            "absolute bottom-0 right-0 rounded-full border-white dark:border-zinc-900",
-            indicatorClasses[size],
-            isOnline ? "bg-emerald-500" : "bg-gray-400 dark:bg-zinc-500"
-          )}
-        />
-      )} */}
     </div>
   );
 }

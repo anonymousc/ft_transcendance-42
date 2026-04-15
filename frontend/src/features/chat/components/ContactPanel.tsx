@@ -17,7 +17,6 @@ function ContactPanel({ contact, onRemoveFriend, className }: ContactPanelProps)
         className
       )}
     >
-      {/* Cover Image */}
       <div className="flex flex-col items-center -mt-10 p-6 border-b border-border/30">
         {contact.coverImage ? (
           <img
@@ -31,7 +30,6 @@ function ContactPanel({ contact, onRemoveFriend, className }: ContactPanelProps)
         )}
       </div>
 
-      {/* Avatar + Name */}
       <div className="flex flex-col items-center pt-20 border-b border-border/30">
         <ChatAvatar
           src={contact.avatar}
@@ -44,14 +42,12 @@ function ContactPanel({ contact, onRemoveFriend, className }: ContactPanelProps)
         </h3>
       </div>
 
-      {/* Last Activities */}
       <div className="flex-1 p-6 min-h-0">
         <h4 className="text-sm font-semibold text-muted-foreground tracking-wide uppercase">
           Last Activities
         </h4>
       </div>
 
-      {/* Remove Friend */}
       {onRemoveFriend && (
         <div className="p-6 flex justify-center">
           <button

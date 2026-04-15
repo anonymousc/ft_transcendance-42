@@ -34,7 +34,6 @@
   color: #ffffff;
 }
 
-/* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .footer-bottom {
     flex-direction: column;

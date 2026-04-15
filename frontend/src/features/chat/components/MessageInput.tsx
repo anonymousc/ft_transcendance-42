@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef, type KeyboardEvent } from "react";
-// import { Smile, Send } from "lucide-react";
 import { Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -74,19 +73,6 @@ function MessageInput({
             "placeholder:text-muted-foreground outline-none"
           )}
         />
-{/* 
-        <button
-          type="button"
-          className={cn(
-            "shrink-0 p-1.5 rounded-full",
-            "text-muted-foreground hover:text-foreground",
-            "hover:bg-gray-100 dark:hover:bg-zinc-700",
-            "transition-colors duration-200"
-          )}
-          aria-label="Emoji"
-        >
-          <Smile className="h-5 w-5" />
-        </button> */}
 
         <button
           type="button"

@@ -210,7 +210,6 @@
     overflow: hidden;
 }
 
-/* ── Responsive: bottom pill (compact on mobile) ───────────────────────── */
 @media (max-width: 768px) {
     .glass-nav-bar {
         top: auto;

@@ -124,7 +124,6 @@ function emptyProfile(): InterestsProfile {
   return { hobbies: [], activities: [], foods: [], topics: [], travelStyle: [] };
 }
 
-/** One pick per category so `needsInterestsOnboarding` passes; user can edit in Settings. */
 function skippedDefaultsProfile(): InterestsProfile {
   return {
     hobbies: [STEPS[0].items[0].label],
@@ -137,23 +136,18 @@ function skippedDefaultsProfile(): InterestsProfile {
 
 function InterestsPage() {
   const navigate = useNavigate();
-  // Destructure refreshUser but don't let its loading flag affect our render
   const { user, loading, refreshUser } = useAuth();
   const [stepIndex, setStepIndex] = useState(0);
   const [selections, setSelections] = useState<InterestsProfile>(emptyProfile);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // "done" = save succeeded; we show the celebration overlay
   const [done, setDone] = useState(false);
-  // true once the celebration card has painted so CSS transition fires
   const [celebIn, setCelebIn] = useState(false);
-  // true when we want the whole page to fade out before navigating
   const [leaving, setLeaving] = useState(false);
 
   const navigatedRef = useRef(false);
 
-  // Trigger the enter animation one rAF after done flips to true
   useEffect(() => {
     if (!done) { setCelebIn(false); return; }
     let cancelled = false;
@@ -166,14 +160,12 @@ function InterestsPage() {
     return () => { cancelled = true; cancelAnimationFrame(id1); };
   }, [done]);
 
-  // After the card has fully entered, start the leave sequence (brief beat, then exit)
   useEffect(() => {
     if (!celebIn) return;
     const t = setTimeout(() => setLeaving(true), 900);
     return () => clearTimeout(t);
   }, [celebIn]);
 
-  // Fade-out done → navigate (match root `transition-opacity` duration)
   useEffect(() => {
     if (!leaving || navigatedRef.current) return;
     const t = setTimeout(() => {
@@ -183,7 +175,6 @@ function InterestsPage() {
     return () => clearTimeout(t);
   }, [leaving, navigate]);
 
-  // Redirect away if interests already filled (but not while we're finishing)
   useEffect(() => {
     if (loading || !user || done) return;
     if (!needsInterestsOnboarding(user.interests)) {
@@ -228,7 +219,6 @@ function InterestsPage() {
     setSaveError(null);
     try {
       await patchMyInterests(selections);
-      // Fire refresh in background — don't await so loading flag doesn't interfere
       void refreshUser();
       setDone(true);
     } catch (e) {
@@ -240,7 +230,6 @@ function InterestsPage() {
 
   const canContinue = currentSelected.length >= 1;
 
-  // Only show the loading screen on initial load, never once we're in the done flow
   if (loading && !done && !user) {
     return (
       <div
@@ -270,7 +259,6 @@ function InterestsPage() {
       style={{ fontFamily: fontStack }}
     >
 
-      {/* ── Wizard (fades + blurs out when done) ─────────────────────────── */}
       <div
         className={cn(
           "transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
@@ -282,7 +270,6 @@ function InterestsPage() {
       >
         <div className="mx-auto max-w-lg px-5 pt-10 pb-16 sm:pt-14">
 
-          {/* Progress bar */}
           <div className="mb-10 flex gap-1">
             {STEPS.map((s, i) => (
               <div
@@ -295,7 +282,6 @@ function InterestsPage() {
             ))}
           </div>
 
-          {/* Card */}
           <div className="rounded-[28px] border border-black/6 dark:border-white/8 bg-white/80 dark:bg-white/5 backdrop-blur-2xl shadow-[0_12px_48px_-16px_rgba(0,0,0,0.1)] dark:shadow-[0_12px_48px_-16px_rgba(0,0,0,0.45)] px-6 py-8 sm:px-8 sm:py-10">
 
             <div className="mb-6 flex items-center justify-between gap-3">
@@ -387,7 +373,6 @@ function InterestsPage() {
         </div>
       </div>
 
-      {/* ── Celebration overlay (fades in on top) ────────────────────────── */}
       {done && (
         <div
           className={cn(

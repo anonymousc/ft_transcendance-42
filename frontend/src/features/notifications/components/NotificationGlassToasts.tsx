@@ -4,9 +4,6 @@ import { useNotificationRealtime } from "@/context/NotificationRealtimeContext";
 import { useGlassToast } from "@/context/GlassToastContext";
 import { notificationRowToNotification } from "@/features/notifications/mapApi";
 
-/**
- * Shows frosted glass toasts for server-push notifications (messages, friends, etc.).
- */
 function NotificationGlassToasts() {
   const { subscribeNotifications } = useNotificationRealtime();
   const { showToast } = useGlassToast();
@@ -18,7 +15,7 @@ function NotificationGlassToasts() {
       showToast({
         title: n.title,
         body: n.body || undefined,
-               onClick: n.actionUrl ? () => navigate(n.actionUrl) : undefined,
+        onClick: n.actionUrl ? () => navigate(n.actionUrl) : undefined,
       });
     });
   }, [subscribeNotifications, showToast, navigate]);

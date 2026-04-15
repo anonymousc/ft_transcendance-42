@@ -219,7 +219,6 @@
   z-index: 3;
 }
 
-/* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .content-section {
     padding: 4rem 1.5rem;

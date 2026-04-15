@@ -1,8 +1,3 @@
-/**
- * WebSocket chat transport. Requires `VITE_WS_URL` (e.g. wss://localhost/ws).
- * Token: GET /chat/ws-token on friends service (`VITE_FRIENDS_URL`).
- */
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import type {
   ConnectionState,

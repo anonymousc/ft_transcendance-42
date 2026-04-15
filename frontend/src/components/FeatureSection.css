@@ -122,7 +122,6 @@
   color: #cccccc;
 }
 
-/* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .features-section {
     padding: 3rem 1.5rem;

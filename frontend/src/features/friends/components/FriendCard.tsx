@@ -120,16 +120,6 @@ function FriendCard({
               <h3 className="truncate text-[15px] font-bold text-stone-900 dark:text-white">
                 {friend.name}
               </h3>
-              {/* <span
-                className={cn(
-                  "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
-                  friend.isOnline
-                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                    : "bg-stone-200/80 text-stone-500 dark:bg-white/10 dark:text-stone-400",
-                )}
-              >
-                {friend.isOnline ? "Online" : "Offline"}
-              </span> */}
             </div>
             <p className="truncate text-[12px] font-medium text-orange-500 dark:text-orange-400">
               @{friend.username}

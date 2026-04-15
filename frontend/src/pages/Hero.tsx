@@ -38,8 +38,6 @@ function Hero() {
         ease: 'power3.out',
       });
 
-      // gsap.from('')
-
       gsap.from('.about-content', {
         scrollTrigger: {
           trigger: aboutRef.current,
@@ -167,7 +165,6 @@ function Hero() {
       <HowitsWorks howItWorksRef={howItWorksRef} />
       <FeatureSection featuresRef={featuresRef} />
       <RIhlaBanner rihlaRef={rihlaRef} />
-      {/* <img src={BigAtlass} alt="Big Atllas" className="big-atlass-image" /> */}
       <Footer footerRef={footerRef} />
     </div>
   );

@@ -5,23 +5,6 @@ function FooterLinks() {
 
     return (
         <div className="flex gap-16 flex-wrap">
-            {/* <div className="min-w-30">
-                <h3 className="font-mono text-[0.9rem] font-normal text-[#888888] mb-4 capitalize">Socials</h3>
-                <ul className="list-none p-0 m-0">
-                    <li className="mb-3">
-                        <a href="#" className={linkClasses}>Twitter [X]</a>
-                    </li>
-                    <li className="mb-3">
-                        <a href="#" className={linkClasses}>Instagram</a>
-                    </li>
-                    <li className="mb-3">
-                        <a href="#" className={linkClasses}>Facebook</a>
-                    </li>
-                    <li className="mb-3">
-                        <a href="#" className={linkClasses}>LinkedIn</a>
-                    </li>
-                </ul>
-            </div> */}
             <div className="min-w-30">
                 <h3 className="font-mono text-[0.9rem] font-normal text-[#888888] mb-4 capitalize">Contacts</h3>
                 <ul className="list-none p-0 m-0">

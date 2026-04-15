@@ -107,7 +107,6 @@
     color: #fca5a5;
 }
 
-/* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .register-page {
         padding: 1.5rem 1rem;

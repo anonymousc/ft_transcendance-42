@@ -22,7 +22,6 @@
   padding-top: 200px;
 }
 
-/* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .footer-section {
     padding: 3rem 1.5rem 1.5rem;
