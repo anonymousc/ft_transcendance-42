@@ -11,10 +11,6 @@ async function friendshipPairExists(tx, userIdA, userIdB) {
   return !!row;
 }
 
-/**
- * @param {string} userId
- * @param {string} otherUserId
- */
 async function getOtherUserIdInFriendship(userId, otherUserId) {
   const [low, high] = sortedPair(userId, otherUserId);
   const row = await prisma.friendship.findUnique({
@@ -26,9 +22,6 @@ async function getOtherUserIdInFriendship(userId, otherUserId) {
   return row.userLowId === userId ? row.userHighId : row.userLowId;
 }
 
-/**
- * @param {import('@prisma/client').PrismaClient} tx
- */
 async function sendFriendRequestTx(tx, fromUserId, toUserId) {
   if (fromUserId === toUserId) {
     return { error: { status: 400, code: 'INVALID_INPUT', message: 'Cannot send a friend request to yourself' } };
@@ -76,9 +69,6 @@ async function sendFriendRequestTx(tx, fromUserId, toUserId) {
   return { autoAccepted: false, request };
 }
 
-/**
- * @param {import('@prisma/client').PrismaClient} tx
- */
 async function acceptFriendRequestTx(tx, requestId, recipientUserId) {
   const request = await tx.friendRequest.findUnique({ where: { id: requestId } });
   if (!request) {
@@ -108,9 +98,6 @@ async function acceptFriendRequestTx(tx, requestId, recipientUserId) {
   };
 }
 
-/**
- * @param {import('@prisma/client').PrismaClient} tx
- */
 async function cancelOrDeclineRequestTx(tx, requestId, userId) {
   const request = await tx.friendRequest.findUnique({ where: { id: requestId } });
   if (!request) {

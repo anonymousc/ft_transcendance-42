@@ -7,10 +7,6 @@ const MAX_MESSAGE_LENGTH = 8000;
 const DEFAULT_MESSAGE_LIMIT = 50;
 const MAX_MESSAGE_LIMIT = 100;
 
-/**
- * @param {string} userId
- * @param {string} conversationId
- */
 async function isParticipant(userId, conversationId) {
   const row = await prisma.conversationParticipant.findUnique({
     where: {
@@ -20,10 +16,6 @@ async function isParticipant(userId, conversationId) {
   return !!row;
 }
 
-/**
- * @param {string} conversationId
- * @returns {Promise<string[]>}
- */
 async function getParticipantUserIds(conversationId) {
   const rows = await prisma.conversationParticipant.findMany({
     where: { conversationId },
@@ -32,10 +24,6 @@ async function getParticipantUserIds(conversationId) {
   return rows.map((r) => r.userId);
 }
 
-/**
- * DM: exactly two participants, both userId and otherUserId.
- * @param {import('@prisma/client').PrismaClient} tx
- */
 async function findDmBetweenTx(tx, userId, otherUserId) {
   const candidates = await tx.conversation.findMany({
     where: {
@@ -60,10 +48,6 @@ async function findDmBetweenTx(tx, userId, otherUserId) {
   return dms[0];
 }
 
-/**
- * @param {string} userId
- * @param {string} otherUserId must be a friend
- */
 async function getOrCreateDmConversation(userId, otherUserId) {
   const friendId = await getOtherUserIdInFriendship(userId, otherUserId);
   if (!friendId || friendId !== otherUserId) {
@@ -87,9 +71,6 @@ async function getOrCreateDmConversation(userId, otherUserId) {
   });
 }
 
-/**
- * @param {string} userId
- */
 async function listConversationsForUser(userId) {
   const rows = await prisma.conversation.findMany({
     where: {
@@ -135,7 +116,6 @@ async function listConversationsForUser(userId) {
   return dedupeDmListItems(items);
 }
 
-/** One DM row per peer pair (DB may contain duplicate 2-user conversations). */
 function activityTimeMs(item) {
   const t = item.lastMessage?.createdAt ?? item.createdAt;
   return new Date(t).getTime();
@@ -172,11 +152,6 @@ function dedupeDmListItems(items) {
   return out;
 }
 
-/**
- * @param {string} conversationId
- * @param {string} userId
- * @param {{ limit?: number, beforeMessageId?: string }} opts
- */
 async function listMessages(conversationId, userId, opts = {}) {
   const participant = await isParticipant(userId, conversationId);
   if (!participant) {
@@ -226,11 +201,6 @@ async function listMessages(conversationId, userId, opts = {}) {
   };
 }
 
-/**
- * @param {string} conversationId
- * @param {string} senderId
- * @param {string} content
- */
 async function createMessage(conversationId, senderId, content) {
   const participant = await isParticipant(senderId, conversationId);
   if (!participant) {
