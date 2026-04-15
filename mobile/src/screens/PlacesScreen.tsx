@@ -25,7 +25,7 @@ export default function PlacesScreen({ route, navigation }: any) {
     <View style={styles.mainContainer}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
       <SafeAreaView style={styles.safeArea}>
-        {/* Superior Header */}
+
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton} 
