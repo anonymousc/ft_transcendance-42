@@ -30,6 +30,7 @@ import {
   type ReviewSummary,
 } from "@/hooks/useCityPlaces";
 import { useInView } from "@/hooks/useInView";
+import { resolveGatewayUrl } from "@/lib/api";
 
 // ── Category styles ─────────────────────────────────────────────────────────
 
@@ -165,8 +166,9 @@ export function StarPicker({ value, onChange }: { value: number; onChange: (v: n
 
 // ── ReviewSection ────────────────────────────────────────────────────────────
 
-const REVIEW_PLACES_URL =
-  (import.meta.env.VITE_REVIEW_PLACES_URL as string) || "http://localhost:4001";
+const REVIEW_PLACES_URL = resolveGatewayUrl(
+  import.meta.env.VITE_REVIEW_PLACES_URL as string | undefined,
+);
 
 interface ReviewEnvelopeLocal {
   ok: boolean;

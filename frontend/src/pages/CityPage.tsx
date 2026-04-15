@@ -25,15 +25,16 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { resolveGatewayUrl } from "@/lib/api";
 
 const AI_PLACES_URL =
-  (import.meta.env.VITE_AI_PLACES_URL as string) || "http://localhost:4000"; // TODO: Store in .env after czar done with dev
+  resolveGatewayUrl(import.meta.env.VITE_AI_PLACES_URL as string | undefined); // TODO: Store in .env after czar done with dev
 
 const REVIEW_PLACES_URL =
-  (import.meta.env.VITE_REVIEW_PLACES_URL as string) || "http://localhost:4001"; //same as above
+  resolveGatewayUrl(import.meta.env.VITE_REVIEW_PLACES_URL as string | undefined); //same as above
 
 const FAV_PLACES_URL =
-  (import.meta.env.VITE_FAV_PLACES_URL as string) || "http://localhost:4002"; // TODO: Store in .env after czar done with dev
+  resolveGatewayUrl(import.meta.env.VITE_FAV_PLACES_URL as string | undefined); // TODO: Store in .env after czar done with dev
 
 /** API returns paths like `/places/photos?...` — must hit ai-places origin, not the SPA host */
 function resolvePlaceImageUrl(src: string | null | undefined): string | null {

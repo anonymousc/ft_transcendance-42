@@ -8,7 +8,7 @@ function stripTrailingSlashes(url: string): string {
 }
 
 export const FRIENDS_BASE_URL = stripTrailingSlashes(
-  (import.meta.env.VITE_FRIENDS_URL as string) || "http://localhost:4003",
+  (import.meta.env.VITE_FRIENDS_URL as string) || "https://localhost",
 );
 
 /**
