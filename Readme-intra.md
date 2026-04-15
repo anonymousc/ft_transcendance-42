@@ -1,4 +1,4 @@
-This project has been created as part of the 42 curriculum by iouhssei, mel-rhay, ,
+This project has been created as part of the 42 curriculum by iouhssei, mel-rhay, aessadik,achahbal, aait-bou
 
 # Rihla — Student Travel Platform for Morocco
 
