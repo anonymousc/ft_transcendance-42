@@ -358,14 +358,14 @@ From the repo root, with `DOCKER=docker` and `COMPOSE=./docker-compose.yml`:
 
 ## Team Information
 
-### Ilyass Ouhsseine (<iouhssei>)  
+### Ilyass Ouhsseine (iouhssei)  
 **Roles:** Product Owner, Project Manager, Frontend Developer  
 **Description:**  
 Defined and led the product vision of *Rihla*, a travel discovery platform built on a microservices architecture (React / Node.js). Managed the full product lifecycle — from ideation and feature prioritization to delivery — while contributing to frontend development. Focused on AI-powered trip planning, personalized recommendations, and seamless user experience.
 
 ---
 
-### Amine El (<intra_un>)  
+### Amine Essadiki (aessadik)  
 **Roles:** Tech Lead, DevOps Engineer  
 **Description:**  
 Led the infrastructure and DevOps strategy, ensuring scalability, reliability, and security across services. Designed and maintained CI/CD pipelines, containerized services (Docker), and managed deployment workflows. Oversaw system architecture decisions and performance optimization.
@@ -379,14 +379,14 @@ Architected and developed core backend services using a microservices approach. 
 
 ---
 
-### Anass El (<intra_us>)  
+### Anas Chahlabani (achahbal)  
 **Roles:** Mobile Developer  
 **Description:**  
 Developed the mobile application experience for *Rihla*, focusing on performance, usability, and consistency with the web platform. Integrated APIs and contributed to delivering a smooth cross-platform user experience.
 
 ---
 
-### Ali El (<intra_us>)  
+### Ali Ait Bouih (aait-bou)  
 **Roles:** Backend Developer  
 **Description:**  
 Contributed to backend service development, including API implementation, database interactions, and feature integration. Worked on ensuring reliability and maintainability of services.
