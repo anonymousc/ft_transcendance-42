@@ -1,10 +1,21 @@
 const GATEWAY_ORIGIN = 'https://localhost';
 const LOCAL_HTTP_RE = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/;
+const LOCAL_WS_RE = /^wss?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/.*)?$/;
 
 export function resolveGatewayUrl(value?: string): string {
   const raw = (value ?? '').trim();
   if (!raw) return GATEWAY_ORIGIN;
   if (LOCAL_HTTP_RE.test(raw)) return GATEWAY_ORIGIN;
+  return raw;
+}
+
+export function resolveGatewayWebSocketUrl(
+  value?: string,
+  path = '/ws',
+): string {
+  const raw = (value ?? '').trim();
+  if (!raw) return `wss://localhost${path}`;
+  if (LOCAL_WS_RE.test(raw)) return `wss://localhost${path}`;
   return raw;
 }
 
