@@ -1,334 +1,133 @@
+This project has been created as part of the 42 curriculum by iouhssei, mel-rhay, aessadik,achahbal, aait-bou
+
 # Rihla — Student Travel Platform for Morocco
 
-> **Rihla** (رحلة) means *journey* in Arabic. It's a travel platform designed to help students discover places and connect with fellow student travellers across Morocco.
-
-**Repository:** `ft_transcendance-42`
-
----
-
-## Table of Contents
-
-- [Overview](#overview)
-- [MVP Features](#mvp-features)
-- [Current Implementation Status](#current-implementation-status)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Backend Scripts](#backend-scripts)
-- [Frontend Scripts](#frontend-scripts)
-- [Environment Variables](#environment-variables)
-- [Running with Docker](#running-with-docker)
-- [API Overview](#api-overview)
-- [Architecture](#architecture)
-- [Testing](#testing)
-- [Security](#security)
-- [Performance & Monitoring](#performance--monitoring)
-- [Common Issues & Solutions](#common-issues--solutions)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [License](#license)
-
----
-
-## Overview
+## Description:
 
 Rihla is a community-driven travel platform built for students exploring Morocco. It combines location-based discovery, social interaction, and AI-powered support to make travel easier, safer, and more social.
 
----
-
 ## MVP Features
 
-| Area | Description | Status |
-|------|-------------|--------|
-| Authentication | Email register/login, logout, **Google + 42 OAuth**, cookie JWT + CSRF, **change password** (local accounts), **link providers** in Settings | Done |
-| Users & profiles | Profiles (username, avatar, bio), edit profile, change-password flow | Done |
-| File uploads | Avatars via profiles service | Done |
-| Location & places | Google Places discovery, city & saved places, planner integration | Done |
-| Activity-based discovery | Places categorized by activity type | Planned |
-| Ratings & reviews | Community reviews + aggregates (`review-places`) | Done |
-| Real-time | **friends-service**: REST + WebSockets (chat / notifications; polish ongoing) | In progress |
-| AI | Trip planner (Gemini) + places suggestions (`ai-places-service`) | Done |
 
----
+| Area                     | Description                                                                                                                                  |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Authentication           | Email register/login, logout, **Google + 42 OAuth**, cookie JWT + CSRF, **change password** (local accounts), **link providers** in Settings |
+| Users & profiles         | Profiles (username, avatar, bio), edit profile, change-password flow                                                                         |
+| File uploads             | Avatars via profiles service                                                                                                                 |
+| Location & places        | Google Places discovery, city & saved places, planner integration                                                                            |
+| Activity-based discovery | Places categorized by activity type                                                                                                          |
+| Ratings & reviews        | Community reviews + aggregates (`review-places`)                                                                                             |
+| Real-time                | **friends-service**: REST + WebSockets (chat / notifications; polish ongoing)                                                                |
+| AI                       | Trip planner (Gemini) + places suggestions (`places-service`)                                                                                |
 
-## Current Implementation Status
 
-### Backend (microservices)
-- **auth-service (NestJS + Prisma):** cookie JWT, **CSRF** on mutating requests, **Google + 42 OAuth** (sign-in + **account linking**), `GET /auth/me` (incl. `hasPassword`), **`POST /auth/change-password`**, `GET /auth/linked-providers`, `GET /auth/validate`, Google token helper for Calendar
-- **profiles-service (NestJS + Prisma):** profile CRUD/patch, search, avatar upload, static `/uploads/*`
-- **ai-places-service (Express):** Google Places (`/autocomplete`, `/places`, `/places/search`, `/places/suggest`, photos) + Redis + rate limits
-- **planner-service (Express + Prisma):** AI trip `/plan/*` (Gemini); integrates favorites, reviews, profiles, auth
-- **fav-places (Express + Prisma):** saved/visited places (`/fav-places/*`)
-- **review-places (Express + Prisma):** reviews + aggregates (`/reviews/*`)
-- **friends-service (Express + Prisma + `ws`):** friends REST + WebSocket ports for chat/notifications; wired in root `docker-compose.yml`
-- **websock-service:** optional legacy/hand-off docs under `backend/src/websock-service/`; realtime work centers on **friends-service**
+## Technical stack
 
-### Frontend (React 19 + Vite 7)
-- **Routes:** Hero, Home, Login, Register, **Profile** (view / **edit** / **change password**), **Settings** (theme, OAuth linking), **Planner**, **City**, **Saved**, **Interests**, **Friends**, **Notifications**, **Webchat**, OAuth success, 404
-- **Routing:** React Router v7 + `ProtectedRoute` for authenticated pages
-- **UI:** Radix UI + Tailwind v4, Lucide icons, GSAP where used
-- **Context:** Theme (incl. dark mode) + auth session from `/auth/me`
-- **Chat / realtime:** WebSocket hooks use friends-service (`VITE_WS_URL`, `VITE_FRIENDS_URL`); completeness varies by screen
+### Frontend technologies and frameworks
 
-### DevOps & Infrastructure
-- **Docker Compose (repo root):** `frontend`, `auth`, `profiles`, `database`, `redis`, `vault`, `swagger`, `logger` (logbull), `ai-places`, `review-places`, `fav-places`, **`friends`**, `planner` — see `docker-compose.yml`
-- **Secrets:** Vault + Docker `secrets:` files under `backend/devops/secrets/` (Google, **42**, Gemini, Places, URLs)
-- **Optional in compose:** nginx, Netdata, and other blocks may be **commented**; enable as needed
-- **Makefile:** `make all`, `make front`, logs, clean (when present)
+- **React** with **TypeScript** for a typed, component-based UI.
+- **Vite** as the build tool and dev server for fast iteration and modern ESM output.
+- **React Router** for client-side routing.
+- **Tailwind CSS** (v4) for utility-first styling, with **Radix UI** primitives and helpers such as **class-variance-authority**, **clsx**, and **tailwind-merge** for consistent, accessible components.
+- **GSAP** for motion where richer animation is needed; **Lucide React** for icons.
 
----
+### Backend technologies and frameworks
 
-## Tech Stack
+- **Node.js** across services, with a **microservices** layout: separate processes for auth, profiles, friends, AI places, reviews, favorites, planner, etc.
+- **NestJS** (with **Passport**, **JWT**, validation, **Prisma**) for **auth-service** and **profiles-service**, where a structured module architecture and strong typing pay off for security and user data.
+- **Express** for lighter HTTP services (e.g. **friends-service**, **planner-service**, **ai-places-service**, **review-places**, **fav-places**) with **Prisma** where persistence is required.
+- **Argon2** for password hashing; **cookie-based sessions** and **CSRF** patterns aligned with the SPA.
+- **WebSockets** (`ws` in **friends-service**) for realtime chat and notifications, behind the HTTPS gateway.
+- **Google Generative AI** (`@google/generative-ai`) in the planner path; **Gemini** used for trip planning and related AI features.
+- **ioredis** and **express-rate-limit** (with Redis backing) for caching and throttling on high-churn routes (e.g. AI and places).
 
-### Frontend
+### Database system and why it was chosen
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| [React](https://react.dev/) | 19.2 | Modern UI framework with hooks |
-| [Vite](https://vitejs.dev/) | 7.2 | Lightning-fast build tool |
-| [TypeScript](https://www.typescriptlang.org/) | 5.9 | Type-safe JavaScript |
-| [Tailwind CSS](https://tailwindcss.com/) | 4.1 | Utility-first styling framework |
-| [Radix UI](https://www.radix-ui.com/) | 1.4 | Unstyled, accessible components |
-| [React Router](https://reactrouter.com/) | 7.13 | Client-side routing |
-| [Lucide React](https://lucide.dev/) | 0.563 | Modern icon library |
-| [GSAP](https://gsap.com/) | 3.14 | Professional animation library |
-| [ESLint](https://eslint.org/) | 9 | Code quality & consistency |
+- **PostgreSQL** is the primary relational store (containerized in the stack, with **Prisma** migrations per service).
+- It was chosen for **ACID transactions**, a **clear relational model** (users, profiles, reviews, favorites, planner data, etc.), **strong tooling**, and **straightforward scaling** patterns for a multi-service backend. **Prisma** gives schema-first modeling, migrations, and type-safe access from TypeScript/JavaScript services.
 
-### Backend
+### Other significant technologies and libraries
 
-| Tool | Version | Purpose |
-|--------|---------|---------|
-| [NestJS](https://nestjs.com/) | 10 | Auth + Profiles microservices |
-| [Express](https://expressjs.com/) | 4/5 | AI Places / Planner / Favorites / Reviews / **Friends** microservices |
-| [TypeScript](https://www.typescriptlang.org/) | 5.x | NestJS services |
-| [Prisma](https://www.prisma.io/) | 6.x | ORM for Postgres-backed services |
-| [PostgreSQL](https://www.postgresql.org/) | 15+ | Primary database |
-| [Redis](https://redis.io/) | 7+ | Caching + rate limit store |
-| [Passport.js](http://www.passportjs.org/) | 0.7 | OAuth/JWT middleware (NestJS) |
-| [JWT](https://jwt.io/) | jsonwebtoken / @nestjs/jwt | Auth tokens for all services |
+- **Redis** for caching and rate limiting, reducing load on Postgres and external APIs.
+- **HashiCorp Vault** (with Docker secrets files) for centralized secret management and bootstrap of credentials.
+- **Docker** and **Docker Compose** for reproducible environments and service orchestration.
+- **Nginx** with **ModSecurity** as a TLS-terminating **reverse proxy** and API gateway to the internal network.
+- **Swagger UI** for API exploration; **Netdata** for monitoring; **Logbull** and a log forwarder for log aggregation (optional depending on configuration).
 
-### DevOps & Infrastructure
+### Justification for major technical choices
 
-| Service | Purpose | Port |
-|---------|---------|------|
-| PostgreSQL | Primary database | 5432 |
-| Redis | Caching & sessions | 6379 |
-| Swagger API Docs | API documentation | 8080 |
-| Vault | Secrets management | 8200 |
-| **AI Places** | Express + Google Places + Redis | **4000** |
-| **Friends** | Express + Prisma + WebSocket | **4003** (+ **8181** / **8182** WS in Docker) |
+- **Microservices** isolate failure and deployment boundaries (auth vs. profiles vs. realtime vs. AI), match the **ft_transcendence**-style scope, and let each area use the smallest stack that fits (Nest for “core domain” services, Express for focused HTTP/WS workers).
+- **Prisma + PostgreSQL** keeps data access consistent and migratable across several repos/services without ad hoc SQL sprawl.
+- **Vite + React** prioritizes developer experience and a responsive SPA while staying easy to serve behind a single HTTPS entrypoint.
+- **Redis** is a pragmatic addition for **performance and abuse protection** on AI- and search-adjacent endpoints.
+- **Vault + gateway** support **security-by-design**: secrets are not baked into images, and traffic can be inspected and routed uniformly.
 
-*Elasticsearch / Kibana / Netdata are not part of the default root compose; add or run separately if needed.*
+## Features list
 
----
+### Public and marketing
 
-## Project Structure
+- **Landing / hero** (`/`) with discovery entry and navigation.
+- **Privacy** (`/privacy`).
+- **Healthcheck** (`/healthcheck`) for service URL checks and diagnostics.
 
-```
-ft_transcendance-42/
-├── frontend/                    # React 19 + Vite 7 + Tailwind
-│   ├── src/
-│   │   ├── components/          # Reusable UI components
-│   │   │   ├── layouts/         # Page layouts (Header, Footer, Navigation)
-│   │   │   ├── DashBoard.tsx   # Dashboard component
-│   │   │   ├── HeroSection.tsx # Landing hero
-│   │   │   ├── featureSection/ # Feature showcase
-│   │   │   ├── glassCard.tsx   # Glass morphism cards
-│   │   │   └── ...
-│   │   ├── context/             # React Context (Theme, Auth, etc.)
-│   │   ├── features/            # Feature-based modules
-│   │   │   ├── Login/
-│   │   │   ├── Register/
-│   │   │   ├── Profile/
-│   │   │   ├── Settings/
-│   │   │   └── Chat/            # Chat infrastructure (WIP)
-│   │   ├── pages/               # Route-level page components
-│   │   │   ├── HomePage.tsx
-│   │   │   ├── OAuthSuccess.tsx
-│   │   │   ├── NotFound.tsx
-│   │   │   └── ...
-│   │   ├── lib/                 # Utilities & helpers
-│   │   ├── assets/              # Static assets & icons
-│   │   ├── App.tsx
-│   │   ├── main.tsx
-│   │   └── vite-env.d.ts
-│   ├── Dockerfile              # Multi-stage build
-│   ├── vite.config.js
-│   ├── tsconfig.json
-│   ├── package.json
-│   └── index.html
-│
-├── backend/                     # Backend microservices (NestJS + Express)
-│   ├── src/
-│   │   ├── auth-service/         # NestJS auth (JWT + Google + 42 OAuth, CSRF, change password)
-│   │   ├── profiles-service/     # NestJS profiles + uploads microservice
-│   │   ├── ai-places-service/    # Express microservice (Google Places + Redis cache)
-│   │   ├── planner-service/      # Express microservice (Gemini trip planner + Prisma)
-│   │   ├── fav-places/           # Express microservice (saved/visited places + Prisma)
-│   │   ├── review-places/        # Express microservice (reviews + aggregates + Prisma)
-│   │   ├── friends-service/      # Friends + WebSocket chat/notification ports (Express + Prisma)
-│   │   └── websock-service/      # Legacy notes / hand-off (optional)
-│   │
-│   └── devops/                   # Docker infra (Vault, DB, Redis, Swagger, etc.)
-│       ├── docker-compose.yml  # Complete stack (all services)
-│       ├── .env                # Service configuration
-│       ├── backend-services/   # Service containers
-│       │   ├── auth/          # Auth gateway
-│       │   ├── prisma/        # Prisma migrations
-│       │   ├── logbull/       # Log aggregation
-│       │   ├── netdata/       # Monitoring
-│       │   └── security/      # Vault secrets
-│       │
-│       ├── frontend-services/  # Frontend infra
-│       │   ├── maptoposter/   # Map integration
-│       │   └── redis/         # Caching layer
-│       │
-│       ├── data/              # Pre-configured data
-│       │   └── swagger.json   # API schema
-│       │
-│       ├── tools/
-│       │   └── entrypoint.sh  # Docker entrypoint
-│       │
-│       └── secrets~/          # Environment secrets (gitignored)
-│           ├── google_client_id
-│           ├── google_client_secret
-│           ├── callback_url
-│           └── frontend_url
-│
-├── Makefile                     # Build & deployment targets
-├── docker-compose.yml          # Root stack: frontend + microservices + infra (paths under backend/)
-├── CNAME                        # DNS configuration
-├── Oauth2.md                    # OAuth setup guide
-├── SECURITY.md                 # Security policies
-└── README.md                    # This file
-```
+### Authentication and account security
 
----
+- **Registration** (`/register`) and **login** (`/login`).
+- **Logout** and session teardown via auth API.
+- **Google OAuth** and **42 Intra OAuth**; **OAuth success** handling (`/oauth-success`).
+- **HTTP-only cookie** session model with **JWT** and **CSRF** token flow for mutating requests.
+- **Change password** for local accounts (`/profile/change-password`).
+- **Settings** (`/settings`): linked OAuth providers and related account configuration.
 
-## Getting Started
+### Profile and preferences
+
+- **Profile** view (`/profile`) and **edit profile** (`/profile/edit`): username, display name, avatar, bio, **interests** (JSON on profile).
+- **Avatar upload** via profiles service / uploads path behind the gateway.
+- **Interests** onboarding or editing (`/interests`).
+
+### Places, discovery, and content
+
+- **Home** discovery experience (`/home`): search and exploration UI.
+- **City** page (`/city`): city-scoped discovery and place detail context.
+- **Google Places–backed** discovery and autocomplete (via **ai-places-service** and gateway routes).
+- **AI place suggestions** (Gemini + caching) for cities.
+- **Saved places** (`/saved`): list and manage favorites (**fav-places**), including **category** metadata per place.
+- **Reviews and ratings** for places: create/read community reviews (**review-places**), aggregates exposed to the UI where implemented.
+
+### Trip planning (AI)
+
+- **Planner** (`/planner`): generate and work with **AI trip plans** (Gemini via **planner-service**), persisted as **TripPlan** records (city, days, preferences, JSON plan, dates); **trip plan modal** surfaces per-day **activities** (name, time, category, ratings, favorites).
+
+### Social and realtime
+
+- **Friends** (`/friends`): friend requests and friendships (**friends-service** REST).
+- **Web chat** (`/webchat`): **WebSocket**-based messaging (**`ws`**), conversations and messages stored in Postgres.
+- **Notifications** (`/notifications`) with **realtime** notification delivery / toasts (**NotificationRealtimeProvider**, glass toast UI).
+- **Nav badges** for unread or actionable items where wired.
+
+### Experience and resilience
+
+- **Protected routes** for authenticated sections.
+- **Theme** switching (light/dark) via **ThemeProvider**.
+- **Global toasts** for feedback (**GlassToastProvider** / stack).
+- **404** handling (`NotFoundPage`).
+
+
+## Instructions
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) v18+ with npm or pnpm
-- [Docker](https://www.docker.com/) & Docker Compose v2+
-- [Git](https://git-scm.com/)
-- Google OAuth 2.0 and/or **42 Intra** OAuth credentials (for authentication)
+- **Docker Engine** with the **Compose V2** plugin (`docker compose …`, as used by the `Makefile`).
+- **Git**, to clone the repository.
+- **Optional (local development without the full stack):** **Node.js** 18+ (npm or pnpm). Some services (for example `ai-places-service`) document **Node 20+** for running outside Docker; the full stack builds Node versions inside images.
+- **OAuth / API access** as needed: Google OAuth, **42 Intra** OAuth, **Google Gemini**, **Google Places** (see secret files below).
+- Sufficient disk and RAM for many containers (database, Vault, microservices, reverse proxy, monitoring).
 
-### Quick Installation
+### Configuration
 
-```bash
-# 1. Clone the repository
-git clone <your-repo-url> ft_transcendance-42 && cd ft_transcendance-42
+#### 1. Repository root `.env`
 
-# 2. Frontend setup
-cd frontend
-npm install
-cd ..
-
-# 3. Backend setup (per service)
-# Each backend service has its own package.json under backend/src/<service>
-cd backend/src/auth-service && npm install && cd ../../..
-cd backend/src/profiles-service && npm install && cd ../../..
-cd backend/src/ai-places-service && npm install && cd ../../..
-cd backend/src/review-places && npm install && cd ../../..
-cd backend/src/fav-places && npm install && cd ../../..
-cd backend/src/planner-service && npm install && cd ../../..
-cd backend/src/friends-service && npm install && cd ../../..
-```
-
-### Local Development (No Docker)
-
-Local development is supported, but the simplest way to run the backend is Docker (see below).  
-If you still want to run services locally, you’ll need **PostgreSQL** + **Redis** running and a `.env` for each service.
-
-**Start auth-service (NestJS)**
-
-```bash
-cd backend/src/auth-service
-npm run prisma:generate
-npm run prisma:migrate
-npm run start:dev
-# http://localhost:3001
-```
-
-```bash
-cd backend/src/profiles-service
-npm run prisma:generate
-npm run prisma:migrate
-npm run start:dev
-# http://localhost:3002
-```
-
-**Start Express services**
-
-```bash
-cd backend/src/ai-places-service && npm run startDev
-cd backend/src/review-places && npm run dev
-cd backend/src/fav-places && npm run dev
-cd backend/src/planner-service && npm run dev
-cd backend/src/friends-service && npm run dev
-```
-
-### Backend Scripts
-
-```bash
-# Each backend service has its own scripts.
-# Examples:
-
-# NestJS services (auth-service / profiles-service)
-cd backend/src/auth-service && npm run start:dev
-cd backend/src/profiles-service && npm run start:dev
-
-# Express services
-cd backend/src/ai-places-service && npm run startDev
-cd backend/src/review-places && npm run dev
-cd backend/src/fav-places && npm run dev
-cd backend/src/planner-service && npm run dev
-cd backend/src/friends-service && npm run dev
-
-# Prisma (per-service)
-cd backend/src/auth-service && npm run prisma:generate && npm run prisma:migrate
-cd backend/src/profiles-service && npm run prisma:generate && npm run prisma:migrate
-cd backend/src/planner-service && npm run prisma:generate && npm run prisma:migrate
-cd backend/src/review-places && npm run prisma:generate && npm run prisma:migrate
-cd backend/src/fav-places && npm run prisma:generate && npm run prisma:migrate
-cd backend/src/friends-service && npm run prisma:generate && npm run prisma:migrate
-```
-
-### Frontend Scripts
-
-```bash
-# From frontend/ directory
-
-npm run dev               # Start dev server (Vite)
-npm run build            # Production build to dist/
-npm run preview          # Preview production build
-npm run lint             # ESLint checks
-```
-
----
-
-## Environment Variables
-
-### Frontend (.env in frontend/)
-
-```env
-# API Configuration
-VITE_API_URL=http://localhost:3001        # Auth (cookies + CSRF)
-VITE_PROFILES_URL=http://localhost:3002   # Profiles
-VITE_AI_PLACES_URL=http://localhost:4000
-VITE_REVIEW_PLACES_URL=http://localhost:4001
-VITE_FAV_PLACES_URL=http://localhost:4002
-VITE_PLANNER_URL=http://localhost:7000
-VITE_FRIENDS_URL=http://localhost:4003    # Friends REST
-VITE_WS_URL=ws://localhost:8181           # Chat WebSocket (friends-service)
-# Optional: VITE_NOTIFICATION_WS_URL or VITE_NOTIFICATION_WS_PORT (default 8182)
-```
-
-### Backend (Docker compose `.env` at repo root)
-
-The root `docker-compose.yml` loads environment from a **repo-root** `.env`.  
-Create `.env` (not committed) with at least:
+`docker-compose.yml` loads **`./.env`** at the repo root for multiple services (including `frontend`). Create it (not committed) before starting the stack. At minimum, define ports and shared settings your deployment expects, for example:
 
 ```env
 # Ports
@@ -339,14 +138,14 @@ PORT_VAULT=8200
 # CORS / redirects
 FRONTEND_URL=http://localhost:5173
 
-# JWT (shared by all backend services)
+# JWT (shared across backend services)
 JWT_ACCESS_SECRET=change_me
 JWT_ACCESS_EXPIRES_IN=15m
 
-# Postgres (Prisma uses DATABASE_URL)
-DATABASE_URL=postgresql://postgres:password@localhost:5432/rihla
+# Postgres — Prisma / services (use a URL that matches your setup; Docker services usually reach Postgres on the compose network)
+DATABASE_URL=postgresql://postgres:password@database:5432/rihla
 
-# External APIs
+# External APIs (also mirrored for Vault where applicable)
 GEMINI_API_KEY=your_gemini_api_key
 GOOGLE_PLACES_API_KEY=your_google_places_api_key
 
@@ -354,477 +153,509 @@ GOOGLE_PLACES_API_KEY=your_google_places_api_key
 REDIS_URL=redis://redis:6379
 ```
 
-### Secrets Management
 
-When using the full Docker stack, Vault consumes secret files under `backend/devops/secrets/` (see `docker-compose.yml` `secrets:` block).
+#### 2. Vault secret files
 
-Create the following files (gitignored) before `make all`:
+The `vault` service mounts Docker **`secrets:`** from **`backend/devops/secrets/`**. Create these files (typically one line each, gitignored) before the first full start:
 
-```
-backend/devops/secrets/
-  ├── google_client_id
-  ├── google_client_secret
-  ├── callback_url
-  ├── fortytwo_client_id
-  ├── fortytwo_client_secret
-  ├── fortytwo_callback
-  ├── frontend_url
-  ├── gemini_api_key
-  └── google_places
-```
+- `google_client_id`
+- `google_client_secret`
+- `callback_url`
+- `frontend_url`
+- `gemini_api_key`
+- `google_places`
+- `fortytwo_client_id`
+- `fortytwo_client_secret`
+- `fortytwo_callback`
 
----
+### Run the project
 
-## Running with Docker
+1. **Clone** the repository and `cd` into the project root.
+2. Add **`./.env`** and populate **`backend/devops/secrets/`** as above.
+3. Ensure **Docker** is running.
+4. From the project root, build and start the full stack:
+   ```bash
+   make all
+   ```
+   This runs `docker compose -f ./docker-compose.yml build …` then `up -d` (see Makefile targets below). The first run can take several minutes.
+5. Wait until healthchecks settle (especially **Vault**, **database**, then app services).
+6. Open the app at **`https://localhost`** (port **443**). The gateway uses a **self-signed** certificate; your browser will warn you—continue for local development.
+7. **Logs:** `make logs` or `docker compose -f ./docker-compose.yml logs -f [service]`.
+8. **Stop:** `make stop`. **Tear down and remove volumes/images:** `make clean` or `make fclean` (destructive; see Makefile).
 
-### Option 1: Frontend Only
+**Hostnames behind the gateway (HTTPS on port 443):** the ModSecurity/nginx config uses names such as `auth.localhost`, `netdata.localhost`, and `logbull.localhost` for some tools; the default server handles **`localhost`** for the main UI and API paths.
 
-```bash
-# From project root
-make front
+### Makefile targets
 
-# Or manually:
-docker compose -f docker-compose.yml build frontend
-docker compose -f docker-compose.yml up frontend -d
+From the repo root, with `DOCKER=docker` and `COMPOSE=./docker-compose.yml`:
 
-# Logs
-docker compose -f docker-compose.yml logs -f frontend
-```
+| Target | What it does |
+| ------ | -------------- |
+| `make all` | Full `docker compose` build (`--no-cache`, `--parallel`, `--force-rm`, `--pull`) then `up -d --remove-orphans`. |
+| `make front` | Build and start only the `frontend` service. |
+| `make logs` | `docker compose … logs -f` (all services), or `logs -f $1` if shell `$1` is set. |
+| `make start` / `make stop` | `docker compose … start` / `stop`. |
+| `make clean` | Stop stack, `down --remove-orphans --rmi all -v`, then prune listed containers, images, volumes, networks. |
+| `make fclean` | `clean` plus `docker system prune -a --volumes -f`. |
+| `make re` | `fclean` then `all`. |
 
-**URL:** http://localhost:5173
+**Note:** The `Makefile` defines **`make backend`**, but **`docker-compose.yml` has no `backend` service**, so that target will fail until the compose file and Makefile are aligned. Use **`make all`** for the full stack.
 
-### Option 2: Full Stack (recommended)
 
-```bash
-make all
-```
+## Team Information
 
-**Services:**
-- Frontend: `http://localhost:${PORT_FRONT}` (default `http://localhost:5173`)
-- Auth: `http://localhost:3001` (`/auth/*`, `/health`)
-- Profiles: `http://localhost:3002` (`/profiles/*`, `/uploads/*`, `/health`)
-- AI Places: `http://localhost:4000` (`/places*`, `/autocomplete*`, `/health`)
-- Review Places: `http://localhost:4001` (`/reviews*`, `/health`)
-- Fav Places: `http://localhost:4002` (`/fav-places*`, `/health`)
-- Planner: `http://localhost:7000` (`/plan*`, `/plans`, `/health`)
-- Friends: `http://localhost:4003` (REST under `/api/friends`, `/api/chat`, `/api/notifications`; WebSockets `8181`/`8182` in compose for chat/notifications)
-- Swagger UI: `http://localhost:8080`
-- Vault: `http://localhost:${PORT_VAULT}` (default `http://localhost:8200`)
-
-### Makefile Commands Summary
-
-```bash
-make all                # Build and start everything in docker-compose.yml
-make front              # Build and start frontend only
-make start              # Start stopped services
-make stop               # Stop all services
-make clean              # Remove containers/images/volumes/networks
-make logs               # Stream logs from all services
-make logs auth          # Stream logs for a single service (example)
-```
-
-### Troubleshooting Docker
-
-```bash
-# View running containers
-docker ps
-
-# View all images
-docker images
-
-# Remove dangling images
-docker image prune
-
-# Check logs
-docker logs <container_id>
-
-# Execute command in container
-docker exec -it <container_id> bash
-
-# Clean everything
-make clean
-
-# Rebuild specific service
-docker compose -f docker-compose.yml build <service_name> --no-cache
-```
+### Ilyass Ouhsseine (iouhssei)  
+**Roles:** Product Owner, Project Manager, Frontend Developer  
+**Description:**  
+Defined and led the product vision of *Rihla*, a travel discovery platform built on a microservices architecture (React / Node.js). Managed the full product lifecycle — from ideation and feature prioritization to delivery — while contributing to frontend development. Focused on AI-powered trip planning, personalized recommendations, and seamless user experience.
 
 ---
 
-## API Overview
-
-### Implemented Endpoints
-
-| Service | Base URL | Key routes | Description | Status |
-|--------|----------|------------|-------------|--------|
-| **auth-service** | `http://localhost:3001` | `GET /health`, `GET /auth/csrf`, `POST /auth/signup`, `POST /auth/signin`, `POST /auth/logout`, `POST /auth/change-password`, `GET /auth/me` (incl. `hasPassword`), `GET /auth/linked-providers`, `GET /auth/validate`, `GET /auth/google/*`, `GET /auth/42/*`, `GET /auth/link/google`, `GET /auth/link/42` | Cookie JWT + CSRF + **Google & 42 OAuth** + password change + provider linking | ✅ |
-| **profiles-service** | `http://localhost:3002` | `GET /health`, `GET /profiles/search`, `GET /profiles/me`, `PUT /profiles/me`, `PATCH /profiles/me`, `POST /uploads/avatar`, `GET /uploads/*` | Profiles + uploads (auth required) | ✅ |
-| **ai-places-service** | `http://localhost:4000` | `GET /health`, `GET /autocomplete`, `POST /autocomplete/recent`, `GET /places`, `GET /places/search`, `POST /places/suggest`, `GET /places/photos` | Discovery (Google Places) + Redis caching + rate limits | ✅ |
-| **review-places** | `http://localhost:4001` | `GET /health`, `GET /reviews`, `GET /reviews/summary`, `POST /reviews/batch`, `POST/PATCH/DELETE /reviews/*` | Reviews + rating aggregates | ✅ |
-| **fav-places** | `http://localhost:4002` | `GET /health`, `GET/POST /fav-places`, `GET /fav-places/check`, `GET /fav-places/public/:userId`, `GET /fav-places/internal/:userId` | Favorites + visited places | ✅ |
-| **planner-service** | `http://localhost:7000` | `GET /health`, `POST /plan/generate`, `GET /plan/:id`, `GET /plans`, `DELETE /plan/:id` | AI trip planning (Gemini) + persistence | ✅ |
-| **friends-service** | `http://localhost:4003` | `/api/friends/*`, `/api/chat/*`, `/api/notifications/*` + WebSocket **8181** (chat) / **8182** (notifications) in Docker | Friends, chat token, realtime (see `friendsApi`, `useWebSocket`) | ✅ |
-
-### Planned / evolving
-
-- **Realtime UX:** polish chat and notifications end-to-end (friends-service + frontend)
-- **Legacy websock docs:** `backend/src/websock-service/handOff.md` if still present
-
-### AI Places Service Details
-
-See `backend/src/ai-places-service/README.md`. Note that the current implementation is **Google Places + Redis** (not Unsplash), with a public photo proxy at `GET /places/photos`.
+### Amine Essadiki (aessadik)  
+**Roles:** Tech Lead, DevOps Engineer  
+**Description:**  
+Led the infrastructure and DevOps strategy, ensuring scalability, reliability, and security across services. Designed and maintained CI/CD pipelines, containerized services (Docker), and managed deployment workflows. Oversaw system architecture decisions and performance optimization.
 
 ---
 
-### Documentation
-
-- **Swagger UI:** Available at `http://localhost:8080` (when running full stack)
-- **OAuth setup:** See [Oauth2.md](Oauth2.md) (Google; configure **42 Intra** via `backend/devops/secrets/fortytwo_*` and auth-service env when using Docker)
+### Mohammed El Rhayour (mel-rhay)  
+**Roles:** Tech Lead, Backend Developer  
+**Description:**  
+Architected and developed core backend services using a microservices approach. Designed APIs, handled business logic, and ensured system consistency and performance. Collaborated closely on authentication, data models, and service communication.
 
 ---
 
-## Architecture
+### Anas Chahlabani (achahbal)  
+**Roles:** Mobile Developer  
+**Description:**  
+Developed the mobile application experience for *Rihla*, focusing on performance, usability, and consistency with the web platform. Integrated APIs and contributed to delivering a smooth cross-platform user experience.
 
-### Authentication Flow
+---
 
-```
-┌─────────────────┐
-│   Frontend      │
-└────────┬────────┘
-         │ 1. User signs in / OAuth
-         ▼
-┌─────────────────────────────┐
-│ auth-service (NestJS)       │
-│ - POST /auth/signup         │ ← Argon2 hash, create user/profile
-│ - POST /auth/signin         │ ← Issues JWT
-│ - GET /auth/google/*        │ ← Google OAuth 2.0
-│ - GET /auth/42/*            │ ← 42 Intra OAuth
-└────────┬────────────────────┘
-         │ 2. Sets cookies
-         ▼
-┌─────────────────────────────┐
-│ Browser cookies             │
-│ - access_token (httpOnly)   │
-│ - csrf_token (readable)     │
-└────────┬────────────────────┘
-         │ 3. For mutating requests:
-         │    send X-CSRF-Token header matching csrf_token cookie
-         ▼
-┌─────────────────────────────┐
-│ Other services validate JWT │
-│ via shared JWT_ACCESS_SECRET│
-└─────────────────────────────┘
-```
+### Ali Ait Bouih (aait-bou)  
+**Roles:** Backend Developer  
+**Description:**  
+Contributed to backend service development, including API implementation, database interactions, and feature integration. Worked on ensuring reliability and maintainability of services.
 
-### Database Schema (Key Models)
+## Project Management
 
-```typescript
-// Core user account (auth-service / profiles-service)
-model User {
-  id              String    @id @default(cuid())
-  email           String    @unique
-  hashPassword    String?
-  isEmailVerified Boolean   @default(false)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+### Team Organization & Task Distribution
 
-  accounts        Account[]
-  profile         Profile?
-}
+The team of five was organized around complementary roles, with each member owning specific domains while collaborating across boundaries:
 
-// OAuth accounts (e.g. google)
-model Account {
-  id                String   @id @default(cuid())
-  userId            String
-  provider          String
-  providerAccountId String
-  accessToken       String?
-  refreshToken      String?
-  expiresAt         Int?
-  createdAt         DateTime @default(now())
+| Member | Role | Responsibilities |
+|--------|------|-----------------|
+| Ilyass Ouhsseine (iouhssei) | Product Owner, Project Manager, Frontend Dev | Product vision, feature prioritization, sprint planning, AI features, frontend development |
+| Amine Essadiki (aessadik) | Tech Lead, DevOps Engineer | Infrastructure, CI/CD, Docker orchestration, Nginx gateway, Vault, security, deployment |
+| Mohammed El Rhayour (mel-rhay) | Tech Lead, Backend Developer | Core backend architecture, API design, auth flows, data models, service communication |
+| Anas Chahlabani (achahbal) | Mobile Developer | Mobile application, API integration, cross-platform UX consistency |
+| Ali Ait Bouih (aait-bou) | Backend Developer | Backend service development, API implementation, database interactions, feature integration |
 
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+### Agile Workflow
 
-  @@unique([provider, providerAccountId])
-}
+The team followed an **Agile methodology** with iterative development cycles:
 
-// Profile info (displayName, username, avatar, etc.)
-model Profile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  username    String   @unique
-  displayName String?
-  avatar      String?
-  bio         String?
-  status      String   @default("offline")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+- **Sprint planning** at the start of each iteration to align on deliverables
+- **Daily follow-ups** to track progress and surface blockers early
+- **Sprint retrospectives** to improve processes over time
+- Features were broken down into actionable tasks with clear ownership
+- Continuous delivery was prioritized, with each service independently deployable
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-```
+### Project Management Tools
 
-(See `backend/src/auth-service/prisma/schema.prisma` and `backend/src/profiles-service/prisma/schema.prisma` for the source of truth.)
+- **GitHub Issues & Pull Requests** — task tracking, code review, and change management. Feature branches followed the convention `feature/your-feature-name`; commits followed [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, etc.)
+- **GitHub Projects / Kanban board** — visual progress tracking across backlog, in-progress, and done columns
 
-## Testing
+### Communication Channels
 
-Backend services currently ship with **lint/format** scripts, but do not have a unified test runner at the repo root.
+- **Discord** — primary async communication channel: dedicated channels per service domain, design decisions, and daily check-ins
+- **In-person / video meetings** — sprint planning, retrospectives, architecture discussions, and decisions requiring synchronous alignment
+
+---
+
+## Tech Stack
 
 ### Frontend
 
-Currently no test setup. Planned features like Chat will include Jest + React Testing Library.
+| Tool | Version | Purpose |
+|------|---------|---------|
+| [React](https://react.dev/) | 19.2 | Modern UI framework with hooks |
+| [Vite](https://vitejs.dev/) | 7.2 | Lightning-fast build tool and dev server |
+| [TypeScript](https://www.typescriptlang.org/) | 5.9 | Type-safe JavaScript |
+| [Tailwind CSS](https://tailwindcss.com/) | 4.1 | Utility-first styling framework |
+| [Radix UI](https://www.radix-ui.com/) | 1.4 | Unstyled, accessible component primitives |
+| [React Router](https://reactrouter.com/) | 7.13 | Client-side routing with protected routes |
+| [Lucide React](https://lucide.dev/) | 0.563 | Icon library |
+| [GSAP](https://gsap.com/) | 3.14 | Animation library |
+| [class-variance-authority](https://cva.style/) + [clsx](https://github.com/lukeed/clsx) + [tailwind-merge](https://github.com/dcastil/tailwind-merge) | — | Consistent, conditional class composition |
+| [ESLint](https://eslint.org/) | 9 | Code quality & consistency |
 
-## Security
+**Justification:** React 19 + Vite offers the best developer experience for a fast-moving SPA — near-instant HMR, ESM output, and a component model that scales well across many pages. Tailwind + Radix keeps styling consistent and accessible without a heavy component library. GSAP handles richer animations that CSS transitions can't easily express.
 
-- **Password Hashing:** Argon2 (industry standard)
-- **JWT Tokens:** Signed with shared secret (e.g. `JWT_ACCESS_SECRET` in env; align all services)
-- **OAuth 2.0:** Google and 42 Intra strategies; provider linking uses signed `state` (short-lived JWT)
-- **CORS:** Configured for frontend domain only
-- **Environment Variables:** Sensitive data never committed (use `.env` and `.gitignore`)
-- **Vault Integration:** DevOps stack includes HashiCorp Vault for secrets management
+### Backend
 
-See [SECURITY.md](SECURITY.md) for detailed security guidelines.
+| Tool | Version | Purpose |
+|------|---------|---------|
+| [NestJS](https://nestjs.com/) | 10 | Auth + Profiles microservices (structured modules, DI, guards) |
+| [Express](https://expressjs.com/) | 4/5 | Lightweight HTTP services (places, planner, reviews, favorites, friends) |
+| [TypeScript](https://www.typescriptlang.org/) | 5.x | Type safety across all services |
+| [Prisma](https://www.prisma.io/) | 6.x | Schema-first ORM with migrations |
+| [Passport.js](http://www.passportjs.org/) | 0.7 | OAuth 2.0 & JWT middleware |
+| [Argon2](https://github.com/ranisalt/node-argon2) | — | Industry-standard password hashing |
+| [ws](https://github.com/websockets/ws) | — | WebSocket server for real-time chat and notifications |
+| [ioredis](https://github.com/luin/ioredis) | — | Redis client for caching and rate limiting |
+| [@google/generative-ai](https://ai.google.dev/) | — | Gemini API integration for trip planning |
 
-## Performance & Monitoring
+**Justification:** NestJS is used for the two highest-security services (auth and profiles) where its module system, guards, and dependency injection provide the strongest safety guarantees. Express is used for the remaining, more focused services where a lighter footprint fits better. Separating services this way means a crash or vulnerability in one domain (e.g. AI places) cannot directly bring down authentication.
 
-When running the full stack (`make all`):
+### Database System
 
-<<<<<<< HEAD
-- **Netdata:** System metrics dashboard at http://localhost:19999
-- **Logbull:** Log monitoring UI at https://logbull.localhost:8080
-- **Logbull Forwarder:** Ships Docker logs from all services to Logbull intake API
-- **Redis:** Caching layer for improved performance
-=======
-- **Redis:** Caching and rate limiting (AI Places, etc.)
-- **Logbull (`logger` service):** log shipping (see compose)
-- **Netdata / ELK:** not enabled in the default root `docker-compose.yml` (services are commented); add or run separately if you need dashboards
->>>>>>> 7f2bf2867310d68a779caeb7b3f43035748a797a
+**PostgreSQL 15+** is the primary relational store, accessed through **Prisma** in every service that requires persistence.
 
-### Logbull Forwarder Setup
+**Why PostgreSQL:**
+- **ACID transactions** ensure data integrity across reviews, favorites, and user records
+- **Strong relational model** fits the domain well — users, profiles, friendships, reviews, and trips all have clear relationships
+- **Excellent TypeScript tooling** via Prisma — schema-first modeling, auto-generated migrations, and fully type-safe queries
+- **Proven scalability** patterns for when the platform grows
+- Each service manages its own Prisma schema and migrations, keeping domain boundaries clean
 
-To ingest all service logs into Logbull, configure these variables in repo-root `.env`:
+**Redis 7+** complements PostgreSQL as a caching and rate-limiting layer, reducing load on the database and external APIs on high-churn routes.
 
-```bash
-LOGBULL_PROJECT_ID=<your-logbull-project-uuid>
-# Optional (required only if the project enforces API key auth)
-LOGBULL_API_KEY=<your-logbull-api-key>
-# Optional (for projects using domain filters)
-LOGBULL_ORIGIN=https://localhost
-# Optional (host docker containers logs path)
-DOCKER_CONTAINERS_PATH=/goinfre/aessadik/docker/containers
-```
+### Other Significant Technologies
 
-The `logbull-forwarder` service reads Docker logs through `/var/run/docker.sock` and posts batches to:
-`/api/v1/logs/receiving/{projectId}`.
-If Docker socket access is restricted, it automatically falls back to tailing Docker JSON logs from `DOCKER_CONTAINERS_PATH`.
+| Technology | Purpose |
+|-----------|---------|
+| [Docker](https://www.docker.com/) + Docker Compose | Reproducible environments and full-stack orchestration |
+| [Nginx](https://nginx.org/) + [ModSecurity](https://github.com/SpiderLabs/ModSecurity) | TLS-terminating reverse proxy, WAF, and API gateway |
+| [HashiCorp Vault](https://www.vaultproject.io/) | Centralized secrets management — credentials never baked into images |
+| [Elasticsearch](https://www.elastic.co/) + [Kibana](https://www.elastic.co/kibana) | Centralized log aggregation and visualization |
+| [Netdata](https://www.netdata.cloud/) | Real-time system and container metrics |
 
-## Common Issues & Solutions
+### Justification for Major Technical Choices
 
-### Port Already in Use
+**Microservices architecture:** Each service has independent deployment boundaries and failure domains. A bug in the AI planner cannot take down authentication. It also lets each service use the smallest stack that fits its needs.
 
-```bash
-# Find what's using port 3000
-lsof -i :3000
+**Cookie-based JWT + CSRF:** More secure than storing tokens in `localStorage` for a web SPA. The double-submit CSRF pattern protects mutating requests, and HTTP-only cookies prevent XSS exfiltration.
 
-# Kill the process
-kill -9 <PID>
+**Nginx + ModSecurity as gateway:** Traffic inspection, WAF rules, and TLS termination happen in one place, so internal services can communicate over plain HTTP without worrying about encryption and filtering individually.
 
-# Or change port in .env
-PORT=3001 npm run start:dev
-```
-
-### Database Connection Error
-
-```bash
-# Verify PostgreSQL is running
-docker ps | grep postgres
-
-# Check DATABASE_URL in your repo-root .env (Docker) or per-service .env (local)
-echo $DATABASE_URL
-
-# Reset database (⚠️ deletes all data)
-# Prisma schemas live per service under backend/src/<service>/prisma/schema.prisma
-# Example (planner-service):
-cd backend/src/planner-service && npx prisma migrate reset
-```
-
-### Prisma Client Missing
-
-```bash
-# Run per service that uses Prisma
-cd backend/src/auth-service && npm run prisma:generate
-cd backend/src/profiles-service && npm run prisma:generate
-cd backend/src/planner-service && npm run prisma:generate
-cd backend/src/review-places && npm run prisma:generate
-cd backend/src/fav-places && npm run prisma:generate
-cd backend/src/friends-service && npm run prisma:generate
-```
-
-### Docker Permission Denied
-
-```bash
-# Add user to docker group
-sudo usermod -aG docker $USER
-
-# Or use sudo
-sudo docker compose up
-```
-
-### Frontend Can't Connect to Backend
-
-```bash
-# Verify services are running
-curl http://localhost:3001/health  # auth-service
-curl http://localhost:3002/health  # profiles-service
-curl http://localhost:4000/health  # ai-places-service
-curl http://localhost:4001/health  # review-places
-curl http://localhost:4002/health  # fav-places
-curl http://localhost:7000/health  # planner-service
-curl http://localhost:4003/health  # friends-service
-
-# Check VITE_API_URL in frontend/.env
-# Should match the service URLs and FRONTEND_URL
-```
-
-### Service status page (frontend)
-
-The app includes a **browser status board** at **`/healthcheck`** (e.g. `http://localhost:5173/healthcheck` when using Vite’s default port). It requests `GET /health` on each microservice using the same `VITE_*` base URLs as the rest of the UI (`VITE_API_URL`, `VITE_PROFILES_URL`, `VITE_AI_PLACES_URL`, `VITE_REVIEW_PLACES_URL`, `VITE_FAV_PLACES_URL`, `VITE_PLANNER_URL`, `VITE_FRIENDS_URL`). It auto-refreshes every 30 seconds and can be refreshed manually. If checks fail only in the browser, confirm each API allows CORS for your frontend origin on `/health`.
-
-## Roadmap
-
-### Short Term (v1.0)
-- Authentication (email, Google, 42) + security (CSRF, password change, OAuth linking)
-- Profiles, settings, avatars
-- Place discovery (Google Places + Redis)
-- Favorites, reviews & ratings
-- AI trip planner (Gemini)
-- Friends + WebSocket plumbing (chat / notifications)
-
-### Medium Term (v1.5)
-- Richer social feed & traveller groups
-- Post creation (travel stories)
-- Deeper notifications product UX
-- Activity-based discovery
-
-### Long Term (v2.0)
-- Mobile app
-- Advanced AI recommendations
-- Payments & analytics
+**Vault for secrets:** API keys and OAuth credentials are injected at runtime rather than committed to the repo or baked into images, aligning with security-by-design principles.
 
 ---
 
-## Contributing
+## Database Schema
 
-We welcome contributions! Please follow these guidelines:
+Persistence is **PostgreSQL**, accessed through **Prisma** in each service. The stack uses one database instance; each service ships its own `schema.prisma` and migrations for the tables it owns. `userId` values align with `User.id` from the auth/profiles domain (string CUIDs), so reviews, favorites, chat, and trips all refer to the same identity without cross-schema foreign keys in every service.
 
-### Setup for Contributors
+### Visual Overview (ER Diagram)
 
-```bash
-# 1. Fork the repository
-# 2. Clone your fork
-git clone https://github.com/<your-username>/ft_transcendance-42.git
-cd ft_transcendance-42
+```mermaid
+erDiagram
+  User ||--o{ Account : "1:N"
+  User ||--o| Profile : "0..1"
+  Conversation ||--o{ ConversationParticipant : "N:M bridge"
+  Conversation ||--o{ Message : "1:N"
 
-# 3. Create a feature branch
-git checkout -b feature/your-feature-name
+  User {
+    string id PK
+    string email UK
+    string hashPassword
+    boolean isEmailVerified
+    datetime createdAt
+    datetime updatedAt
+  }
 
-# 4. Make your changes and test
-npm run lint && npm run test
+  Account {
+    string id PK
+    string userId FK
+    string provider
+    string providerAccountId
+    string accessToken
+    string refreshToken
+    int expiresAt
+    datetime createdAt
+  }
 
-# 5. Commit with clear messages
-git commit -m "feat: add your feature description"
+  Profile {
+    string id PK
+    string userId FK_UK
+    string username UK
+    string displayName
+    string avatar
+    string bio
+    string status
+    json interests
+    datetime createdAt
+    datetime updatedAt
+  }
 
-# 6. Push and create a Pull Request
-git push origin feature/your-feature-name
+  FriendRequest {
+    string id PK
+    string fromUserId
+    string toUserId
+    datetime createdAt
+    datetime updatedAt
+  }
+
+  Friendship {
+    string id PK
+    string userLowId
+    string userHighId
+    datetime createdAt
+  }
+
+  Conversation {
+    string id PK
+    datetime createdAt
+  }
+
+  ConversationParticipant {
+    string conversationId FK
+    string userId
+  }
+
+  Message {
+    string id PK
+    string conversationId FK
+    string senderId
+    string content
+    datetime createdAt
+  }
+
+  Notification {
+    string id PK
+    string userId
+    string type
+    string title
+    string body
+    json data
+    boolean read
+    datetime readAt
+    boolean archived
+    datetime archivedAt
+    datetime createdAt
+  }
+
+  Review {
+    string id PK
+    string placeName
+    string city
+    string userId
+    int rating
+    string comment
+    datetime createdAt
+    datetime updatedAt
+  }
+
+  SavedPlace {
+    string id PK
+    string userId
+    string placeName
+    string city
+    string category
+    string address
+    string image
+    string placeId
+    float rating
+    string status
+    datetime savedAt
+  }
+
+  TripPlan {
+    string id PK
+    string userId
+    string city
+    int days
+    json plan
+    date tripStartDate
+    date tripEndDate
+    datetime createdAt
+    datetime updatedAt
+  }
 ```
 
-### Code Standards
+### Tables and Relationships (by Service)
 
-- **Linting:** ESLint + Prettier (run `npm run lint && npm run format`)
-- **Naming:** Use camelCase for variables/functions, PascalCase for classes/components
-- **Imports:** Organize imports (external → local)
-- **Tests:** Include unit tests for new features (`*.spec.ts`)
-- **Comments:** Document complex logic; use TypeScript types instead of JSDoc
-- **Commits:** Use conventional commits (feat:, fix:, docs:, etc.)
+**auth-service / profiles-service:** `User` is the root identity. `Account` rows are many-to-one with `User` (unique on `[provider, providerAccountId]`). `Profile` is an optional one-to-one with `User`. Deleting a user cascades to both accounts and profile.
 
-### Pull Request Process
+**friends-service:** `FriendRequest` stores directed requests (unique pair). `Friendship` stores an undirected pair created after acceptance. `Conversation` has many `Message` rows and many users via `ConversationParticipant` (composite PK: `conversationId + userId`). `Notification` is per `userId`, indexed for unread and archive queries.
 
-1. Update `README.md` if adding new features or changing workflows
-2. Ensure all tests pass: `npm run test`, `npm run test:e2e`
-3. Get code review from at least one maintainer
-4. Merge to `main` after approval
+**review-places:** `Review` — one review per user per place name + city (`@@unique([userId, placeName, city])`).
 
-### Reporting Issues
+**fav-places:** `SavedPlace` — one saved row per user per place name + city, with optional `placeId`, `rating`, `image`, and `status`.
 
-- Use GitHub Issues with clear title and description
-- Include reproduction steps for bugs
-- Attach screenshots or logs if relevant
+**planner-service:** `TripPlan` — per `userId` and `city`, with `days`, `preferences` (Postgres text array), structured `plan` JSON, and optional trip date bounds.
 
-### Seed Faker Commands
+### Key Fields and Data Types
+
+| Category | Fields | Type |
+|----------|--------|------|
+| **Identifiers** | `User.id`, `Account.id`, `Profile.id`, `FriendRequest.id`, `Friendship.id`, `Notification.id` | `String` — `cuid()` |
+| **Identifiers** | `Conversation.id`, `Message.id`, `Review.id`, `SavedPlace.id`, `TripPlan.id` | `String` — `uuid()` |
+| **Text** | emails, usernames, provider keys, message content, review comments, place names, addresses | `String` |
+| **Booleans** | `User.isEmailVerified`, `Notification.read`, `Notification.archived` | `Boolean` |
+| **Numbers** | `Account.expiresAt` (epoch), `Review.rating` (1–5), `TripPlan.days`, `SavedPlace.rating` | `Int` / `Float` |
+| **JSON** | `Profile.interests`, `Notification.data`, `TripPlan.plan` (serialized AI itinerary) | `Json` |
+| **Arrays** | `TripPlan.preferences` (native Postgres text array) | `String[]` |
+| **Timestamps** | `createdAt`, `updatedAt` across all models | `DateTime` |
+| **Date-only** | `TripPlan.tripStartDate`, `TripPlan.tripEndDate` | `Date` (`@db.Date`) |
 
 
-## 1) Start stack (as you normally do)
 
-```bash
-docker compose up -d --build
-```
+### ft_transcendence Plan (Total Score: 23/14)
+----------------------------------------
+iouhssei:
+    [Minor] Custom-made design system: Reusable components, color palette, typography.
+[Major] Recommendation system: Machine learning based on user behavior.[Minor] Use a frontend framework: React, Vue, Angular, Svelte, etc.
+mel-rhay:
+    [Minor] Notification system: For creation, update, and deletion actions.
+[Major] Implement real-time features: WebSockets, real-time updates, efficient broadcasting.[Minor] Use a backend framework: Express, Fastify, NestJS, Django, etc.[Major] Allow users to interact with other users: Chat, Profile, Friends system.
+aait-bou:
+    [Minor] Use an ORM: Database Object-Relational Mapping.
+[Minor] Remote authentication: OAuth 2.0 (Google, GitHub, 42, etc.).
+achahbal:
+    [Minor] Server-Side Rendering (SSR): Improved performance and SEO.
+[Minor] Support for additional browsers: Min 2 additional browsers (Firefox, Safari, etc.).[Minor] Health check & status page.
+[Major] Custom Major Module: Substantial technical complexity. Requires justification.
+aessadik:
+    [Major] WAF/ModSecurity + HashiCorp Vault: Strict WAF config and secure secrets management.
+[Major] Backend as microservices: Loosely-coupled services.[Major] Prometheus & Grafana: Monitoring and alerting.
 
-If you hit Docker permission errors, run with sudo or add your user to the `docker` group.
+refactor this in markkdown and improve wrinting
+3:12 PM
+Identified request to restructure and enhance project documentation formatting
 
-## 2) Seed 100 auth users (and save emails/passwords)
+The user wants me to reformat and improve the writing of their ft_transcendence plan in markdown.
+Done
+ft_transcendence — Project Plan
 
-```bash
-docker compose exec auth sh -lc "npm run seed:faker"
-```
+Total Score: 23/14
+iouhssei
+Type	Module
+Minor	Custom Design System — Reusable components, color palette, and typography.
+Minor	Frontend Framework — React, Vue, Angular, Svelte, or equivalent.
+Major	Recommendation System — Machine learning model based on user behavior.
+mel-rhay
+Type	Module
+Minor	Notification System — Alerts for creation, update, and deletion actions.
+Minor	Backend Framework — Express, Fastify, NestJS, Django, or equivalent.
+Major	Real-Time Features — WebSocket integration with efficient event broadcasting.
+Major	User Interactions — Chat, user profiles, and friends system.
+aait-bou
+Type	Module
+Minor	ORM Integration — Database access via Object-Relational Mapping.
+Minor	Remote Authentication — OAuth 2.0 support (Google, GitHub, 42, etc.).
+achahbal
+Type	Module
+Minor	Server-Side Rendering (SSR) — Improved performance and SEO.
+Minor	Cross-Browser Support — Compatibility with at least 2 additional browsers (Firefox, Safari, etc.).
+Minor	Health Check & Status Page — Service availability monitoring endpoint.
+Major	Custom Major Module — Substantial technical complexity; requires written justification.
+aessadik
+Type	Module
+Major	WAF / ModSecurity + HashiCorp Vault — Strict WAF configuration with secure secrets management.
+Major	Microservices Architecture — Backend decomposed into loosely-coupled, independently deployable services.
+Major	Prometheus & Grafana — Full monitoring stack with metrics collection and alerting.
 
-This creates the files **inside the `auth` container** at `./seed-output/`.
+in markdown
+3:12 PM
+Deduced user's markdown export preference
 
-Copy them to your host:
+Here's your .md file, ready to download or share with the team.
+Ft transcendence plan
+Document · MD 
+Want to be notified when Claude responds?
 
-```bash
-docker cp auth:/app/seed-output ./seed-output-auth
-```
 
-Your credentials will be in:
-- `./seed-output-auth/auth-users.json`
-- `./seed-output-auth/auth-users.csv`
+Claude is AI and can make mistakes. Please double-check responses.
+Ft transcendence plan · MD
+# ft_transcendence — Project Plan
+**Total Score: 23/14**
+ 
+---
+ 
+## iouhssei
+| Type | Module |
+|------|--------|
+| Minor | **Custom Design System** — Reusable components, color palette, and typography. |
+| Minor | **Frontend Framework** — React, Vue, Angular, Svelte, or equivalent. |
+| Major | **Recommendation System** — Machine learning model based on user behavior. |
+| Minor | **Cross-Browser Support** — Compatibility with at least 2 additional browsers (Firefox, Safari, etc.). |  
+ 
+---
+ 
+## mel-rhay
+| Type | Module |
+|------|--------|
+| Minor | **Notification System** — Alerts for creation, update, and deletion actions. |
+| Minor | **Backend Framework** — Express, Fastify, NestJS, Django, or equivalent. |
+| Major | **Real-Time Features** — WebSocket integration with efficient event broadcasting. |
+| Major | **User Interactions** — Chat, user profiles, and friends system. |
+| Minor | **Health Check & Status Page** — Service availability monitoring endpoint. |
+ 
+---
+ 
+## aait-bou
+| Type | Module |
+|------|--------|
+| Minor | **ORM Integration** — Database access via Object-Relational Mapping. |
+| Minor | **Remote Authentication** — OAuth 2.0 support (Google, GitHub, 42, etc.). |
+ 
+---
+ 
+## achahbal
+| Type | Module |
+|------|--------|
+| Minor | **Server-Side Rendering (SSR)** — Improved performance and SEO. |
+| Major | **Custom Major Module** — Substantial technical complexity; requires written justification. |
+ 
+---
+ 
+## aessadik
+| Type | Module |
+|------|--------|
+| Major | **WAF / ModSecurity + HashiCorp Vault** — Strict WAF configuration with secure secrets management. |
+| Major | **Microservices Architecture** — Backend decomposed into loosely-coupled, independently deployable services. |
+| Major | **Prometheus & Grafana** — Full monitoring stack with metrics collection and alerting. |
+ 
 
-## 3) Seed friends conversations/messages (optionally reusing the same user IDs)
+# Custom Module (Bonus)
 
-First copy the auth users file into the friends container (so IDs match):
-
-```bash
-docker cp ./seed-output-auth/auth-users.json friends:/app/auth-users.json
-```
-
-Then run:
-
-```bash
-docker compose exec friends sh -lc "SEED_USERS_JSON=/app/auth-users.json npm run seed:faker"
-```
-
-Copy summary out:
-
-```bash
-docker cp friends:/app/seed-output ./seed-output-friends
-```
+# RIHLA-MOBILE - The AI Travel Explorer
 
 ---
 
-## License
+## 🎖️ Major Module of Choice: AI Travel Orchestration Engine
+**Grade: Major Module (2 Points)**
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) file for details.
+### ∗ Why I chose this module
+Traditional travel applications often suffer from a disconnect between data discovery and logistical planning. Furthermore, modern users overwhelmingly prefer to plan and navigate their journeys using mobile devices while on the go. I chose to implement a custom AI Travel Orchestration Engine within a native mobile environment because it meets the user where they are: in the palm of their hand. This project bridges the gap, creating a frictionless transition from raw geospatial discovery to a mathematically logical multi-day itinerary, optimized specifically for the mobile-first traveler.
+
+### ∗ What technical challenges it addresses
+1. **The Hallucination Problem**: Large Language Models (LLMs) often generate non-existent locations or outdated addresses. My engine addresses this by implementing a **Custom Prompt Bridge**. Instead of allowing the AI to guess, the engine programmatically injects real-time, verified data from the Google Places API into the LLM context, forcing the AI to work strictly with physical, verifiable landmarks and coordinates.
+2. **Geospatial Logic**: Calculating a logical travel sequence for a human (avoiding diagonal zig-zags across a city) requires complex heuristics. The orchestration engine solves this by using AI to group activities based on neighborhood density and logical time-of-day constraints (e.g., matching museum hours with morning slots and restaurants with evening slots).
+3. **Structured Data Parsing**: Converting natural language AI thought processes into a strictly-typed JSON schema that a mobile UI can render without crashing is a significant technical hurdle. I implemented a robust parsing layer that enforces a specific schema on every generation.
+
+### ∗ How it adds value to your project
+It transforms RIHLA from a simple search directory into a dynamic personal travel assistant. By automating the planning phase, it saves users hours of research and ensures that their trips are geographically optimized. It takes the "guesswork" out of tourism, providing value that standard map applications currently lack.
+
+### ∗ Why it deserves Major module status (2 points)
+This module is substantial because it involves a complex **multi-stage pipeline**:
+- **Stage 1 (Live Data Acquisition)**: Asynchronous fetching of real-world geospatial datasets.
+- **Stage 2 (Contextual Injection)**: Transforming raw JSON into a natural language context for the LLM.
+- **Stage 3 (AI Orchestration)**: Using `Gemini-2.5-Flash` to solve the combinatorial problem of itinerary design.
+- **Stage 4 (Dynamic UI Rendering)**: Mapping a complex AI-generated payload into a vertical timeline interface with deep-linked native GPS actions.
+By integrating disparate state-of-the-art technologies (React Native + Google Maps + Google Generative AI) into one seamless system, this module demonstrates high technical complexity and creativity far beyond a standard feature.
 
 ---
 
-## Team & Acknowledgments
+## ⚙️ Tech Stack
+- **Framework**: React Native / Expo (TS)
+- **Navigation**: Native Stack
+- **APIs**: Google Places, Google Gemini 2.5 Flash
+- **Target**: iOS Only
 
-Built as part of the 42 School Transcendence project.
+```bash
+npm run ios
+```
 
-For questions or support:
-- 📧 Email: [contact info]
-- 💬 Discord: [Discord server link]
-- 🐛 Issues: [GitHub Issues](../../issues)
-
----
-
-**Last Updated:** April 2026
