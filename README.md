@@ -407,7 +407,7 @@ make all
 - Review Places: `http://localhost:4001` (`/reviews*`, `/health`)
 - Fav Places: `http://localhost:4002` (`/fav-places*`, `/health`)
 - Planner: `http://localhost:7000` (`/plan*`, `/plans`, `/health`)
-- Friends: `http://localhost:4003` (REST; WebSockets published as `8181`/`8182` in compose for chat/notifications)
+- Friends: `http://localhost:4003` (REST under `/api/friends`, `/api/chat`, `/api/notifications`; WebSockets `8181`/`8182` in compose for chat/notifications)
 - Swagger UI: `http://localhost:8080`
 - Vault: `http://localhost:${PORT_VAULT}` (default `http://localhost:8200`)
 
@@ -462,7 +462,7 @@ docker compose -f docker-compose.yml build <service_name> --no-cache
 | **review-places** | `http://localhost:4001` | `GET /health`, `GET /reviews`, `GET /reviews/summary`, `POST /reviews/batch`, `POST/PATCH/DELETE /reviews/*` | Reviews + rating aggregates | ✅ |
 | **fav-places** | `http://localhost:4002` | `GET /health`, `GET/POST /fav-places`, `GET /fav-places/check`, `GET /fav-places/public/:userId`, `GET /fav-places/internal/:userId` | Favorites + visited places | ✅ |
 | **planner-service** | `http://localhost:7000` | `GET /health`, `POST /plan/generate`, `GET /plan/:id`, `GET /plans`, `DELETE /plan/:id` | AI trip planning (Gemini) + persistence | ✅ |
-| **friends-service** | `http://localhost:4003` | REST + WebSocket **8181** (chat) / **8182** (notifications) in Docker | Friends, chat token, realtime (see `friendsApi`, `useWebSocket`) | ✅ |
+| **friends-service** | `http://localhost:4003` | `/api/friends/*`, `/api/chat/*`, `/api/notifications/*` + WebSocket **8181** (chat) / **8182** (notifications) in Docker | Friends, chat token, realtime (see `friendsApi`, `useWebSocket`) | ✅ |
 
 ### Planned / evolving
 

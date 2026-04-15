@@ -24,9 +24,9 @@ app.get('/health', (_req, res) =>
   res.json({ status: 'ok', service: 'friends-service' }),
 );
 
-app.use('/friends', friendsRouter);
-app.use('/chat', chatRouter);
-app.use('/notifications', notificationsRouter);
+app.use('/api/friends', friendsRouter);
+app.use('/api/chat', chatRouter);
+app.use('/api/notifications', notificationsRouter);
 app.listen(PORT, () => {
   console.log(`Friends service running on port ${PORT}`);
 });

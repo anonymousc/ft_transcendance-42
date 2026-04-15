@@ -16,7 +16,12 @@ import ChatAvatar from "@/features/chat/components/ChatAvatar";
 import FriendCard from "./FriendCard";
 import FriendProfile from "./FriendProfile";
 import SuggestedCard from "./SuggestedCard";
-import type { Friend, PendingFriendRequest, SuggestedStudent } from "../types";
+import type {
+  Friend,
+  OutgoingFriendRequest,
+  PendingFriendRequest,
+  SuggestedStudent,
+} from "../types";
 import {
   countSharedInterests,
   flattenUserInterests,
@@ -28,6 +33,7 @@ import {
   fetchFriends,
   fetchIncomingRequests,
   fetchOutgoingRequests,
+  mapOutgoingRequestRowsToPending,
   removeFriend,
   sendFriendRequest,
 } from "@/lib/friendsApi";
@@ -46,12 +52,14 @@ function FriendsPage() {
 
   const [friends, setFriends] = useState<Friend[]>([]);
   const [pending, setPending] = useState<PendingFriendRequest[]>([]);
+  const [outgoing, setOutgoing] = useState<OutgoingFriendRequest[]>([]);
   const [outgoingToUserIds, setOutgoingToUserIds] = useState<Set<string>>(
     () => new Set(),
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pendingExpanded, setPendingExpanded] = useState(true);
+  const [outgoingExpanded, setOutgoingExpanded] = useState(true);
   const [search, setSearch] = useState("");
   const [discoverSearch, setDiscoverSearch] = useState("");
   const [discoverHits, setDiscoverHits] = useState<SuggestedStudent[]>([]);
@@ -64,14 +72,16 @@ function FriendsPage() {
     setError(null);
     setLoading(true);
     try {
-      const [friendList, incoming, outgoing] = await Promise.all([
+      const [friendList, incoming, outgoingRows] = await Promise.all([
         fetchFriends(),
         fetchIncomingRequests(),
         fetchOutgoingRequests(),
       ]);
+      const outgoingList = await mapOutgoingRequestRowsToPending(outgoingRows);
       setFriends(friendList);
       setPending(incoming);
-      setOutgoingToUserIds(new Set(outgoing.map((r) => r.toUserId)));
+      setOutgoing(outgoingList);
+      setOutgoingToUserIds(new Set(outgoingList.map((r) => r.toUserId)));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load friends");
     } finally {
@@ -185,14 +195,45 @@ function FriendsPage() {
     }
   }, [refreshIncomingFriendBadge]);
 
-  const handleAddSuggested = useCallback(async (studentId: string) => {
-    try {
-      await sendFriendRequest(studentId);
-      setOutgoingToUserIds((prev) => new Set(prev).add(studentId));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to send friend request");
-    }
+  const refreshOutgoing = useCallback(async () => {
+    const rows = await fetchOutgoingRequests();
+    const list = await mapOutgoingRequestRowsToPending(rows);
+    setOutgoing(list);
+    setOutgoingToUserIds(new Set(list.map((r) => r.toUserId)));
   }, []);
+
+  const handleAddSuggested = useCallback(
+    async (studentId: string) => {
+      try {
+        await sendFriendRequest(studentId);
+        await refreshOutgoing();
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "Failed to send friend request",
+        );
+      }
+    },
+    [refreshOutgoing],
+  );
+
+  const handleCancelOutgoing = useCallback(
+    async (req: OutgoingFriendRequest) => {
+      try {
+        await declineOrCancelRequest(req.id);
+        setOutgoing((prev) => prev.filter((p) => p.id !== req.id));
+        setOutgoingToUserIds((prev) => {
+          const next = new Set(prev);
+          next.delete(req.toUserId);
+          return next;
+        });
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "Failed to cancel friend request",
+        );
+      }
+    },
+    [],
+  );
 
   return (
     <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#1d1d1f]">
@@ -312,6 +353,77 @@ function FriendsPage() {
                             )}
                           >
                             Decline
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            )}
+
+            {outgoing.length > 0 && (
+              <section
+                className={cn(
+                  "mb-8 overflow-hidden rounded-2xl border border-stone-200/80",
+                  "bg-white/90 shadow-sm dark:border-white/10 dark:bg-white/5",
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => setOutgoingExpanded((e) => !e)}
+                  className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left sm:px-5"
+                >
+                  <div>
+                    <p className="text-[15px] font-bold text-stone-900 dark:text-white">
+                      {outgoing.length} outgoing request
+                      {outgoing.length !== 1 ? "s" : ""}
+                    </p>
+                    <p className="text-[12px] text-stone-500 dark:text-stone-400">
+                      Waiting for them to respond
+                    </p>
+                  </div>
+                  {outgoingExpanded ? (
+                    <ChevronUp className="shrink-0 text-stone-400" size={20} />
+                  ) : (
+                    <ChevronDown className="shrink-0 text-stone-400" size={20} />
+                  )}
+                </button>
+                {outgoingExpanded && (
+                  <ul className="space-y-2 px-3 py-3 sm:px-4">
+                    {outgoing.map((req) => (
+                      <li
+                        key={req.id}
+                        className={cn(
+                          "flex flex-wrap items-center gap-3 rounded-xl border border-stone-200/60",
+                          "bg-stone-50/80 px-3 py-3 dark:border-white/8 dark:bg-white/5",
+                        )}
+                      >
+                        <ChatAvatar
+                          src={req.avatar}
+                          name={req.name}
+                          size="md"
+                          isOnline={false}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-semibold text-stone-900 dark:text-white">
+                            {req.name}
+                          </p>
+                          <p className="truncate text-[12px] text-stone-500 dark:text-stone-400">
+                            @{req.username}
+                          </p>
+                        </div>
+                        <div className="flex w-full shrink-0 sm:w-auto">
+                          <button
+                            type="button"
+                            onClick={() => void handleCancelOutgoing(req)}
+                            className={cn(
+                              "w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-[13px] font-semibold",
+                              "text-stone-700 transition-colors hover:bg-stone-50",
+                              "dark:border-white/15 dark:bg-transparent dark:text-stone-200 dark:hover:bg-white/10 sm:w-auto",
+                            )}
+                          >
+                            Cancel request
                           </button>
                         </div>
                       </li>

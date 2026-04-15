@@ -26,7 +26,7 @@ export interface Conversation {
 
 export type ConnectionState = "connecting" | "connected" | "disconnected" | "error";
 
-/** Wire format: server → WsServerEnvelope, client → WsClientSend. Env VITE_WS_URL; token GET /chat/ws-token. */
+/** Wire format: server → WsServerEnvelope, client → WsClientSend. Env VITE_WS_URL; token GET /api/chat/ws-token. */
 
 export interface WsMessagePayload {
   id: string;            // server-assigned permanent message ID

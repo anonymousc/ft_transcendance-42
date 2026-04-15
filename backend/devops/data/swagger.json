@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Rihla backend APIs",
-    "description": "OpenAPI documentation. Friends service runs on port 4003 (host) or `friends:4003` inside Docker Compose.\n\n**WebSocket chat** (port 8181 by default) is in `friends-chat.asyncapi.yaml`. **Notification WebSocket** (port 8182 by default) is in `friends-notifications.asyncapi.yaml`. Open either file from this folder in [AsyncAPI Studio](https://studio.asyncapi.com/) (File → Load file), or mount the same directory in any AsyncAPI viewer.",
+    "description": "OpenAPI documentation. Friends service runs on port 4003 (host) or `friends:4003` inside Docker Compose. HTTP REST is mounted at **`/api/friends`**, **`/api/chat`**, and **`/api/notifications`** (see paths below).\n\n**WebSocket chat** (port 8181 by default) is in `friends-chat.asyncapi.yaml`. **Notification WebSocket** (port 8182 by default) is in `friends-notifications.asyncapi.yaml`. Open either file from this folder in [AsyncAPI Studio](https://studio.asyncapi.com/) (File → Load file), or mount the same directory in any AsyncAPI viewer.",
     "version": "1.0.0"
   },
   "servers": [
@@ -22,11 +22,11 @@
     },
     {
       "name": "Chat",
-      "description": "Direct messages between friends (friends-service, `/chat`)"
+      "description": "Direct messages between friends (friends-service, `/api/chat`)"
     },
     {
       "name": "Notifications",
-      "description": "In-app notifications (friends-service, `/notifications`); real-time delivery on WebSocket port 8182"
+      "description": "In-app notifications (friends-service, `/api/notifications`); real-time delivery on WebSocket port 8182"
     }
   ],
   "components": {
@@ -188,7 +188,7 @@
       },
       "Notification": {
         "type": "object",
-        "description": "Persisted row; `GET /notifications` omits archived notifications.",
+        "description": "Persisted row; `GET /api/notifications` omits archived notifications.",
         "properties": {
           "id": { "type": "string", "description": "Cuid" },
           "userId": { "type": "string" },
@@ -231,7 +231,7 @@
     }
   },
   "paths": {
-    "/friends": {
+    "/api/friends": {
       "get": {
         "tags": ["Friends"],
         "summary": "List friends",
@@ -270,7 +270,7 @@
         }
       }
     },
-    "/friends/{userId}": {
+    "/api/friends/{userId}": {
       "get": {
         "tags": ["Friends"],
         "summary": "Get one friend",
@@ -354,7 +354,7 @@
         }
       }
     },
-    "/friends/requests/incoming": {
+    "/api/friends/requests/incoming": {
       "get": {
         "tags": ["Friends"],
         "summary": "List incoming friend requests",
@@ -392,7 +392,7 @@
         }
       }
     },
-    "/friends/requests/outgoing": {
+    "/api/friends/requests/outgoing": {
       "get": {
         "tags": ["Friends"],
         "summary": "List outgoing friend requests",
@@ -430,7 +430,7 @@
         }
       }
     },
-    "/friends/requests": {
+    "/api/friends/requests": {
       "post": {
         "tags": ["Friends"],
         "summary": "Send friend request",
@@ -492,7 +492,7 @@
         }
       }
     },
-    "/friends/requests/{requestId}/accept": {
+    "/api/friends/requests/{requestId}/accept": {
       "post": {
         "tags": ["Friends"],
         "summary": "Accept friend request",
@@ -534,7 +534,7 @@
         }
       }
     },
-    "/friends/requests/{requestId}": {
+    "/api/friends/requests/{requestId}": {
       "delete": {
         "tags": ["Friends"],
         "summary": "Cancel or decline friend request",
@@ -577,7 +577,7 @@
         }
       }
     },
-    "/chat/conversations": {
+    "/api/chat/conversations": {
       "get": {
         "tags": ["Chat"],
         "summary": "List my conversations",
@@ -674,7 +674,7 @@
         }
       }
     },
-    "/chat/conversations/{conversationId}/messages": {
+    "/api/chat/conversations/{conversationId}/messages": {
       "get": {
         "tags": ["Chat"],
         "summary": "List messages in a conversation",
@@ -813,7 +813,7 @@
         }
       }
     },
-    "/notifications": {
+    "/api/notifications": {
       "get": {
         "tags": ["Notifications"],
         "summary": "List notifications",
@@ -852,7 +852,7 @@
         }
       }
     },
-    "/notifications/read": {
+    "/api/notifications/read": {
       "patch": {
         "tags": ["Notifications"],
         "summary": "Mark one notification read",
@@ -913,7 +913,7 @@
         }
       }
     },
-    "/notifications/readAll": {
+    "/api/notifications/readAll": {
       "patch": {
         "tags": ["Notifications"],
         "summary": "Mark all notifications read",
@@ -949,11 +949,11 @@
         }
       }
     },
-    "/notifications/archive": {
+    "/api/notifications/archive": {
       "patch": {
         "tags": ["Notifications"],
         "summary": "Archive a notification",
-        "description": "Hides the row from `GET /notifications` and emits `notification_archived` on the notification WebSocket. Query `id` required.",
+        "description": "Hides the row from `GET /api/notifications` and emits `notification_archived` on the notification WebSocket. Query `id` required.",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
