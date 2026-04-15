@@ -13,7 +13,7 @@
     isolation: isolate;
 }
 
-/* Liquid glass header surface */
+/* Liquid glass header surface
 .home-nav::before {
     content: "";
     position: absolute;
@@ -41,7 +41,7 @@
     filter: blur(18px);
     opacity: 0.55;
     animation: homeNavSheen 10s ease-in-out infinite;
-}
+} */
 
 @keyframes homeNavSheen {
     0% { transform: translate3d(-4%, -2%, 0) rotate(-6deg); }
@@ -63,7 +63,7 @@
 
 /* Home video: lighter glass so the video reads through */
 .home-nav.home-nav--home-video::before {
-    background: rgba(10, 10, 12, 0.28);
+    /* background: rgba(10, 10, 12, 0.28); */
     border-bottom: 1px solid rgba(255, 255, 255, 0.10);
     box-shadow:
         0 10px 30px rgba(0, 0, 0, 0.30),

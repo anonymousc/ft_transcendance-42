@@ -45,10 +45,21 @@ async function generateTripPlan({
 
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    throw new Error('Gemini returned no valid JSON in response');
+    const preview = String(text).slice(0, 280).replace(/\s+/g, ' ').trim();
+    throw new Error(
+      `Gemini returned no JSON object (expected a single {...} trip plan). Preview: ${preview}`,
+    );
   }
 
-  const plan = JSON.parse(jsonMatch[0]);
+  let plan;
+  try {
+    plan = JSON.parse(jsonMatch[0]);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new Error(
+      `Gemini JSON was not parseable (${msg}). Snippet: ${jsonMatch[0].slice(0, 200)}`,
+    );
+  }
 
   if (!plan.days || !Array.isArray(plan.days)) {
     throw new Error('Gemini response missing required "days" array');

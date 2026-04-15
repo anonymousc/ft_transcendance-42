@@ -5,7 +5,7 @@ import GlassSearchBar from "./GlassSearchBar";
 import GlassCalendar from "./GlassCalendar";
 import { useAuth } from "../../context/AuthContext";
 import "./TripPlannerBar.css";
-import { resolveGatewayUrl } from "@/lib/api";
+import { parseApiJson, resolveGatewayUrl } from "@/lib/api";
 
 const PLANNER_URL = resolveGatewayUrl(
   import.meta.env.VITE_PLANNER_URL as string | undefined,
@@ -165,7 +165,8 @@ function TripPlannerBar({
         }),
       });
 
-      const data = await res.json();
+      const raw = await parseApiJson(res);
+      const data = raw as { ok?: boolean; error?: { message?: string }; data?: TripPlan };
 
       if (!data.ok) {
         throw new Error(data.error?.message ?? "Failed to generate plan");
