@@ -1,4 +1,4 @@
-This project has been created as part of the 42 curriculum by iouhssei, , ,
+This project has been created as part of the 42 curriculum by iouhssei, mel-rhay, ,
 
 # Rihla — Student Travel Platform for Morocco
 
@@ -365,14 +365,14 @@ Defined and led the product vision of *Rihla*, a travel discovery platform built
 
 ---
 
-### Amine El (<intra_un>)  
+### Amine Essadiki (aessadik)  
 **Roles:** Tech Lead, DevOps Engineer  
 **Description:**  
 Led the infrastructure and DevOps strategy, ensuring scalability, reliability, and security across services. Designed and maintained CI/CD pipelines, containerized services (Docker), and managed deployment workflows. Oversaw system architecture decisions and performance optimization.
 
 ---
 
-### Hamid El (<intra_us>)  
+### Mohammed El Rhayour (mel-rhay)  
 **Roles:** Tech Lead, Backend Developer  
 **Description:**  
 Architected and developed core backend services using a microservices approach. Designed APIs, handled business logic, and ensured system consistency and performance. Collaborated closely on authentication, data models, and service communication.
