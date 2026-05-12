@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import "./RegisterPage.css";
-import SigninOuth from "../../../components/shared/SigninOuth";
 import passportOverlay from '../../../assets/PassportOverlay.png';
 import RegisterForm from '../../../components/RegisterForm';
 import GlassCard from '../../../components/glassCard';
 import BackArrow from '../../../components/shared/BackArrow';
 import { useAuth } from '../../../context/AuthContext';
-import { API_BASE_URL } from '../../../lib/api';
 import { needsInterestsOnboarding } from '../../../lib/interestsOnboarding';
 
 function RegisterPage() {
@@ -40,14 +38,6 @@ function RegisterPage() {
         }
     };
 
-    const handleGoogleLogin = (): void => {
-        window.location.href = `${API_BASE_URL}/auth/google`;
-    };
-
-    const handleFortyTwoLogin = (): void => {
-        window.location.href = `${API_BASE_URL}/auth/42`;
-    };
-
     return (
         <main className="register-page">
             <BackArrow />
@@ -61,9 +51,8 @@ function RegisterPage() {
                     <RegisterForm handleSubmit={handleSubmit} submitting={submitting} />
                     <div className="oauth-section">
                         <p className="text-sm font-normal text-gray-600 dark:text-gray-400">
-                            Or sign up with :
+                            OAuth sign-up is currently disabled.
                         </p>
-                        <SigninOuth onGoogleLogin={handleGoogleLogin} onFortyTwoLogin={handleFortyTwoLogin} />
                     </div>
                 </div>
                 <GlassCard imageOverlay={passportOverlay} />

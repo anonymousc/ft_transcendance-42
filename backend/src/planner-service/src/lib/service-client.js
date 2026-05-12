@@ -1,5 +1,5 @@
-const FAV_PLACES_URL = process.env.FAV_PLACES_URL || 'http://localhost:4002';
-const REVIEW_PLACES_URL = process.env.REVIEW_PLACES_URL || 'http://localhost:4001';
+const FAV_PLACES_URL = process.env.FAV_PLACES_URL || 'http://137.184.159.183:4002';
+const REVIEW_PLACES_URL = process.env.REVIEW_PLACES_URL || 'http://137.184.159.183:4001';
 
 async function fetchUserFavorites(userId, city) {
   try {

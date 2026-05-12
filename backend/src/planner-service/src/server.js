@@ -13,7 +13,7 @@ const app = express();
 const PORT = process.env.PORT_PLAN || 7000;
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://localhost',
+  origin: process.env.FRONTEND_URL || 'https://rihla.tech',
   credentials: true,
 }));
 app.use(express.json());

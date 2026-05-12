@@ -23,33 +23,33 @@ export function getMicroserviceTargets(): MicroserviceTarget[] {
       id: 'ai-places',
       label: 'ai-places-service',
       baseUrl:
-        (import.meta.env.VITE_AI_PLACES_URL as string) || 'https://localhost',
+        (import.meta.env.VITE_AI_PLACES_URL as string) || 'https://rihla.tech',
     },
     {
       id: 'review-places',
       label: 'review-places',
       baseUrl:
         (import.meta.env.VITE_REVIEW_PLACES_URL as string) ||
-        'https://localhost',
+        'https://rihla.tech',
     },
     {
       id: 'fav-places',
       label: 'fav-places',
       baseUrl:
         (import.meta.env.VITE_FAV_PLACES_URL as string) ||
-        'https://localhost',
+        'https://rihla.tech',
     },
     {
       id: 'planner',
       label: 'planner-service',
       baseUrl:
-        (import.meta.env.VITE_PLANNER_URL as string) || 'https://localhost',
+        (import.meta.env.VITE_PLANNER_URL as string) || 'https://rihla.tech',
     },
     {
       id: 'friends',
       label: 'friends-service',
       baseUrl:
-        (import.meta.env.VITE_FRIENDS_URL as string) || 'https://localhost',
+        (import.meta.env.VITE_FRIENDS_URL as string) || 'https://rihla.tech',
     },
   ];
 }

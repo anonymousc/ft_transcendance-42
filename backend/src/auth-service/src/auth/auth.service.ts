@@ -6,450 +6,41 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
-import { SignupDto, SigninDto, ChangePasswordDto } from './dto';
+import { SignupDto, SigninDto } from './dto';
+import type { Profile, User } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { createHash, randomBytes } from 'crypto';
+import { MailService } from './mail.service';
 
-interface GoogleUser {
-  provider: string;
-  providerAccountId: string;
+export type SessionUserDto = {
+  id: string;
   email: string;
-  displayName: string;
-  avatar: string;
-  accessToken: string;
-  refreshToken: string;
-  expiresIn?: number;
-}
-
-interface FortyTwoUser {
-  provider: string;
-  providerAccountId: string;
-  email: string;
-  displayName: string;
-  avatar: string;
-  accessToken: string;
-  refreshToken?: string;
-  expiresIn?: number;
-}
-
-type OAuthLinkPayload = { userId: string; provider: 'google' | '42' };
+  displayName: string | null;
+  username: string | null;
+  avatar: string | null;
+  bio: string | null;
+  status: string;
+  interests: unknown;
+};
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
   ) {}
-
-  verifyAccessTokenOrThrow(token: string): { sub: string; email: string } {
-    try {
-      const payload = this.jwtService.verify<{
-        sub?: string;
-        email?: string;
-        purpose?: string;
-      }>(token);
-      if (payload.purpose === 'oauth_link' || !payload.sub) {
-        throw new UnauthorizedException('Invalid session token');
-      }
-      return { sub: payload.sub, email: payload.email ?? '' };
-    } catch {
-      throw new UnauthorizedException('Invalid or expired session');
-    }
+  private hashToken(token: string) {
+    return createHash('sha256').update(token).digest('hex');
   }
 
-  signOAuthLinkState(userId: string, provider: 'google' | '42'): string {
-    return this.jwtService.sign(
-      { purpose: 'oauth_link', provider, sub: userId },
-      { expiresIn: '10m' },
-    );
+  private getVerificationExpiry() {
+    const hours = Number(process.env.EMAIL_VERIFY_TTL_HOURS || 24);
+    return new Date(Date.now() + hours * 60 * 60 * 1000);
   }
 
-  tryParseOAuthLinkState(
-    state: string | undefined,
-  ): OAuthLinkPayload | null {
-    if (!state?.trim()) return null;
-    try {
-      const payload = this.jwtService.verify<{
-        purpose?: string;
-        provider?: string;
-        sub?: string;
-      }>(state);
-      if (payload.purpose !== 'oauth_link' || !payload.sub) return null;
-      if (payload.provider !== 'google' && payload.provider !== '42') {
-        return null;
-      }
-      return { userId: payload.sub, provider: payload.provider };
-    } catch {
-      return null;
-    }
-  }
-
-  async linkGoogleAccount(linkUserId: string, googleUser: GoogleUser) {
-    const {
-      provider,
-      providerAccountId,
-      email,
-      accessToken,
-      refreshToken,
-      expiresIn,
-    } = googleUser;
-
-    if (!email?.trim()) {
-      throw new BadRequestException('Google account has no email; cannot link');
-    }
-
-    const expiresAt = Math.floor(Date.now() / 1000) + (expiresIn ?? 3600);
-
-    const existingByProvider = await this.prisma.account.findUnique({
-      where: { provider_providerAccountId: { provider, providerAccountId } },
-    });
-
-    if (existingByProvider && existingByProvider.userId !== linkUserId) {
-      throw new ConflictException(
-        'This Google account is already linked to another user',
-      );
-    }
-
-    const otherGoogle = await this.prisma.account.findFirst({
-      where: { userId: linkUserId, provider: 'google' },
-    });
-    if (
-      otherGoogle &&
-      otherGoogle.providerAccountId !== providerAccountId
-    ) {
-      throw new ConflictException(
-        'Another Google account is already linked to this profile',
-      );
-    }
-
-    await this.prisma.account.upsert({
-      where: { provider_providerAccountId: { provider, providerAccountId } },
-      update: {
-        userId: linkUserId,
-        accessToken,
-        refreshToken: refreshToken ?? undefined,
-        expiresAt,
-      },
-      create: {
-        userId: linkUserId,
-        provider,
-        providerAccountId,
-        accessToken,
-        refreshToken,
-        expiresAt,
-      },
-    });
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: linkUserId },
-      include: { profile: true },
-    });
-    if (!user) {
-      throw new BadRequestException('User not found while linking Google');
-    }
-    return user;
-  }
-
-  async linkFortyTwoAccount(linkUserId: string, fortyTwoUser: FortyTwoUser) {
-    const {
-      provider,
-      providerAccountId,
-      email,
-      accessToken,
-      refreshToken,
-      expiresIn,
-    } = fortyTwoUser;
-
-    if (!email?.trim()) {
-      throw new BadRequestException('42 account has no email; cannot link');
-    }
-
-    const expiresAt = Math.floor(Date.now() / 1000) + (expiresIn ?? 7200);
-
-    const existingByProvider = await this.prisma.account.findUnique({
-      where: { provider_providerAccountId: { provider, providerAccountId } },
-    });
-
-    if (existingByProvider && existingByProvider.userId !== linkUserId) {
-      throw new ConflictException(
-        'This 42 account is already linked to another user',
-      );
-    }
-
-    const other42 = await this.prisma.account.findFirst({
-      where: { userId: linkUserId, provider: '42' },
-    });
-    if (other42 && other42.providerAccountId !== providerAccountId) {
-      throw new ConflictException(
-        'Another 42 account is already linked to this profile',
-      );
-    }
-
-    await this.prisma.account.upsert({
-      where: { provider_providerAccountId: { provider, providerAccountId } },
-      update: {
-        userId: linkUserId,
-        accessToken,
-        refreshToken: refreshToken ?? undefined,
-        expiresAt,
-      },
-      create: {
-        userId: linkUserId,
-        provider,
-        providerAccountId,
-        accessToken,
-        refreshToken: refreshToken ?? null,
-        expiresAt,
-      },
-    });
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: linkUserId },
-      include: { profile: true },
-    });
-    if (!user) {
-      throw new BadRequestException('User not found while linking 42');
-    }
-    return user;
-  }
-
-  async validateGoogleUser(googleUser: GoogleUser) {
-    const {
-      provider,
-      providerAccountId,
-      email,
-      displayName,
-      avatar,
-      accessToken,
-      refreshToken,
-      expiresIn,
-    } = googleUser;
-
-    const expiresAt = Math.floor(Date.now() / 1000) + (expiresIn ?? 3600);
-
-    const existingAccount = await this.prisma.account.findUnique({
-      where: { provider_providerAccountId: { provider, providerAccountId } },
-      include: { user: { include: { profile: true } } },
-    });
-
-    let userId: string;
-
-    if (existingAccount) {
-      userId = existingAccount.userId;
-    } else {
-      let user = await this.prisma.user.findUnique({
-        where: { email },
-        include: { profile: true },
-      });
-
-      if (!user) {
-        user = await this.prisma.user.create({
-          data: {
-            email,
-            isEmailVerified: true,
-            profile: {
-              create: {
-                username: email.split('@')[0] + '_' + Date.now().toString(36),
-                displayName: displayName || email.split('@')[0],
-                avatar: avatar || null,
-              },
-            },
-          },
-          include: { profile: true },
-        });
-      }
-
-      userId = user.id;
-    }
-
-    await this.prisma.account.upsert({
-      where: { provider_providerAccountId: { provider, providerAccountId } },
-      update: {
-        accessToken,
-        refreshToken: refreshToken ?? undefined,
-        expiresAt,
-      },
-      create: {
-        userId,
-        provider,
-        providerAccountId,
-        accessToken,
-        refreshToken,
-        expiresAt,
-      },
-    });
-
-    if (existingAccount && avatar && existingAccount.user.profile?.avatar !== avatar) {
-      await this.prisma.profile.update({
-        where: { userId: existingAccount.user.id },
-        data: { avatar },
-      });
-    }
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: { profile: true },
-    });
-
-    if (!user) {
-      throw new BadRequestException('Failed to resolve user after Google sign-in');
-    }
-
-    return user;
-  }
-
-  async validateFortyTwoUser(fortyTwoUser: FortyTwoUser) {
-    const {
-      provider,
-      providerAccountId,
-      email,
-      displayName,
-      avatar,
-      accessToken,
-      refreshToken,
-      expiresIn,
-    } = fortyTwoUser;
-
-    if (!email?.trim()) {
-      throw new BadRequestException('42 account has no email; cannot complete sign-in');
-    }
-
-    const expiresAt = Math.floor(Date.now() / 1000) + (expiresIn ?? 7200);
-
-    const existingAccount = await this.prisma.account.findUnique({
-      where: { provider_providerAccountId: { provider, providerAccountId } },
-      include: { user: { include: { profile: true } } },
-    });
-
-    let userId: string;
-
-    if (existingAccount) {
-      userId = existingAccount.userId;
-    } else {
-      let user = await this.prisma.user.findUnique({
-        where: { email },
-        include: { profile: true },
-      });
-
-      if (!user) {
-        user = await this.prisma.user.create({
-          data: {
-            email,
-            isEmailVerified: true,
-            profile: {
-              create: {
-                username: email.split('@')[0] + '_' + Date.now().toString(36),
-                displayName: displayName || email.split('@')[0],
-                avatar: avatar || null,
-              },
-            },
-          },
-          include: { profile: true },
-        });
-      }
-
-      userId = user.id;
-    }
-
-    await this.prisma.account.upsert({
-      where: { provider_providerAccountId: { provider, providerAccountId } },
-      update: {
-        accessToken,
-        refreshToken: refreshToken ?? undefined,
-        expiresAt,
-      },
-      create: {
-        userId,
-        provider,
-        providerAccountId,
-        accessToken,
-        refreshToken: refreshToken ?? null,
-        expiresAt,
-      },
-    });
-
-    if (existingAccount && avatar && existingAccount.user.profile?.avatar !== avatar) {
-      await this.prisma.profile.update({
-        where: { userId: existingAccount.user.id },
-        data: { avatar },
-      });
-    }
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: { profile: true },
-    });
-
-    if (!user) {
-      throw new BadRequestException('Failed to resolve user after 42 sign-in');
-    }
-
-    return user;
-  }
-
-  async getValidGoogleAccessToken(userId: string): Promise<string> {
-    const account = await this.prisma.account.findFirst({
-      where: { userId, provider: 'google' },
-    });
-
-    if (!account?.accessToken) {
-      throw new Error(
-        'No Google account linked. Please sign in with Google to use calendar export.',
-      );
-    }
-
-    if (
-      account.expiresAt != null &&
-      account.expiresAt * 1000 > Date.now() + 60_000
-    ) {
-      return account.accessToken;
-    }
-
-    if (!account.refreshToken) {
-      throw new Error(
-        'No Google account linked. Please sign in with Google to use calendar export.',
-      );
-    }
-
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    if (!clientId || !clientSecret) {
-      throw new Error('Google token refresh failed. Please reconnect your Google account.');
-    }
-
-    const body = new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      refresh_token: account.refreshToken,
-      grant_type: 'refresh_token',
-    });
-
-    const res = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString(),
-    });
-
-    const json = (await res.json()) as {
-      access_token?: string;
-      expires_in?: number;
-      error?: string;
-    };
-
-    if (!res.ok || !json.access_token) {
-      throw new Error('Google token refresh failed. Please reconnect your Google account.');
-    }
-
-    const newExpiresAt = Math.floor(Date.now() / 1000) + (json.expires_in ?? 3600);
-
-    await this.prisma.account.update({
-      where: { id: account.id },
-      data: {
-        accessToken: json.access_token,
-        expiresAt: newExpiresAt,
-      },
-    });
-
-    return json.access_token;
+  private isAutoVerifyEnabled() {
+    return (process.env.EMAIL_VERIFY_AUTO || '').toLowerCase() === 'true';
   }
 
   generateJwt(user: { id: string; email: string }) {
@@ -457,68 +48,35 @@ export class AuthService {
     return this.jwtService.sign(payload);
   }
 
-  async getMe(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: { profile: true },
-    });
-    if (!user) return null;
+  private sessionUserDto(user: User & { profile: Profile | null }): SessionUserDto {
+    const p = user.profile;
     return {
       id: user.id,
       email: user.email,
-      displayName: user.profile?.displayName || null,
-      username: user.profile?.username || null,
-      avatar: user.profile?.avatar || null,
-      bio: user.profile?.bio || null,
-      status: user.profile?.status || 'offline',
-      interests: user.profile?.interests ?? null,
-      hasPassword: !!user.hashPassword,
+      username: p?.username ?? null,
+      displayName: p?.displayName ?? null,
+      avatar: p?.avatar ?? null,
+      bio: p?.bio ?? null,
+      status: p?.status ?? 'offline',
+      interests: p?.interests ?? null,
     };
   }
 
-  async changePassword(userId: string, dto: ChangePasswordDto) {
+  async getMeFromAccessToken(token: string): Promise<SessionUserDto> {
+    let payload: { sub: string };
+    try {
+      payload = await this.jwtService.verifyAsync<{ sub: string }>(token);
+    } catch {
+      throw new UnauthorizedException('Invalid or expired session');
+    }
     const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: payload.sub },
+      include: { profile: true },
     });
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
-    if (!user.hashPassword) {
-      throw new BadRequestException(
-        'This account has no password. Sign in with your linked provider instead.',
-      );
-    }
-    const currentOk = await argon2.verify(
-      user.hashPassword,
-      dto.currentPassword,
-    );
-    if (!currentOk) {
-      throw new UnauthorizedException('Current password is incorrect');
-    }
-    if (dto.newPassword === dto.currentPassword) {
-      throw new BadRequestException(
-        'New password must be different from your current password',
-      );
-    }
-    const newHash = await argon2.hash(dto.newPassword);
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { hashPassword: newHash },
-    });
-    return { ok: true };
-  }
-
-  /** OAuth provider ids stored on `Account.provider` (see strategies). */
-  async getLinkedOAuthProviders(userId: string): Promise<string[]> {
-    const rows = await this.prisma.account.findMany({
-      where: {
-        userId,
-        provider: { in: ['google', '42'] },
-      },
-      select: { provider: true },
-      distinct: ['provider'],
-    });
-    return rows.map((r) => r.provider);
+    return this.sessionUserDto(user);
   }
 
   async signup(dto: SignupDto) {
@@ -533,11 +91,13 @@ export class AuthService {
     const hashPassword = await argon2.hash(dto.password);
     const displayName = `${dto.firstName} ${dto.lastName}`;
 
+    const autoVerify = this.isAutoVerifyEnabled();
+
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
         hashPassword,
-        isEmailVerified: false,
+        isEmailVerified: autoVerify,
         accounts: {
           create: { provider: 'local', providerAccountId: dto.email },
         },
@@ -548,16 +108,35 @@ export class AuthService {
       include: { profile: true },
     });
 
-    const token = this.generateJwt(user);
+    if (!autoVerify) {
+      const token = randomBytes(32).toString('hex');
+      const tokenHash = this.hashToken(token);
+
+      await this.prisma.emailVerification.deleteMany({
+        where: { userId: user.id },
+      });
+
+      await this.prisma.emailVerification.create({
+        data: {
+          userId: user.id,
+          tokenHash,
+          expiresAt: this.getVerificationExpiry(),
+        },
+      });
+
+      await this.mailService.sendVerificationEmail(
+        user.email,
+        token,
+        user.profile?.displayName || displayName,
+      );
+    }
+
+    const accessToken = this.generateJwt(user);
 
     return {
-      accessToken: token,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.profile?.username,
-        displayName: user.profile?.displayName,
-      },
+      accessToken,
+      user: this.sessionUserDto(user),
+      verificationSent: !autoVerify,
     };
   }
 
@@ -572,9 +151,7 @@ export class AuthService {
     }
 
     if (!user.hashPassword) {
-      throw new BadRequestException(
-        'This account was created via OAuth. Please sign in with your OAuth provider.',
-      );
+      throw new BadRequestException('This account has no password set');
     }
 
     const isPasswordValid = await argon2.verify(user.hashPassword, dto.password);
@@ -582,16 +159,47 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const token = this.generateJwt(user);
+    if (!user.isEmailVerified) {
+      if (this.isAutoVerifyEnabled()) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { isEmailVerified: true },
+        });
+      } else {
+        if (!dto.verificationToken?.trim()) {
+          throw new BadRequestException('Email is not verified');
+        }
+
+        const tokenHash = this.hashToken(dto.verificationToken.trim());
+        const verification = await this.prisma.emailVerification.findFirst({
+          where: {
+            userId: user.id,
+            tokenHash,
+            expiresAt: { gt: new Date() },
+          },
+        });
+
+        if (!verification) {
+          throw new UnauthorizedException('Invalid or expired verification token');
+        }
+
+        await this.prisma.$transaction([
+          this.prisma.user.update({
+            where: { id: user.id },
+            data: { isEmailVerified: true },
+          }),
+          this.prisma.emailVerification.deleteMany({
+            where: { userId: user.id },
+          }),
+        ]);
+      }
+    }
+
+    const accessToken = this.generateJwt(user);
 
     return {
-      accessToken: token,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.profile?.username,
-        displayName: user.profile?.displayName,
-      },
+      accessToken,
+      user: this.sessionUserDto(user),
     };
   }
 }

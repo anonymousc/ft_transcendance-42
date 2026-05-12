@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 4003;
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'https://localhost',
+    origin: process.env.FRONTEND_URL || 'https://rihla.tech',
     credentials: true,
   }),
 );

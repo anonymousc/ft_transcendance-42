@@ -201,7 +201,7 @@ function SettingsPage() {
           </div>
         </div>
 
-        <div className="settings-section">
+        {/* <div className="settings-section">
           <p className="settings-section-title">Connected Accounts</p>
 
           <div
@@ -261,7 +261,7 @@ function SettingsPage() {
               )}
             </div>
           </div>
-        </div>
+        </div> */}
 
         <div className="settings-section">
           <p className="settings-section-title">Preferences</p>

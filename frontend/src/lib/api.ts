@@ -1,4 +1,4 @@
-const GATEWAY_ORIGIN = 'https://localhost';
+const GATEWAY_ORIGIN = 'https://rihla.tech';
 const LOCAL_HTTP_RE = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/;
 const LOCAL_WS_RE = /^wss?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/.*)?$/;
 
@@ -14,8 +14,8 @@ export function resolveGatewayWebSocketUrl(
   path = '/ws',
 ): string {
   const raw = (value ?? '').trim();
-  if (!raw) return `wss://localhost${path}`;
-  if (LOCAL_WS_RE.test(raw)) return `wss://localhost${path}`;
+  if (!raw) return `wss://137.184.159.183${path}`;
+  if (LOCAL_WS_RE.test(raw)) return `wss://137.184.159.183${path}`;
   return raw;
 }
 
@@ -26,21 +26,6 @@ export const API_BASE_URL = resolveGatewayUrl(
 export const PROFILES_BASE_URL = resolveGatewayUrl(
   import.meta.env.VITE_PROFILES_URL as string | undefined,
 );
-
-let cachedCsrfToken: string | null = null;
-
-export async function ensureCsrfToken(): Promise<string> {
-  if (cachedCsrfToken) return cachedCsrfToken;
-  const res = await fetch(`${API_BASE_URL}/auth/csrf`, { credentials: 'include' });
-  const data = (await res.json().catch(() => ({}))) as { csrfToken?: string };
-  if (!res.ok || !data.csrfToken) throw new Error('Failed to get CSRF token');
-  cachedCsrfToken = data.csrfToken;
-  return cachedCsrfToken;
-}
-
-export function clearCachedCsrfToken() {
-  cachedCsrfToken = null;
-}
 
 /**
  * Read response body as text and parse JSON. Avoids `res.json()` throwing
@@ -55,7 +40,7 @@ export async function parseApiJson(res: Response): Promise<unknown> {
     const hint =
       res.status >= 500
         ? ' Planner may be down or the gateway returned an error page.'
-        : ' Check that the URL hits the API (e.g. /plan/... under https://localhost), not the SPA.';
+        : ' Check that the URL hits the API (e.g. /plan/... under https://rihla.tech), not the SPA.';
     throw new Error(
       `Server returned HTML instead of JSON (HTTP ${res.status}).${hint}`,
     );

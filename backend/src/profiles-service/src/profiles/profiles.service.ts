@@ -8,28 +8,42 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 export class ProfilesService {
   constructor(private prisma: PrismaService) {}
 
+  private normalizeInterests(raw: any) {
+    const base = { hobbies: [], activities: [], foods: [], topics: [], travelStyle: [] };
+    if (!raw || typeof raw !== 'object') return base;
+    return {
+      hobbies: Array.isArray(raw.hobbies) ? raw.hobbies : base.hobbies,
+      activities: Array.isArray(raw.activities) ? raw.activities : base.activities,
+      foods: Array.isArray(raw.foods) ? raw.foods : base.foods,
+      topics: Array.isArray(raw.topics) ? raw.topics : base.topics,
+      travelStyle: Array.isArray(raw.travelStyle) ? raw.travelStyle : base.travelStyle,
+    };
+  }
+
   async getOrCreateProfileForUser(userId: string) {
     const existing = await this.prisma.profile.findUnique({ where: { userId } });
-    if (existing) return existing;
-    return this.prisma.profile.create({
+    if (existing) return { ...existing, interests: this.normalizeInterests(existing.interests) };
+    const created = await this.prisma.profile.create({
       data: {
         userId,
         username: `user_${userId.slice(0, 8)}`,
         bio: null,
       },
     });
+    return { ...created, interests: this.normalizeInterests(created.interests) };
   }
 
   async updateProfileForUser(userId: string, dto: UpdateProfileDto) {
     await this.getOrCreateProfileForUser(userId);
     try {
-      return await this.prisma.profile.update({
+      const updated = await this.prisma.profile.update({
         where: { userId },
         data: {
           username: dto.name,
           bio: dto.description,
         },
       });
+      return { ...updated, interests: this.normalizeInterests(updated.interests) };
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new ConflictException('Username is already taken');
@@ -41,17 +55,19 @@ export class ProfilesService {
   async patchProfileForUser(userId: string, dto: PatchProfileDto) {
     await this.getOrCreateProfileForUser(userId);
     if (dto.interests === undefined) {
-      return this.prisma.profile.findUniqueOrThrow({ where: { userId } });
+      const row = await this.prisma.profile.findUniqueOrThrow({ where: { userId } });
+      return { ...row, interests: this.normalizeInterests(row.interests) };
     }
-    return this.prisma.profile.update({
+    const updated = await this.prisma.profile.update({
       where: { userId },
       data: { interests: dto.interests as object },
     });
+    return { ...updated, interests: this.normalizeInterests(updated.interests) };
   }
 
   async searchProfilesForUser(currentUserId: string, q: string, limit: number) {
     const take = Math.min(Math.max(limit, 1), 25);
-    return this.prisma.profile.findMany({
+    const rows = await this.prisma.profile.findMany({
       where: {
         NOT: { userId: currentUserId },
         OR: [
@@ -70,5 +86,6 @@ export class ProfilesService {
         interests: true,
       },
     });
+    return rows.map((r) => ({ ...r, interests: this.normalizeInterests(r.interests) }));
   }
 }

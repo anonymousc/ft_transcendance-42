@@ -40,5 +40,23 @@ rm -f /tmp/db_data /tmp/auth_data
 echo "[auth-service] Running Prisma migrations..."
 npx prisma migrate deploy
 
+echo "[auth-service] Generating Prisma client..."
+npx prisma generate
+
+if [ "${SEED_DEMO:-}" = "true" ]; then
+  echo "[auth-service] Seeding demo user..."
+  # Prefer compiled JS seed if available (use absolute paths)
+  if [ -f /app/scripts-compiled/seed-faker.js ]; then
+    node /app/scripts-compiled/seed-faker.js
+  else
+    # Try ESM-aware ts-node first, fall back to regular ts-node
+    if npx ts-node-esm /app/scripts/seed-faker.ts 2>/dev/null; then
+      :
+    else
+      npx ts-node /app/scripts/seed-faker.ts
+    fi
+  fi
+fi
+
 echo "[auth-service] Starting server on port ${AUTH_PORT:-3001}..."
 exec node dist/main

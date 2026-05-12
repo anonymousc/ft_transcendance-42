@@ -67,7 +67,7 @@ export const privacyPolicy: PrivacyPolicyDocument = {
         },
         {
           subtitle: 'Safety & Security',
-          text: 'We analyze usage patterns to detect fraud, abuse, and unauthorized access. CSRF tokens and JWT authentication protect every session.',
+          text: 'We analyze usage patterns to detect fraud, abuse, and unauthorized access. JWT authentication protects every session.',
         },
       ],
     },
@@ -116,7 +116,7 @@ export const privacyPolicy: PrivacyPolicyDocument = {
       blocks: [
         {
           subtitle: 'Technical Safeguards',
-          text: 'Passwords are hashed with Argon2. Sessions use HTTP-only cookies with CSRF protection. All inter-service communication is authenticated via JWT. Secrets are managed through HashiCorp Vault.',
+          text: 'Passwords are hashed with Argon2. Sessions use HTTP-only cookies. All inter-service communication is authenticated via JWT. Secrets are managed through HashiCorp Vault.',
         },
         {
           subtitle: 'Data Minimization',
@@ -135,7 +135,7 @@ export const privacyPolicy: PrivacyPolicyDocument = {
       blocks: [
         {
           subtitle: 'Essential Cookies',
-          text: 'We use HTTP-only cookies to store your authentication token and a readable CSRF token required for account security. These are strictly necessary for the platform to function.',
+          text: 'We use HTTP-only cookies to store your authentication token. These are strictly necessary for the platform to function.',
         },
         {
           subtitle: 'No Tracking Cookies',

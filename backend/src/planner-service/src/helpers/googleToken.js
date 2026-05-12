@@ -1,4 +1,4 @@
-const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'https://localhost';
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'https://rihla.tech';
 
 function extractAuthErrorMessage(data) {
   if (!data || typeof data !== 'object') return null;

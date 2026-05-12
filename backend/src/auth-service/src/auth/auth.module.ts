@@ -1,19 +1,13 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { GoogleStrategy } from './strategies/google.strategy';
-import { FortyTwoStrategy } from './strategies/fortytwo.strategy';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { GoogleOAuthLinkGuard } from './guards/google-oauth-link.guard';
-import { FortyTwoOAuthLinkGuard } from './guards/fortytwo-oauth-link.guard';
+import { MailService } from './mail.service';
 import { PrismaService } from '../prisma.service';
 
 @Module({
   imports: [
-    PassportModule.register({ defaultStrategy: 'google' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -28,11 +22,7 @@ import { PrismaService } from '../prisma.service';
   controllers: [AuthController],
   providers: [
     AuthService,
-    GoogleStrategy,
-    FortyTwoStrategy,
-    JwtStrategy,
-    GoogleOAuthLinkGuard,
-    FortyTwoOAuthLinkGuard,
+    MailService,
     PrismaService,
   ],
   exports: [AuthService],

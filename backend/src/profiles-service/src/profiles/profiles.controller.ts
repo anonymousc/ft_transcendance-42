@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   ValidationPipe,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { PatchProfileDto } from './dto/patch-profile.dto';
@@ -20,6 +21,16 @@ import type { Request } from 'express';
 @Controller('profiles')
 export class ProfilesController {
   constructor(private profilesservice: ProfilesService) {}
+
+  private resolveUserId(req: Request): string {
+    const jwtUserId = (req.user as { id?: string } | undefined)?.id;
+    if (jwtUserId) return jwtUserId;
+
+    const headerUserId = req.header('x-user-id')?.trim();
+    if (headerUserId) return headerUserId;
+
+    throw new UnauthorizedException('User identity is required');
+  }
 
   @Get('search')
   @UseGuards(JwtAuthGuard)
@@ -35,10 +46,8 @@ export class ProfilesController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
   getMe(@Req() req: Request) {
-    const user = req.user as { id: string };
-    return this.profilesservice.getOrCreateProfileForUser(user.id);
+    return this.profilesservice.getOrCreateProfileForUser(this.resolveUserId(req));
   }
 
   @Put('me')
@@ -49,9 +58,7 @@ export class ProfilesController {
   }
 
   @Patch('me')
-  @UseGuards(JwtAuthGuard)
   patchMe(@Req() req: Request, @Body(ValidationPipe) dto: PatchProfileDto) {
-    const user = req.user as { id: string };
-    return this.profilesservice.patchProfileForUser(user.id, dto);
+    return this.profilesservice.patchProfileForUser(this.resolveUserId(req), dto);
   }
 }

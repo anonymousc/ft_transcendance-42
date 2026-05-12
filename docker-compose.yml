@@ -70,6 +70,17 @@ services:
     container_name: auth
     env_file:
       .env
+    environment:
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - SMTP_SECURE=false
+      - SMTP_FROM=no-reply@travel.local
+      - EMAIL_VERIFY_AUTO=true
+      - SEED_DEMO=true
+      - SEED_EMAIL=demo@travel.local
+      - SEED_PASSWORD=Demo1234
+      - SEED_FIRST_NAME=Demo
+      - SEED_LAST_NAME=User
     networks:
       - saas
     volumes:
@@ -79,6 +90,8 @@ services:
         condition: service_healthy
       database:
         condition: service_healthy
+      mailhog:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://auth:3001/health || exit 1"]
       interval: 30s
@@ -94,6 +107,29 @@ services:
         labels: "service"
     labels:
       - "service=auth"
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: mailhog
+    networks:
+      - saas
+    environment:
+      - MH_AUTH_FILE=/mailhog/auth
+      - MH_UI_BIND_ADDR=0.0.0.0:8025
+    ports:
+      - "0.0.0.0:1025:1025"
+      - "0.0.0.0:8025:8025"
+    volumes:
+      - ./backend/devops/frontend-services/mailhog/auth:/mailhog/auth:ro
+    restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service"
+    labels:
+      - "service=mailhog"
 
   profiles:
     build: ./backend/src/profiles-service
@@ -224,6 +260,7 @@ services:
       redis:
         condition: service_healthy
     volumes:
+      - data:/var/lib/postgresql/data
       - shared_resources:/data/
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1"]

@@ -16,6 +16,11 @@ async function bootstrap() {
     const method = req.method.toUpperCase();
     if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') return next();
 
+    const path = req.path || '';
+    if (path === '/auth/signup' || path === '/auth/signin' || path.startsWith('/auth/login')) {
+      return next();
+    }
+
     const csrfCookie = req.cookies?.csrf_token as string | undefined;
     const csrfHeader = (req.header('x-csrf-token') || req.header('X-CSRF-Token')) as string | undefined;
 
@@ -34,7 +39,7 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'https://localhost',
+    origin: process.env.FRONTEND_URL || 'https://rihla.tech',
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
   });

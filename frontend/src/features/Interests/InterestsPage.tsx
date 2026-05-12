@@ -136,7 +136,7 @@ function skippedDefaultsProfile(): InterestsProfile {
 
 function InterestsPage() {
   const navigate = useNavigate();
-  const { user, loading, refreshUser } = useAuth();
+  const { user, loading, setUserInterests } = useAuth();
   const [stepIndex, setStepIndex] = useState(0);
   const [selections, setSelections] = useState<InterestsProfile>(emptyProfile);
   const [saving, setSaving] = useState(false);
@@ -201,8 +201,8 @@ function InterestsPage() {
     setSaving(true);
     setSaveError(null);
     try {
-      await patchMyInterests(skippedDefaultsProfile());
-      void refreshUser();
+      const profile = await patchMyInterests(skippedDefaultsProfile(), user?.id ?? undefined);
+      setUserInterests(profile.interests ?? null);
       navigate("/home", { replace: true });
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "Failed to skip onboarding");
@@ -218,8 +218,8 @@ function InterestsPage() {
     setSaving(true);
     setSaveError(null);
     try {
-      await patchMyInterests(selections);
-      void refreshUser();
+      const profile = await patchMyInterests(selections, user?.id ?? undefined);
+      setUserInterests(profile.interests ?? null);
       setDone(true);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "Failed to save interests");

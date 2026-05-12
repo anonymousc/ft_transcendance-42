@@ -1,7 +1,66 @@
 import type { SuggestedStudent } from "@/features/friends/types";
 import { flattenUserInterests } from "@/features/friends/utils";
-import { PROFILES_BASE_URL, ensureCsrfToken } from "./api";
+import { PROFILES_BASE_URL } from "./api";
 import type { InterestsProfile } from "./interestsOnboarding";
+
+const ACCESS_TOKEN_STORAGE_KEY = "access_token";
+
+function readAccessToken(): string | null {
+  try {
+    return localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function readCookie(name: string): string | null {
+  const encodedName = `${encodeURIComponent(name)}=`;
+  const parts = document.cookie.split("; ");
+  for (const part of parts) {
+    if (part.startsWith(encodedName)) {
+      return decodeURIComponent(part.slice(encodedName.length));
+    }
+  }
+  return null;
+}
+
+function writeCookie(name: string, value: string): void {
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; Path=/; SameSite=Lax${secure}`;
+}
+
+function createCsrfToken(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID().replace(/-/g, "");
+  }
+  return `${Date.now()}${Math.random().toString(16).slice(2)}`;
+}
+
+function ensureCsrfToken(): string {
+  const existing = readCookie("csrf_token");
+  if (existing) return existing;
+  const created = createCsrfToken();
+  writeCookie("csrf_token", created);
+  return created;
+}
+
+function buildCsrfHeaders(extra?: HeadersInit): HeadersInit {
+  const csrfToken = ensureCsrfToken();
+  const accessToken = readAccessToken();
+  return {
+    ...(extra ?? {}),
+    "X-CSRF-Token": csrfToken,
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  };
+}
+
+function buildAuthHeaders(extra?: HeadersInit): HeadersInit {
+  const accessToken = readAccessToken();
+  return {
+    ...(extra ?? {}),
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  };
+}
 
 export interface Profile {
   id: string;
@@ -14,20 +73,28 @@ export interface Profile {
   interests?: InterestsProfile | null;
 }
 
-export async function fetchMyProfile(): Promise<Profile> {
+export async function fetchMyProfile(fallbackUserId?: string): Promise<Profile> {
   const res = await fetch(`${PROFILES_BASE_URL}/profiles/me`, {
     credentials: "include",
+    headers: buildAuthHeaders(
+      fallbackUserId ? { "X-User-Id": fallbackUserId } : undefined,
+    ),
   });
   if (!res.ok) throw new Error("Failed to load profile");
   return (await res.json()) as Profile;
 }
 
-export async function patchMyInterests(profile: InterestsProfile): Promise<Profile> {
-  const csrf = await ensureCsrfToken();
+export async function patchMyInterests(
+  profile: InterestsProfile,
+  fallbackUserId?: string,
+): Promise<Profile> {
   const res = await fetch(`${PROFILES_BASE_URL}/profiles/me`, {
     method: "PATCH",
     credentials: "include",
-    headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+    headers: buildCsrfHeaders({
+      "Content-Type": "application/json",
+      ...(fallbackUserId ? { "X-User-Id": fallbackUserId } : {}),
+    }),
     body: JSON.stringify({ interests: profile }),
   });
   if (!res.ok) {
@@ -41,11 +108,10 @@ export async function updateMyProfile(input: {
   name: string;
   description: string;
 }): Promise<Profile> {
-  const csrf = await ensureCsrfToken();
   const res = await fetch(`${PROFILES_BASE_URL}/profiles/me`, {
     method: "PUT",
     credentials: "include",
-    headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+    headers: buildCsrfHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(input),
   });
   if (!res.ok) {
@@ -56,14 +122,13 @@ export async function updateMyProfile(input: {
 }
 
 export async function uploadAvatar(file: File): Promise<{ avatarUrl: string }> {
-  const csrf = await ensureCsrfToken();
   const formData = new FormData();
   formData.append("avatar", file);
 
   const res = await fetch(`${PROFILES_BASE_URL}/uploads/avatar`, {
     method: "POST",
     credentials: "include",
-    headers: { "X-CSRF-Token": csrf },
+    headers: buildCsrfHeaders(),
     body: formData,
   });
 
@@ -96,6 +161,7 @@ export async function searchUsers(q: string): Promise<SuggestedStudent[]> {
   const params = new URLSearchParams({ q: trimmed });
   const res = await fetch(`${PROFILES_BASE_URL}/profiles/search?${params}`, {
     credentials: "include",
+    headers: buildAuthHeaders(),
   });
   if (!res.ok) {
     const err = (await res.json().catch(() => ({}))) as {
@@ -117,4 +183,3 @@ export async function searchUsers(q: string): Promise<SuggestedStudent[]> {
     return student;
   });
 }
-

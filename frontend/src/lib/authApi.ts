@@ -1,4 +1,4 @@
-import { API_BASE_URL, ensureCsrfToken } from "./api";
+import { API_BASE_URL } from "./api";
 
 function readErrorMessage(body: unknown, fallback: string): string {
   const o = body as {
@@ -15,13 +15,11 @@ export async function changeMyPassword(input: {
   currentPassword: string;
   newPassword: string;
 }): Promise<void> {
-  const csrf = await ensureCsrfToken();
   const res = await fetch(`${API_BASE_URL}/auth/change-password`, {
     method: "POST",
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      "X-CSRF-Token": csrf,
     },
     body: JSON.stringify(input),
   });

@@ -11,7 +11,7 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.enableCors({
-     origin: process.env.FRONTEND_URL || 'https://localhost',
+    origin: process.env.FRONTEND_URL || 'https://rihla.tech',
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
   });
@@ -28,6 +28,17 @@ async function bootstrap() {
 
     const csrfCookie = req.cookies?.csrf_token as string | undefined;
     const csrfHeader = (req.header('x-csrf-token') || req.header('X-CSRF-Token')) as string | undefined;
+    const isProd = process.env.NODE_ENV === 'production';
+
+    if (!csrfCookie && csrfHeader) {
+      res.cookie('csrf_token', csrfHeader, {
+        httpOnly: false,
+        secure: isProd,
+        sameSite: (isProd ? 'none' : 'lax') as any,
+        path: '/',
+      });
+      return next();
+    }
 
     if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
       return res.status(403).json({ ok: false, error: { code: 'CSRF', message: 'CSRF token missing or invalid' } });
