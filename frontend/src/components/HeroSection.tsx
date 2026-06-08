@@ -70,9 +70,9 @@ function HeroSection() {
 
       <div className="hero-shell">
         <div className="hero-top">
-          <div className="hero-logo-wrap" aria-hidden="true">
+          {/* <div className="hero-logo-wrap" aria-hidden="true">
             <img src={RihlaLogo} alt="" className="hero-logo" />
-          </div>
+          </div> */}
 
           <div className="hero-copy">
             <h1 className="hero-title">
@@ -87,48 +87,6 @@ function HeroSection() {
 
             <div className="hero-actions">
               <DiscoverBtn />
-            </div>
-          </div>
-        </div>
-
-        <div className="hero-cards" role="list" aria-label="Highlights">
-          <div className="hero-card" role="listitem">
-            <div className="hero-card-icon" aria-hidden="true">
-              <ShieldCheck size={22} />
-            </div>
-            <div className="hero-card-title">Safe planning</div>
-            <div className="hero-card-text">
-              Save places, keep your itinerary organized, and share it when you’re ready.
-            </div>
-          </div>
-
-          <div className="hero-card" role="listitem">
-            <div className="hero-card-icon" aria-hidden="true">
-              <Zap size={22} />
-            </div>
-            <div className="hero-card-title">Fast discovery</div>
-            <div className="hero-card-text">
-              Find activities and spots quickly with clean search and smart suggestions.
-            </div>
-          </div>
-
-          <div className="hero-card" role="listitem">
-            <div className="hero-card-icon" aria-hidden="true">
-              <Headset size={22} />
-            </div>
-            <div className="hero-card-title">Travel together</div>
-            <div className="hero-card-text">
-              Meet travelers, chat, and plan trips with friends or new companions.
-            </div>
-          </div>
-
-          <div className="hero-card" role="listitem">
-            <div className="hero-card-icon" aria-hidden="true">
-              <Code2 size={22} />
-            </div>
-            <div className="hero-card-title">Modern experience</div>
-            <div className="hero-card-text">
-              Smooth UI, dark mode support, and a design that stays consistent across pages.
             </div>
           </div>
         </div>

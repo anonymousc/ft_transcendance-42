@@ -7,9 +7,9 @@
   box-sizing: border-box;
   max-width: 100%;
   overflow-x: clip;
-  background-image:
+  /* background-image:
     linear-gradient(180deg, rgba(0, 0, 0, 0.259) 0%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.70) 100%),
-    url("../assets/imssouane.png");
+    url("../assets/imssouane.png"); */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -26,9 +26,9 @@
   --hero-muted: rgba(17, 17, 17, 0.72);
   --hero-secondary-bg: rgba(255, 255, 255, 0.34);
   --hero-secondary-text: rgba(17, 17, 17, 0.94);
-  --hero-secondary-shadow:
+  /* --hero-secondary-shadow:
     0 8px 28px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08); */
   --hero-glass-blur: blur(7px) saturate(1.45);
 }
 
@@ -55,10 +55,10 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
+  /* background:
     radial-gradient(60% 60% at 50% 40%, rgba(255, 140, 0, 0.18) 0%, rgba(255, 140, 0, 0.00) 60%),
     radial-gradient(45% 45% at 20% 15%, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.00) 55%),
-    radial-gradient(45% 45% at 80% 85%, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.00) 60%);
+    radial-gradient(45% 45% at 80% 85%, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.00) 60%); */
 }
 
 /* Fade into the next section’s page bg — reads as a harsh white band on the photo in light mode */
@@ -111,7 +111,28 @@
   display: block;
 }
 
+/* .hero-copy {
+  padding: clamp(1.1rem, 2.6vw, 1.8rem);
+  border-radius: 24px;
+  background: linear-gradient(
+      165deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    ),
+    var(--hero-surface);
+  border: 1px solid var(--hero-border);
+  box-shadow: var(--hero-shadow);
+  backdrop-filter: var(--hero-glass-blur);
+  -webkit-backdrop-filter: var(--hero-glass-blur);
+} */
+
+
 .hero-copy {
+  /* Expands the component to fill its container, up to a generous maximum width */
+  width: 250%;
+  max-width: 1000px; /* Adjust this value (e.g., 1400px, or 90% for fluid scaling) depending on how wide you want it */
+  margin-inline: auto; /* Centers the component if it's smaller than its parent container */
+
   padding: clamp(1.1rem, 2.6vw, 1.8rem);
   border-radius: 24px;
   background: linear-gradient(
