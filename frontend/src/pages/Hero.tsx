@@ -2,7 +2,6 @@ import './Hero.css';
 import { useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import BigAtlass from '../assets/BigAtlass.png';
 import HeroSection from '../components/HeroSection';
 import AboutUsSection from '../components/AboutUsSection';
 import HowitsWorks from '../components/HowItsWorks';
@@ -46,7 +45,6 @@ function Hero() {
           toggleActions: 'play none none reverse',
         },
         y: 50,
-        opacity: 0,
         duration: 0.8,
         ease: 'power2.out',
       });

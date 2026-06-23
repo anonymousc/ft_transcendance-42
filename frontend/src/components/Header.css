@@ -32,22 +32,11 @@
   background-color: #1c1c1e;
 }
 
-/* Over the hero image on `/` only: readable chrome until the bar frosts on scroll */
-.Header:not(.scrolled):not(.bar-document) .desktop-nav .nav-link {
-  color: rgba(255, 255, 255, 0.92);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
-}
-
-.Header:not(.scrolled):not(.bar-document) .desktop-nav .nav-link:hover,
-.Header:not(.scrolled):not(.bar-document) .desktop-nav .nav-link.active {
-  color: #ff6600;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
-}
-
-.Header:not(.scrolled):not(.bar-document) .logo-img {
-  filter: drop-shadow(0 1px 3px rgba(255, 255, 255, 0.094));
-}
-
+/*
+ * Over the hero on `/`: the hero now matches the page background, so the nav
+ * links/logo follow the normal light(black)/dark(white) rules from DesktopNav.css
+ * with no shadows.
+ */
 .Header.scrolled .logo-img {
   filter: none;
 }
@@ -158,11 +147,6 @@
   transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease,
     box-shadow 0.3s ease;
   transform-origin: center;
-}
-
-.Header:not(.scrolled):not(.bar-document) .nav-hamburger span {
-  background-color: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 :is(.dark) .nav-hamburger span {
