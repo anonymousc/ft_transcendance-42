@@ -345,6 +345,19 @@
     align-items: center;
   }
 
+  .hero-actions {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .hero-actions .hero-btn-primary,
+  .hero-actions .hero-btn-secondary {
+    width: 100%;
+    max-width: 340px;
+  }
+
   .hero-subtitle { max-width: 100%; }
 
   .card-stack-wrap { width: 100%; }

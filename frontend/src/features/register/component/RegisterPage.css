@@ -107,17 +107,24 @@
     color: #fca5a5;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     .register-page {
-        padding: 1.5rem 1rem;
-        align-items: flex-start;
-        padding-top: 4rem;
+        padding: 0;
+        align-items: stretch;
+        overflow-y: auto;
+    }
+
+    /* No back arrow on mobile */
+    .register-page .back-arrow {
+        display: none;
     }
 
     .register-card {
         flex-direction: column;
-        max-width: 480px;
-        margin: 0 auto;
+        max-width: 100%;
+        min-height: 100vh;
+        margin: 0;
+        border-radius: 0;
     }
 
     /* Hide the passport/glass card side on mobile */
@@ -126,9 +133,11 @@
     }
 
     .register-side {
+        flex: 1;
         margin-right: 0;
-        border-radius: 20px;
+        border-radius: 0;
         padding: 2rem 1.5rem;
+        justify-content: center;
     }
 
     .register-side h2 {
@@ -141,11 +150,6 @@
 }
 
 @media (max-width: 480px) {
-    .register-page {
-        padding: 1rem;
-        padding-top: 3.5rem;
-    }
-
     .register-side {
         padding: 1.75rem 1.25rem;
     }
