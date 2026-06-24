@@ -41,7 +41,7 @@ function FeatureSection({ featuresRef } : { featuresRef: React.RefObject<HTMLEle
             <h3 className="feature-title">Travel Together</h3>
             <p className="feature-text">
               Join travel groups, chat with other tourists, share tips, and plan
-              experiences together—before and during your trip.
+              experiences together before and during your trip.
             </p>
           </div>
         </div>

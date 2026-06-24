@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import HomeNavBar from "@/components/shared/HomeNavBar";
-import CityBackground from "@/assets/marrakech_japanese_ink_20260221_014526 2.png";
+import CityBackground from "@/assets/marrakesh.webp";
 import {
   ChevronDown,
   MapPin,
