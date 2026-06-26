@@ -43,6 +43,76 @@
 }
 
 
+/* ----------------------------------------------------------------------- */
+/* CSS scroll/load reveal — replaces the old GSAP + ScrollTrigger setup.    */
+/* An IntersectionObserver in Hero.tsx toggles `.is-visible`; everything     */
+/* below is GPU-friendly opacity/transform transitions.                      */
+/* ----------------------------------------------------------------------- */
+.hero-content,
+.hero-image,
+.how-it-works-item,
+.feature-right,
+.feature-left,
+.hero-button,
+.footer-bottom {
+  opacity: 0;
+}
+
+.hero-content,
+.hero-image,
+.about-content,
+.how-it-works-item,
+.feature-right,
+.feature-left,
+.hero-button,
+.footer-bottom {
+  transition: opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.hero-content { transform: translate3d(0, 60px, 0); }
+.hero-image { transform: translate3d(0, 80px, 0); }
+/* About text slid up but stayed visible in the original — keep that. */
+.about-content { transform: translate3d(0, 50px, 0); }
+.how-it-works-item { transform: translate3d(0, 60px, 0); }
+.feature-right,
+.feature-left { transform: translate3d(60px, 0, 0); }
+.hero-button { transform: translate3d(0, 30px, 0); }
+.footer-bottom { transform: translate3d(0, 20px, 0); }
+
+/* Springy easing on the discover button, echoing the old back.out feel. */
+.hero-button { transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+.hero-content.is-visible,
+.hero-image.is-visible,
+.about-content.is-visible,
+.how-it-works-item.is-visible,
+.feature-right.is-visible,
+.feature-left.is-visible,
+.hero-button.is-visible,
+.footer-bottom.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-content,
+  .hero-image,
+  .about-content,
+  .how-it-works-item,
+  .feature-right,
+  .feature-left,
+  .hero-button,
+  .footer-bottom {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
 .content-section {
   background-color: #ffffff;
   padding: 10rem 2rem;

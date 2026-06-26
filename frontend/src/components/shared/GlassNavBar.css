@@ -205,9 +205,26 @@
     font-weight: 500;
     letter-spacing: 0.01em;
     white-space: nowrap;
-    width: 0;
+    max-width: 0;
+    margin-left: 0;
     opacity: 0;
     overflow: hidden;
+    /* Expand/collapse driven purely by the `.active` class (replaces GSAP). */
+    transition: max-width 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+        margin-left 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+        opacity 0.35s ease;
+}
+
+.glass-nav-item.active .nav-label {
+    max-width: 8rem;
+    margin-left: 0.5rem;
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .glass-nav-item .nav-label {
+        transition: none;
+    }
 }
 
 @media (max-width: 768px) {

@@ -2,10 +2,28 @@ const GATEWAY_ORIGIN = 'https://rihla.tech';
 const LOCAL_HTTP_RE = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/;
 const LOCAL_WS_RE = /^wss?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/.*)?$/;
 
+/**
+ * Gateway origin to use when no explicit VITE_* override is set.
+ *
+ * In production the SPA and the API gateway (nginx) share an origin, so we hit
+ * the same origin the page was served from. This keeps API calls same-origin
+ * whether the site is reached via its domain (rihla.tech) or the raw droplet IP
+ * (https://137.184.159.183), which sidesteps CORS entirely. During local
+ * `vite dev` (localhost) there is no local backend, so we fall back to the
+ * deployed gateway.
+ */
+function defaultGatewayOrigin(): string {
+  if (typeof window !== 'undefined') {
+    const origin = window.location.origin;
+    if (!LOCAL_HTTP_RE.test(origin)) return origin;
+  }
+  return GATEWAY_ORIGIN;
+}
+
 export function resolveGatewayUrl(value?: string): string {
   const raw = (value ?? '').trim();
-  if (!raw) return GATEWAY_ORIGIN;
-  if (LOCAL_HTTP_RE.test(raw)) return GATEWAY_ORIGIN;
+  if (!raw) return defaultGatewayOrigin();
+  if (LOCAL_HTTP_RE.test(raw)) return defaultGatewayOrigin();
   return raw;
 }
 
@@ -14,9 +32,12 @@ export function resolveGatewayWebSocketUrl(
   path = '/ws',
 ): string {
   const raw = (value ?? '').trim();
-  if (!raw) return `wss://137.184.159.183${path}`;
-  if (LOCAL_WS_RE.test(raw)) return `wss://137.184.159.183${path}`;
-  return raw;
+  if (raw && !LOCAL_WS_RE.test(raw)) return raw;
+  // Target the same host the SPA was served from, so the socket origin matches.
+  if (typeof window !== 'undefined' && !LOCAL_HTTP_RE.test(window.location.origin)) {
+    return `wss://${window.location.host}${path}`;
+  }
+  return `wss://137.184.159.183${path}`;
 }
 
 export const API_BASE_URL = resolveGatewayUrl(
