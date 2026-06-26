@@ -13,6 +13,11 @@ const suggestRouter = require('./routes/suggest');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Behind Nginx (single reverse-proxy hop). Trust exactly one proxy so
+// express-rate-limit reads the real client IP from X-Forwarded-For without
+// allowing clients to spoof it. Do NOT use `true` here (it trusts all hops).
+app.set('trust proxy', 1);
+
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'https://rihla.tech',
   credentials: true,

@@ -40,8 +40,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       if (cookieTheme) return cookieTheme;
       const savedTheme = localStorage.getItem('theme') as Theme;
       if (savedTheme === 'dark' || savedTheme === 'light') return savedTheme;
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
+    // Default to light mode; ignore the OS prefers-color-scheme setting.
     return 'light';
   });
 
