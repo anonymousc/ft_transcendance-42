@@ -38,8 +38,21 @@ async function bootstrap() {
     }),
   );
 
+  // Allow one or more comma-separated origins via FRONTEND_URL, e.g.
+  // "https://rihla.tech,https://137.184.159.183". Requests with no Origin
+  // (same-origin, curl, health checks) are always allowed.
+  const allowedOrigins = (process.env.FRONTEND_URL || 'https://rihla.tech')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'https://rihla.tech',
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Origin ${origin} not allowed by CORS`), false);
+    },
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
   });
