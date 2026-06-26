@@ -21,32 +21,20 @@ export const FRIENDS_BASE_URL = stripTrailingSlashes(
 
 /**
  * WebSocket URL for notification pushes (friends-service `notificationSocket`).
- * Override with `VITE_NOTIFICATION_WS_URL`, or set `VITE_NOTIFICATION_WS_PORT` if the host
- * matches `VITE_FRIENDS_URL` but the published port differs (default8182).
+ *
+ * Always routes through the nginx gateway at `/notifications/ws` over port 443,
+ * the same way the chat socket uses `/ws`. Connecting directly to the raw
+ * service port (8182) does not work in production: it is not a port Cloudflare's
+ * proxy forwards, and the origin terminates TLS only at the gateway (443).
+ *
+ * Override with `VITE_NOTIFICATION_WS_URL` only for non-gateway setups.
  */
 export function getNotificationWebSocketUrl(): string {
   const explicit = (import.meta.env.VITE_NOTIFICATION_WS_URL as string | undefined)
     ?.trim();
   if (explicit) return stripTrailingSlashes(explicit);
 
-  const portRaw = import.meta.env.VITE_NOTIFICATION_WS_PORT as string | undefined;
-  const port =
-    portRaw != null && String(portRaw).trim() !== ""
-      ? Number(portRaw)
-      : 8182;
-  const safePort = Number.isFinite(port) && port > 0 ? port : 8182;
-
-  try {
-    const u = new URL(FRIENDS_BASE_URL);
-    const isLocal = u.hostname === "localhost" || u.hostname === "127.0.0.1";
-    if (isLocal) {
-      return resolveGatewayWebSocketUrl(undefined, "/notifications/ws");
-    }
-    const proto = u.protocol === "https:" ? "wss:" : "ws:";
-    return `${proto}//${u.hostname}:${safePort}`;
-  } catch {
-    return resolveGatewayWebSocketUrl(undefined, "/notifications/ws");
-  }
+  return resolveGatewayWebSocketUrl(undefined, "/notifications/ws");
 }
 
 type FriendsOk<T> = { ok: true; data: T };
